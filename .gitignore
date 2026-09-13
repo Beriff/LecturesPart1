@@ -18,6 +18,10 @@ Part_II_*
 _glava0_extract.txt
 err.txt
 
+# картинки-ассеты дек (нужны для GitHub Pages) — исключение из правил выше
+!decks/img4/
+!decks/img4/*.jpg
+
 # временные файлы анализа
 _dump*.txt
 _slidemap.txt
