@@ -21,6 +21,8 @@ err.txt
 # картинки-ассеты дек (нужны для GitHub Pages) — исключение из правил выше
 !decks/img4/
 !decks/img4/*.jpg
+!decks/img4/*.png
+!decks/img4/*.svg
 
 # временные файлы анализа
 _dump*.txt

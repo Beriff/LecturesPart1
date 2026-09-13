@@ -215,6 +215,28 @@ p+p{margin-top:16px}
 .qopt.ok{background:#DCFCE7;border-color:var(--ok);color:#14663a;font-weight:700}
 .qopt.bad{background:#FEE2E2;border-color:var(--bad);color:#8a1c1c}
 .qbadge{display:inline-flex;align-items:center;gap:10px;font-family:var(--fd);font-weight:700;color:var(--blue-500);background:var(--blue-050);border-radius:999px;padding:10px 20px;font-size:20px}
+
+.dividerimg.plain{background:none;box-shadow:none;padding:0;width:600px;height:560px}
+.dividerimg img.im{width:100%;height:100%;object-fit:contain}
+.wave g[transform="translate(560,430)"]{display:none}
+.im.zoom{cursor:zoom-in}
+.shot.zoomable{position:relative}
+.shot.zoomable::after{content:"\2922 на весь экран";position:absolute;right:12px;bottom:12px;background:rgba(20,53,127,.82);color:#fff;font-family:var(--fb);font-size:15px;padding:6px 12px;border-radius:9px;pointer-events:none}
+#lb{position:fixed;inset:0;z-index:100;background:rgba(8,20,48,.93);display:none;align-items:center;justify-content:center;padding:40px}
+#lb.on{display:flex}
+#lb img{max-width:96vw;max-height:90vh;border-radius:10px;box-shadow:0 30px 90px rgba(0,0,0,.5);background:#fff;cursor:zoom-out}
+#lb .lbx{position:absolute;top:24px;right:34px;width:56px;height:56px;border-radius:14px;border:0;background:#2F6BFF;color:#fff;font-size:26px;cursor:pointer}
+#lb .lbhint{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);color:#cfe0ff;font-family:var(--fb);font-size:18px}
+.chupa{position:absolute;right:70px;top:50%;transform:translateY(-50%);z-index:3;width:720px;background:#fff;border-radius:28px;box-shadow:0 30px 80px rgba(15,42,102,.30);padding:30px 34px}
+.chupa h4{font-family:var(--fd);font-weight:800;color:var(--blue-900);font-size:30px;margin-bottom:6px}
+.chupa .mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+.chupa .mbtn{font-family:var(--fb);font-weight:600;font-size:18px;color:var(--blue-900);background:var(--blue-050);border:2px solid transparent;border-radius:12px;padding:12px 6px;cursor:pointer;text-align:center;transition:.12s}
+.chupa .mbtn:hover{border-color:var(--blue-500)}
+.chupa .mbtn.act{background:var(--blue-500);color:#fff}
+.chupa .res{margin-top:18px;display:flex;align-items:center;gap:22px;min-height:160px}
+.chupa .res img{width:160px;height:160px;object-fit:contain}
+.chupa .res .cap{font-family:var(--fb);font-size:22px;color:var(--slate)}
+.chupa .res .cap b{font-family:var(--fd);color:var(--blue-900);font-size:28px;display:block;margin-bottom:4px}
 .ph1{background-image:url("img4/ph1.jpg")}
 .ph2{background-image:url("img4/ph2.jpg")}
 .ph3{background-image:url("img4/ph3.jpg")}
@@ -260,7 +282,7 @@ p+p{margin-top:16px}
 
 <section class="slide">
   <div class="pad">
-    <div class="title-row"><span class="diamond"></span><div class="h-d h2">СОДЕРЖАНИЕ</div></div>
+    <div class="title-row"><span class="diamond"></span><div class="h-d h2">ЦЕЛИ ГЛАВЫ</div></div>
     <div class="grid g2" style="margin-top:40px"><div class="card" style="display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center;cursor:pointer" onclick="showId('p01')">
   <div class="numc">01</div><div><h4 style="font-size:30px">Системы счисления</h4><p style="font-size:21px">двоичная · hex · IP-октеты</p></div></div><div class="card" style="display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center;cursor:pointer" onclick="showId('p02')">
   <div class="numc">02</div><div><h4 style="font-size:30px">MAC-адреса</h4><p style="font-size:21px">строение · биты I/G, U/L · типы</p></div></div><div class="card" style="display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center;cursor:pointer" onclick="showId('p03')">
@@ -295,6 +317,7 @@ p+p{margin-top:16px}
         <div class="h-d h2">СИСТЕМЫ<br>СЧИСЛЕНИЯ</div>
         <p class="body slate" style="margin-top:20px;max-width:22ch">Почему машина думает нулями и как из них вырастают 192.168.0.13 и F4-46-37-55-24-86</p>
       </div>
+      <div class="dividerimg plain"><img class="im" src="img4/place1.svg" alt=""></div>
       <div class="pagefoot">Глава 04 · Раздел 01</div>
     </section>
 
@@ -365,9 +388,8 @@ p+p{margin-top:16px}
 <section class="slide">
   <div class="tophint">2.1 · Двоичная система</div>
   <div class="pad">
-    <div class="title-row"><span class="diamond"></span><div class="h-d h3">ПЕРЕВОД 10 → 2 · «РАСКЛАДКА НА <span class='hl'>ГИРИ</span>»</div></div>
-    <div style="margin-top:26px"><p class="body sm">Возьмём <b>13</b>. Спрашиваем: суммой каких степеней двойки его собрать? <b>13 = 8 + 4 + 1</b>. Значит, на весах лежат гири 8, 4 и 1, а гири 2 — нет. Начальные нули отбрасываем:</p>
-  <div style="margin:26px 0"><div class="bits "><div class="bit "><div class="w">2<sup>7</sup></div><div class="v">0</div><div class="w">128</div></div><div class="bit "><div class="w">2<sup>6</sup></div><div class="v">0</div><div class="w">64</div></div><div class="bit "><div class="w">2<sup>5</sup></div><div class="v">0</div><div class="w">32</div></div><div class="bit "><div class="w">2<sup>4</sup></div><div class="v">0</div><div class="w">16</div></div><div class="bit on"><div class="w">2<sup>3</sup></div><div class="v">1</div><div class="w">8</div></div><div class="bit on"><div class="w">2<sup>2</sup></div><div class="v">1</div><div class="w">4</div></div><div class="bit "><div class="w">2<sup>1</sup></div><div class="v">0</div><div class="w">2</div></div><div class="bit on"><div class="w">2<sup>0</sup></div><div class="v">1</div><div class="w">1</div></div></div></div>
+    <div class="title-row"><span class="diamond"></span><div class="h-d h3">ПЕРЕВОД <span class='hl'>10 → 2</span></div></div>
+    <div style="margin-top:26px"><div style="margin:26px 0"><div class="bits "><div class="bit "><div class="w">2<sup>7</sup></div><div class="v">0</div><div class="w">128</div></div><div class="bit "><div class="w">2<sup>6</sup></div><div class="v">0</div><div class="w">64</div></div><div class="bit "><div class="w">2<sup>5</sup></div><div class="v">0</div><div class="w">32</div></div><div class="bit "><div class="w">2<sup>4</sup></div><div class="v">0</div><div class="w">16</div></div><div class="bit on"><div class="w">2<sup>3</sup></div><div class="v">1</div><div class="w">8</div></div><div class="bit on"><div class="w">2<sup>2</sup></div><div class="v">1</div><div class="w">4</div></div><div class="bit "><div class="w">2<sup>1</sup></div><div class="v">0</div><div class="w">2</div></div><div class="bit on"><div class="w">2<sup>0</sup></div><div class="v">1</div><div class="w">1</div></div></div></div>
   <div class="mbig">13₁₀ = 1101₂</div>
   <p class="body sm slate" style="margin-top:18px">Читается «один-один-ноль-один» — это набор битов, а не «тысяча сто один». В разряде либо 0, либо 1 — цифры 3 в двоичной не существует.</p></div>
     
@@ -404,7 +426,7 @@ p+p{margin-top:16px}
 <section class="slide">
   <div class="tophint">2.1 · Шестнадцатеричная</div>
   <div class="pad">
-    <div class="title-row"><span class="diamond"></span><div class="h-d h3">ШЕСТНАДЦАТЕРИЧНАЯ · <span class='hl'>ЗАЧЕМ</span></div></div>
+    <div class="title-row"><span class="diamond"></span><div class="h-d h3">ШЕСТНАДЦАТЕРИЧНАЯ СИСТЕМА <span class='hl'>СЧИСЛЕНИЯ</span></div></div>
     <div style="margin-top:26px"><p class="body sm">Двоичная запись честная, но длинная. Десятичная короткая, но плохо «дружит» с двоичной: одна десятичная цифра не соответствует ровному числу битов. Нужна третья система — короткая, как десятичная, и совпадающая с двоичной по границам разрядов.</p>
   <p class="body sm">Такая система — <b>шестнадцатеричная</b>: позиционная, основание <b>16</b>. Но привычных цифр только десять (0–9) — где взять ещё шесть? Недостающие обозначили буквами:</p></div>
     <div class="grid" style="grid-template-columns:repeat(6,1fr);margin-top:24px;gap:14px"><div class="card line" style="text-align:center;padding:18px"><div class="h-d" style="font-size:44px;color:var(--blue-500)">A</div><div class="mono slate" style="font-size:22px">10</div></div><div class="card line" style="text-align:center;padding:18px"><div class="h-d" style="font-size:44px;color:var(--blue-500)">B</div><div class="mono slate" style="font-size:22px">11</div></div><div class="card line" style="text-align:center;padding:18px"><div class="h-d" style="font-size:44px;color:var(--blue-500)">C</div><div class="mono slate" style="font-size:22px">12</div></div><div class="card line" style="text-align:center;padding:18px"><div class="h-d" style="font-size:44px;color:var(--blue-500)">D</div><div class="mono slate" style="font-size:22px">13</div></div><div class="card line" style="text-align:center;padding:18px"><div class="h-d" style="font-size:44px;color:var(--blue-500)">E</div><div class="mono slate" style="font-size:22px">14</div></div><div class="card line" style="text-align:center;padding:18px"><div class="h-d" style="font-size:44px;color:var(--blue-500)">F</div><div class="mono slate" style="font-size:22px">15</div></div></div>
@@ -478,6 +500,7 @@ p+p{margin-top:16px}
         <div class="h-d h2">MAC-<br>АДРЕСА</div>
         <p class="body slate" style="margin-top:20px;max-width:22ch">48 бит, две половины OUI и Interface ID, два служебных бита — и три типа рассылки</p>
       </div>
+      <div class="dividerimg plain"><img class="im" src="img4/place2.svg" alt=""></div>
       <div class="pagefoot">Глава 04 · Раздел 02</div>
     </section>
 
@@ -629,27 +652,18 @@ p+p{margin-top:16px}
         <div class="eyebrow" style="margin:6px 0 14px">Раздел 03</div>
         <div class="h-d h2">ПРОТОКОЛ<br>ARP</div>
         <p class="body slate" style="margin-top:20px;max-width:22ch">Как по известному IP выяснить неизвестный MAC — запрос всем, ответ лично</p>
+        <div class="def" style="margin-top:26px;max-width:92%"><div class="badge">под запись</div><div class="term" style="font-size:26px"><span class="hl">ARP</span> · Address Resolution Protocol</div><p style="font-size:22px">сетевой протокол для определения <b style="color:#fff">MAC-адреса</b> устройства по его известному <b style="color:#fff">IP-адресу</b>.</p></div>
       </div>
-      <div class="dividerimg"><div class="im ph1"></div></div>
+      <div class="dividerimg plain"><img class="im" src="img4/place3.svg" alt=""></div>
       <div class="pagefoot">Глава 04 · Раздел 03</div>
     </section>
 
 <section class="slide">
   <div class="tophint">2.3 · Протокол ARP</div>
   <div class="pad">
-    <div class="title-row"><span class="diamond"></span><div class="h-d h3">ЗАЧЕМ НУЖЕН <span class='hl'>ARP</span></div></div>
-    <div style="margin-top:26px"><p class="body sm">Чтобы передать данные соседу, нужны два адреса получателя: <b>IP</b> (логический) и <b>MAC</b> (физический). Без MAC протокол Ethernet не соберёт кадр. Свой IP и MAC узел знает, IP получателя — тоже. А MAC получателя взять неоткуда: он зашит в чужую карту.</p></div>
-    <div class="def" style="margin-top:26px"><div class="badge">под запись</div><div class="term"><span class="hl">ARP</span> · Address Resolution Protocol</div><p>сетевой протокол для определения <b style="color:#fff">MAC-адреса</b> устройства по его известному <b style="color:#fff">IP-адресу</b>.</p></div>
-  </div>
-  <div class="pagefoot">2.3 · Протокол ARP</div>
-</section>
-
-<section class="slide">
-  <div class="tophint">2.3 · Протокол ARP</div>
-  <div class="pad">
     <div class="title-row"><span class="diamond"></span><div class="h-d h3">КАК РАБОТАЕТ ARP · <span class='hl'>ЗАПРОС ВСЕМ, ОТВЕТ ЛИЧНО</span></div></div>
     <div style="margin-top:26px"><p class="body sm">Узел <b>.233</b> формирует широковещательный кадр (DST = FF-FF-FF-FF-FF-FF) с вопросом «У кого IP .1? Ответьте .233» — это <b>ARP-запрос</b>. Коммутатор рассылает всем; каждый сравнивает Target IP со своим. Совпадение у одного — он отвечает <b>одноадресно</b>, ведь MAC спрашивавшего известен из запроса. Отправитель пишет MAC в свою <b>ARP-таблицу</b>.</p></div>
-    <div class="shot" style="margin-top:18px;height:380px"><div class="im ph1"></div></div>
+    <div class="shot zoomable" style="margin-top:16px;height:440px"><div class="im ph1 zoom"></div></div>
     <div style="margin-top:20px;display:none"><svg viewBox="0 0 1100 340" style="width:100%;max-width:1100px">
       <rect x="490" y="130" width="120" height="80" rx="12" fill="#14357F"/><text x="550" y="176" text-anchor="middle" fill="#fff" font-family="Montserrat" font-weight="700" font-size="22">SWITCH</text>
       <g font-family="JetBrains Mono" font-size="18">
@@ -730,7 +744,19 @@ p+p{margin-top:16px}
   <div class="pad">
     <div class="title-row"><span class="diamond"></span><div class="h-d h3">ОДНОАДРЕСНЫЕ MAC В <span class="hl">ARP-ОТВЕТЕ</span></div></div>
     <div style="margin-top:16px"><p class="body sm">В ARP-ответе оба MAC — <b>одноадресные</b>. В первом октете каждого адреса младший бит <b>I/G = 0</b> (Individual — «кадр одному»), а соседний <b>LG = 0</b> (Globally unique — заводской). Wireshark подтверждает это и для Source, и для Destination.</p></div>
-    <div class="shot" style="margin-top:22px;height:560px"><div class="im ph2"></div></div>
+    <div class="ws" style="margin-top:18px">
+      <div class="ws-tree" style="font-size:20px">
+        <div class="r"><span class="tw">▾</span>Ethernet II, Src: ASUSTekC_30:e2:9c (ac:9e:17:30:e2:9c), Dst: IntelCor_55:24:86 (f4:46:37:55:24:86)</div>
+        <div class="r i1"><span class="tw">▾</span>Destination: IntelCor_55:24:86 (f4:46:37:55:24:86)</div>
+        <div class="r i2">Address: IntelCor_55:24:86 (f4:46:37:55:24:86)</div>
+        <div class="r i2">.... ..<span class="hl">0</span>. .... .... .... .... = <b>LG bit:</b> Globally unique address (factory default)</div>
+        <div class="r i2">.... ...<span class="hl">0</span> .... .... .... .... = <b>IG bit:</b> Individual address (unicast)</div>
+        <div class="r i1"><span class="tw">▾</span>Source: ASUSTekC_30:e2:9c (ac:9e:17:30:e2:9c)</div>
+        <div class="r i2">Address: ASUSTekC_30:e2:9c (ac:9e:17:30:e2:9c)</div>
+        <div class="r i2">.... ..<span class="hl">0</span>. .... .... .... .... = <b>LG bit:</b> Globally unique address (factory default)</div>
+        <div class="r i2">.... ...<span class="hl">0</span> .... .... .... .... = <b>IG bit:</b> Individual address (unicast)</div>
+      </div>
+    </div>
   </div>
   <div class="pagefoot">2.3 · Протокол ARP · Wireshark</div>
 </section>
@@ -741,10 +767,14 @@ p+p{margin-top:16px}
   <div class="pad">
     <div class="title-row"><span class="diamond"></span><div class="h-d h3">ARP-ТАБЛИЦА · <span class='hl'>КЭШ</span> СООТВЕТСТВИЙ</div></div>
     <div style="margin-top:26px"><p class="body sm">Рассылать broadcast перед каждой отправкой расточительно. Поэтому узел складывает пары <b>IP ↔ MAC</b> в <b>ARP-таблицу</b> и заглядывает туда первым делом. Записи со временем <b>устаревают</b> — устройства меняются, и «вечная» запись начала бы врать. Ограниченное время жизни держит таблицу и компактной, и актуальной.</p></div>
-    <table class="tbl" style="margin-top:24px;max-width:900px"><tr><th>Интернет-адрес</th><th>Физический адрес</th><th>Тип</th></tr>
-  <tr><td>192.168.1.1</td><td>ac-9e-17-30-e2-9c</td><td>динамический</td></tr>
-  <tr><td>192.168.1.255</td><td>ff-ff-ff-ff-ff-ff</td><td>статический</td></tr>
-  <tr><td>224.0.0.22</td><td>01-00-5e-00-00-16</td><td>статический</td></tr></table>
+    <div class="term-win" style="margin-top:22px;max-width:1150px"><div class="bar"><i></i><i></i><i></i></div>
+  <pre>C:\Users\student&gt; arp -a
+
+   Интерфейс: 192.168.1.233 --- 0x5
+     Интернет-адрес        Физический адрес        Тип
+     <span class="hl">192.168.1.1           ac-9e-17-30-e2-9c       динамический</span>
+     192.168.1.255         ff-ff-ff-ff-ff-ff       статический
+     224.0.0.22            01-00-5e-00-00-16       статический</pre></div>
   </div>
   <div class="pagefoot">2.3 · Протокол ARP</div>
 </section>
@@ -774,7 +804,7 @@ p+p{margin-top:16px}
         <div class="h-d h2">СКВОЗНОЙ<br>ПРИМЕР</div>
         <p class="body slate" style="margin-top:20px;max-width:22ch">PC-A отправляет файл PC-B: инкапсуляция вниз, ARP добывает MAC, декапсуляция вверх</p>
       </div>
-      <div class="dividerimg"><div class="im ph4"></div></div>
+      <div class="dividerimg"><div class="im ph4 zoom"></div></div>
       <div class="pagefoot">Глава 04 · Раздел 04</div>
     </section>
 
@@ -810,7 +840,7 @@ p+p{margin-top:16px}
     <div style="margin-top:26px"><p class="body sm"><b>Приложения (FTP).</b> Файл форматируется и уходит ниже — к TCP.</p>
   <p class="body sm"><b>Транспортный (TCP).</b> Разбивка на сегменты, метки портов: источник <b>54236</b>, назначение <b>21</b> (FTP). Получаем <b>сегмент</b>.</p>
   <p class="body sm"><b>Сетевой (IP).</b> Проставляются <b>SrcIP</b> и <b>DstIP</b> (оба известны). Сегмент стал <b>пакетом</b>.</p></div>
-    <div class="shot" style="margin-top:16px;height:300px"><div class="im ph4"></div></div>
+    <div class="shot zoomable" style="margin-top:14px;height:380px"><div class="im ph4 zoom"></div></div>
     <div style="margin-top:30px;display:flex;justify-content:center"><div style="background:#2F6BFF;border-radius:12px;padding:16px 20px;display:inline-flex;align-items:center;gap:14px;color:#fff"><span class="mono" style="font-weight:700">IP · Src 192.168.1.1 · Dst 192.168.1.2</span><div style="background:#7FA6FF;border-radius:12px;padding:16px 20px;display:inline-flex;align-items:center;gap:14px;color:#14357F"><span class="mono" style="font-weight:700">TCP · 54236→21</span><div class="mono" style="color:#14357F;font-weight:700">Данные</div></div></div></div>
   </div>
   <div class="pagefoot">2.4 · Инкапсуляция</div>
@@ -822,7 +852,7 @@ p+p{margin-top:16px}
     <div class="title-row"><span class="diamond"></span><div class="h-d h3">ЗАМИНКА НА КАНАЛЬНОМ · <span class='hl'>НЕТ MAC</span></div></div>
     <div style="margin-top:26px"><p class="body sm">Чтобы упаковать пакет в кадр, нужен MAC PC-B — а его PC-A не знает. PC-A <b>запоминает почти готовый пакет</b> в памяти и формирует <b>ARP-запрос</b>: IP получателя = IP PC-B, MAC получателя = широковещательный FF:FF:FF:FF:FF:FF.</p>
   <p class="body sm"><b>Широковещание.</b> Коммутатор рассылает кадр всем. <b>Фильтрация:</b> PC-C убеждается, что запрос не ему, и отбрасывает; PC-B узнаёт свой IP и готовит ответ.</p></div>
-    <div class="shot" style="margin-top:14px;height:340px"><div class="im ph3"></div></div>
+    <div class="shot zoomable" style="margin-top:12px;height:400px"><div class="im ph3 zoom"></div></div>
     <div style="margin-top:16px;display:none"><svg viewBox="0 0 1100 340" style="width:100%;max-width:1100px">
       <rect x="490" y="130" width="120" height="80" rx="12" fill="#14357F"/><text x="550" y="176" text-anchor="middle" fill="#fff" font-family="Montserrat" font-weight="700" font-size="22">SWITCH</text>
       <g font-family="JetBrains Mono" font-size="18">
@@ -844,7 +874,7 @@ p+p{margin-top:16px}
     <div class="title-row"><span class="diamond"></span><div class="h-d h3">ARP-ОТВЕТ И <span class='hl'>ДОСТРОЙКА</span> КАДРА</div></div>
     <div style="margin-top:26px"><p class="body sm"><b>ARP-ответ.</b> PC-B отправляет ответ одноадресно обратно на PC-A, вложив свой MAC.</p>
   <p class="body sm"><b>Достройка.</b> PC-A записывает MAC PC-B в ARP-таблицу и достаёт из памяти тот самый пакет. Теперь есть оба адреса — пакет упаковывается в <b>кадр</b>.</p></div>
-    <div class="shot" style="margin-top:16px;height:300px"><div class="im ph5"></div></div>
+    <div class="shot zoomable" style="margin-top:14px;height:380px"><div class="im ph5 zoom"></div></div>
     <div style="margin-top:30px;display:flex;justify-content:center"><div style="background:#1E4BB8;border-radius:12px;padding:16px 20px;display:inline-flex;align-items:center;gap:14px;color:#fff"><span class="mono" style="font-weight:700">Ethernet · Src/DstMAC</span><div style="background:#2F6BFF;border-radius:12px;padding:16px 20px;display:inline-flex;align-items:center;gap:14px;color:#fff"><span class="mono" style="font-weight:700">IP · Src 192.168.1.1 · Dst 192.168.1.2</span><div style="background:#7FA6FF;border-radius:12px;padding:16px 20px;display:inline-flex;align-items:center;gap:14px;color:#14357F"><span class="mono" style="font-weight:700">TCP · 54236→21</span><div class="mono" style="color:#14357F;font-weight:700">Данные</div></div></div></div><div style="align-self:center;margin-left:18px" class="mono slate">= кадр</div></div>
   </div>
   <div class="pagefoot">2.4 · Инкапсуляция</div>
@@ -857,7 +887,7 @@ p+p{margin-top:16px}
     <div style="margin-top:26px"><p class="body sm"><b>Отправка.</b> PC-A шлёт готовый кадр одноадресно на PC-B; коммутатор по своей таблице отправляет его только в нужный порт.</p>
   <p class="body sm"><b>Канальный.</b> PC-B видит, что DstMAC — его, снимает Ethernet-заголовок → пакет.</p>
   <p class="body sm"><b>Сетевой.</b> Сравнивает DstIP со своим, снимает IP-заголовок → сегмент.</p></div>
-    <div class="shot" style="margin-top:16px;height:300px"><div class="im ph6"></div></div>
+    <div class="shot zoomable" style="margin-top:14px;height:380px"><div class="im ph6 zoom"></div></div>
     <div style="margin-top:30px;display:flex;justify-content:center"><div style="background:#2F6BFF;border-radius:12px;padding:16px 20px;display:inline-flex;align-items:center;gap:14px;color:#fff"><span class="mono" style="font-weight:700">IP · Src 192.168.1.1 · Dst 192.168.1.2</span><div style="background:#7FA6FF;border-radius:12px;padding:16px 20px;display:inline-flex;align-items:center;gap:14px;color:#14357F"><span class="mono" style="font-weight:700">TCP · 54236→21</span><div class="mono" style="color:#14357F;font-weight:700">Данные</div></div></div><div style="align-self:center;margin-left:18px" class="mono slate">← снимаем слои</div></div>
   </div>
   <div class="pagefoot">2.4 · Декапсуляция</div>
@@ -868,7 +898,7 @@ p+p{margin-top:16px}
   <div class="pad">
     <div class="title-row"><span class="diamond"></span><div class="h-d h3">ТРАНСПОРТ, ПРИЛОЖЕНИЯ · <span class='hl'>ФАЙЛ НА ДИСКЕ</span></div></div>
     <div style="margin-top:26px"><p class="body sm">По полю «порт назначения» <b>DPrt = 21</b> PC-B понимает: это FTP. Заголовок сегмента снимается, данные уходят FTP, который форматирует и <b>записывает файл на диск</b>. Передача завершена ✓.</p></div>
-    <div class="shot" style="margin-top:14px;height:250px"><div class="im ph7"></div></div>
+    <div class="shot zoomable" style="margin-top:12px;height:360px"><div class="im ph7 zoom"></div></div>
     <div class="def" style="margin-top:26px"><p style="font-size:26px">Всё сложилось в цепочку: <b style="color:#fff">биты</b> дали возможность записывать адреса, <b style="color:#fff">октеты и hex</b> сделали их читаемыми, <b style="color:#fff">типы MAC</b> задали адресацию «одному / группе / всем», а <b style="color:#fff">ARP</b> связал мир IP с миром MAC. Дальше — маршрутизаторы и шлюзы, когда получатель в другой сети.</p></div>
   </div>
   <div class="pagefoot">2.4 · Итог</div>
@@ -879,7 +909,7 @@ p+p{margin-top:16px}
   <div class="pad">
     <div class="title-row"><span class="diamond"></span><div class="h-d h3">ДЕКАПСУЛЯЦИЯ · <span class="hl">ФАЙЛ ДОСТАВЛЕН</span></div></div>
     <div style="margin-top:16px"><p class="body sm">На PC-B заголовки снимаются слой за слоем: <b>Ethernet → IP → TCP</b>. Остаются только <b>данные приложения</b> — тот самый файл, переданный по FTP. Кадр «раздевается» до полезной нагрузки, и передача завершена.</p></div>
-    <div class="shot" style="margin-top:22px;height:560px"><div class="im ph8"></div></div>
+    <div class="shot zoomable" style="margin-top:18px;height:600px"><div class="im ph8 zoom"></div></div>
   </div>
   <div class="pagefoot">2.4 · Декапсуляция</div>
 </section>
@@ -986,9 +1016,16 @@ p+p{margin-top:16px}
     <p class="body slate" style="margin-top:22px;max-width:24ch">Биты → адреса → типы MAC → ARP → инкапсуляция. Дальше — маршрутизаторы и шлюзы.</p>
     <div class="mono" style="margin-top:34px;color:var(--slate);font-size:22px">Ананко · Качур · VK · TG</div>
   </div>
+  <div class="chupa" id="chupa">
+    <h4>Кто ты по месяцу рождения? 🐾</h4>
+    <p class="body sm slate" style="font-size:20px">Выбери месяц — узнаешь своего чупакабрика.</p>
+    <div class="mgrid" id="chMonths"></div>
+    <div class="res" id="chRes"><span class="cap slate">↑ выбери свой месяц</span></div>
+  </div>
   <div class="pagefoot">Глава 04</div>
 </section>
 </div></div>
+<div id="lb"><button class="lbx" type="button">✕</button><img alt=""><div class="lbhint">клик по картинке — свернуть · Esc</div></div>
 <script>
 (function(){
 var deck=document.getElementById('deck');
@@ -1244,6 +1281,24 @@ inits.quiz=function(sl){ if(sl._qw)return; sl._qw=1;
  var upd=function(){var done=sl.querySelectorAll('.qcard.done').length;var right=sl.querySelectorAll('.qopt.picked[data-ok="1"]').length;var b=sl.querySelector('#qscore');if(b)b.textContent='Отвечено: '+done+' / 4 · верно '+right;};
  [].forEach.call(sl.querySelectorAll('.qopt'),function(o){o.onclick=function(){var card=o.parentNode.parentNode;if(card.classList.contains('done'))return;card.classList.add('done');o.classList.add('picked');[].forEach.call(card.querySelectorAll('.qopt'),function(x){if(x.getAttribute('data-ok')==='1')x.classList.add('ok');});if(o.getAttribute('data-ok')!=='1')o.classList.add('bad');upd();};});
 };
+
+/* ===== lightbox для фото ===== */
+(function(){var lb=document.getElementById('lb');if(!lb)return;var lbimg=lb.querySelector('img');
+ document.addEventListener('click',function(e){var im=e.target.closest&&e.target.closest('.im.zoom');
+   if(im){var bg=getComputedStyle(im).backgroundImage;var m=/url\(["']?([^"')]+)["']?\)/.exec(bg);if(m){lbimg.src=m[1];lb.classList.add('on');}return;}
+   if(e.target===lb||e.target===lbimg||(e.target.classList&&e.target.classList.contains('lbx')))lb.classList.remove('on');});
+ addEventListener('keydown',function(e){if(e.key==='Escape')lb.classList.remove('on');});})();
+/* ===== чупакабрик по месяцу рождения ===== */
+(function(){var box=document.getElementById('chupa');if(!box)return;
+ var months=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+ var icons=[];for(var k=1;k<=12;k++)icons.push('img4/mon'+k+'.png');
+ for(var j=icons.length-1;j>0;j--){var r=Math.floor(Math.random()*(j+1));var t=icons[j];icons[j]=icons[r];icons[r]=t;}
+ var mg=document.getElementById('chMonths'),res=document.getElementById('chRes');
+ months.forEach(function(m,idx){var b=document.createElement('div');b.className='mbtn';b.textContent=m;
+   b.onclick=function(){[].forEach.call(mg.children,function(c){c.classList.remove('act')});b.classList.add('act');
+     res.innerHTML='<img src="'+icons[idx]+'" alt=""><div class="cap"><b>'+m+'</b>вот твой чупакабрик!</div>';};
+   mg.appendChild(b);});})();
+
 fit();show(0);
 })();
 </script>
