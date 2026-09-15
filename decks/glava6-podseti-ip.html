@@ -1550,7 +1550,9 @@ $('#q-next').onclick=nextQ;$('#q-type').onchange=nextQ;nextQ();
 
 /* ===================== навигация ===================== */
 const deck=$('#deck'),slides=$$('.slide');let cur=-1;
-function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);deck.style.transform=`scale(${s>0&&isFinite(s)?s:1})`;}
+function fit(){const W=innerWidth,H=innerHeight;if(!(W>0&&H>0))return;
+  let dw=1920,dh=1080;if(W/H>16/9)dw=Math.round(1080*W/H);else dh=Math.round(1920*H/W);
+  deck.style.width=dw+'px';deck.style.height=dh+'px';deck.style.transform=`scale(${W/dw})`;}
 addEventListener('resize',fit);fit();
 function go(i){i=Math.max(0,Math.min(slides.length-1,i));if(i===cur)return;const back=i<cur;cur=i;
   slides.forEach((s,k)=>{s.classList.toggle('on',k===cur);s.classList.toggle('back',k===cur&&back);});
