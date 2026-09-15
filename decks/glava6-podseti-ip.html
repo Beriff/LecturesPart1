@@ -1,0 +1,1712 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Глава 6. Разбиение IP-сетей на подсети</title>
+<style>
+:root{
+  --bg:#05030e;
+  --panel:rgba(255,255,255,.055);
+  --edge:rgba(160,120,255,.30);
+  --magenta:#e64cff;
+  --azure:#3ba7ff;
+  --violet:#8b5cf6;
+  --host:#7b6bd6;
+  --lime:#4dffc3;
+  --ink:#ece8ff; --dim:#9b92c2;
+  --amber:#ffb547;
+  --icon-fill:rgba(139,92,246,.16);
+  --sans:"Golos Text","Inter","Manrope","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  --glass:inset 0 1px 0 rgba(255,255,255,.18),0 18px 50px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);overflow:hidden;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--azure);outline-offset:2px}
+
+/* фон: три пятна + сетка, статично */
+#bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+#bg i{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5}
+#bg .b1{width:50vw;height:50vw;left:-14vw;top:-18vw;background:radial-gradient(circle,#6d28ff,transparent 65%)}
+#bg .b2{width:46vw;height:46vw;right:-12vw;bottom:-18vw;background:radial-gradient(circle,#0a5cff,transparent 65%)}
+#bg .b3{width:30vw;height:30vw;left:46vw;top:40vh;background:radial-gradient(circle,#d42fd0,transparent 68%);opacity:.22}
+#bg .grid{position:absolute;inset:0;opacity:.18;
+  background-image:linear-gradient(rgba(139,92,246,.4) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.4) 1px,transparent 1px);
+  background-size:64px 64px;
+  -webkit-mask-image:radial-gradient(ellipse 80% 70% at 50% 45%,#000 25%,transparent 100%);
+  mask-image:radial-gradient(ellipse 80% 70% at 50% 45%,#000 25%,transparent 100%)}
+
+/* каркас */
+#prog{position:fixed;top:0;left:0;height:3px;width:0;z-index:30;background:linear-gradient(90deg,var(--azure),var(--magenta));transition:width .3s}
+.top{position:fixed;top:3px;left:0;right:0;height:52px;z-index:20;display:flex;align-items:center;gap:14px;padding:0 20px}
+.top .name{font-size:14px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+.top .cnt{font-family:var(--mono);font-size:13px;color:var(--dim)}
+.seg{display:flex;border:1px solid var(--edge);border-radius:12px;padding:3px;background:rgba(10,6,26,.6);backdrop-filter:blur(12px)}
+.seg button{border:0;background:transparent;color:var(--dim);font:inherit;font-size:14px;padding:6px 14px;border-radius:9px;cursor:pointer}
+.seg button[aria-pressed=true]{background:rgba(230,76,255,.24);color:#fff;box-shadow:0 0 14px rgba(230,76,255,.45)}
+#stage{position:fixed;top:56px;bottom:60px;left:0;right:0;z-index:1}
+.slide{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:clamp(10px,2vh,26px) clamp(16px,3vw,48px);display:none;scrollbar-width:thin;scrollbar-color:rgba(139,92,246,.5) transparent}
+.slide.on{display:block;animation:sIn .32s ease-out}
+.slide.on.back{animation-name:sBack}
+@keyframes sIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes sBack{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
+.wrap{max-width:1560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;justify-content:center;gap:18px;padding-bottom:8px}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;height:60px;z-index:20;display:flex;align-items:center;justify-content:center;gap:4px;padding:0 12px;overflow-x:auto;scrollbar-width:none}
+nav.tabs button{flex:0 0 auto;border:1px solid transparent;background:transparent;color:var(--dim);font:inherit;font-size:14px;padding:7px 13px;border-radius:12px;cursor:pointer}
+nav.tabs button:hover{color:#fff}
+nav.tabs button[aria-current=true]{border-color:var(--edge);background:var(--panel);color:#fff}
+.navbtn{position:fixed;bottom:12px;z-index:21;width:38px;height:38px;border-radius:12px;border:1px solid var(--edge);background:rgba(10,6,26,.7);color:var(--ink);font-size:18px;cursor:pointer}
+#pv{left:12px}#nx{right:12px}
+
+/* типографика */
+h1{font-size:clamp(34px,5vw,78px);line-height:1.02;letter-spacing:-.03em;font-weight:800;margin:0;
+  background:linear-gradient(100deg,#fff 15%,var(--magenta) 60%,var(--azure));-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-size:clamp(24px,2.7vw,42px);line-height:1.1;letter-spacing:-.02em;font-weight:800;margin:0;
+  background:linear-gradient(100deg,#fff 25%,var(--magenta) 70%,var(--azure));-webkit-background-clip:text;background-clip:text;color:transparent;width:fit-content;max-width:100%}
+h3{font-size:clamp(17px,1.5vw,22px);font-weight:700;color:#fff;margin:0 0 .5em}
+p,li{font-size:clamp(15px,1.25vw,19px);line-height:1.55;color:var(--dim);margin:0}
+p+p{margin-top:.7em}
+b,strong{color:#fff;font-weight:600}
+.lead{font-size:clamp(17px,1.5vw,23px);color:var(--ink);max-width:62ch}
+.mono{font-family:var(--mono)}
+.sm{font-size:13px;color:var(--dim)}
+.acc-m{color:var(--magenta)}.acc-a{color:var(--azure)}.acc-l{color:var(--lime)}
+.pts{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.55em}
+.pts li{position:relative;padding-left:22px}
+.pts li::before{content:"";position:absolute;left:0;top:.7em;width:10px;height:2px;background:var(--violet)}
+ol.num{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:.45em}
+ol.num li::marker{color:var(--magenta);font-family:var(--mono)}
+
+/* поверхности */
+.pane{background:var(--panel);border:1px solid var(--edge);border-radius:20px;padding:clamp(16px,2vw,30px);
+  backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);box-shadow:var(--glass);position:relative;min-width:0}
+.pane.main{border-color:var(--magenta)}
+.plain{padding:4px 2px;min-width:0}
+.two{display:grid;grid-template-columns:minmax(0,1fr);gap:clamp(16px,2vw,28px);align-items:center}
+.stack{display:flex;flex-direction:column;gap:14px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.head{display:flex;flex-direction:column;gap:6px}
+.center{text-align:center;align-items:center}
+@media(min-width:1280px){
+  .two{grid-template-columns:minmax(0,5fr) minmax(0,6fr)}
+  .two.rev{grid-template-columns:minmax(0,6fr) minmax(0,5fr)}
+  .two.even{grid-template-columns:1fr 1fr}
+  .two.wide{grid-template-columns:minmax(0,4fr) minmax(0,7fr)}
+}
+svg.fig{display:block;width:100%;height:auto;max-height:62vh;color:var(--ink)}
+svg.fig text{font-family:var(--sans);fill:var(--ink)}
+svg.fig .mt{font-family:var(--mono)}
+svg.fig .dimt{fill:var(--dim)}
+svg.fig .lnk{stroke:var(--violet);stroke-width:1.5;fill:none}
+.u-m{color:var(--magenta)}.u-a{color:var(--azure)}.u-v{color:#b69cff}.u-h{color:var(--host)}
+
+/* контролы */
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:13px;color:var(--dim)}
+input,select,textarea{background:rgba(10,6,26,.7);border:1px solid var(--edge);color:#fff;border-radius:12px;padding:9px 12px;font:inherit;font-size:15px;outline:none;max-width:100%}
+input:focus,select:focus{border-color:var(--magenta)}
+input[type=range]{padding:0;height:26px;background:transparent;border:0;width:100%;accent-color:var(--magenta)}
+.btn{background:rgba(139,92,246,.14);border:1px solid var(--edge);color:var(--ink);border-radius:12px;padding:9px 16px;font:inherit;font-size:14px;cursor:pointer}
+.btn:hover{border-color:var(--magenta)}
+.btn:active,.btn[aria-pressed=true]{background:rgba(230,76,255,.26);border-color:var(--magenta);color:#fff;box-shadow:0 0 16px rgba(230,76,255,.45)}
+.btn.pri{background:linear-gradient(100deg,rgba(230,76,255,.32),rgba(59,167,255,.32));color:#fff}
+.btn.sm{padding:5px 10px;font-size:12.5px;border-radius:11px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+
+/* бит-ячейки */
+.tape{display:grid;grid-template-columns:repeat(4,auto);justify-content:center;gap:10px 14px;margin:6px 0}
+.oct{display:flex;flex-direction:column;align-items:center;gap:5px}
+.oct .bits{display:flex;gap:3px}
+.bit{width:clamp(24px,2.3vw,36px);height:clamp(32px,3.2vw,46px);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:clamp(14px,1.35vw,19px);border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#cfc7ef;user-select:none}
+button.bit{cursor:pointer;padding:0}
+.bit.net{background:linear-gradient(180deg,rgba(59,167,255,.5),rgba(59,167,255,.14));color:#fff;border-color:rgba(59,167,255,.65)}
+.bit.sub{background:linear-gradient(180deg,rgba(230,76,255,.5),rgba(230,76,255,.14));color:#fff;border-color:rgba(230,76,255,.7)}
+.bit.host{background:linear-gradient(180deg,rgba(123,107,214,.4),rgba(123,107,214,.1));color:#fff;border-color:rgba(160,140,255,.45)}
+.bit.sel{box-shadow:0 0 16px var(--magenta)}
+.bit.emp{border-style:dashed;color:transparent}
+.bit.ok{border:1.5px solid var(--lime)}
+.bit.bad{border:1.5px solid var(--magenta)}
+.wts{display:flex;gap:3px}
+.wts span{width:clamp(24px,2.3vw,36px);text-align:center;font-family:var(--mono);font-size:10.5px;color:var(--dim)}
+.oct .dec{font-family:var(--mono);font-size:17px;color:#fff}
+.oct .cap{font-size:12px;color:var(--dim)}
+.legend{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;font-size:13.5px;color:var(--dim)}
+.legend span{display:flex;align-items:center;gap:7px}
+.sw{width:13px;height:13px;border-radius:4px;display:inline-block}
+.sw.n{background:var(--azure)}.sw.s{background:var(--magenta)}.sw.h{background:var(--host)}
+@media(max-width:1279px){.tape{grid-template-columns:repeat(2,auto)}}
+@media(max-width:767px){.tape{grid-template-columns:auto}}
+
+/* результаты */
+.res{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.res .c{border-top:1px solid var(--edge);padding:9px 2px 4px}
+.res .k{font-size:12.5px;color:var(--dim)}
+.res .v{font-family:var(--mono);font-size:clamp(15px,1.4vw,19px);color:#fff;margin-top:3px;word-break:break-word}
+.res .c.big{grid-column:span 2;border:1px solid var(--magenta);border-radius:14px;padding:12px 16px}
+.res .c.big .v{font-size:clamp(22px,2.4vw,34px)}
+@media(max-width:560px){.res .c.big{grid-column:auto}}
+
+/* таблицы */
+.tscroll{overflow-x:auto;max-width:100%}
+.tscroll.tall{max-height:46vh;overflow-y:auto}
+table{border-collapse:collapse;width:100%;font-size:clamp(13px,1.05vw,15.5px)}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid rgba(139,92,246,.22);color:var(--ink);vertical-align:middle}
+th{color:var(--dim);font-weight:600;font-size:.9em;position:sticky;top:0;background:rgba(9,5,22,.92)}
+td.mono,.mono td{font-family:var(--mono)}
+tr.hl td{background:rgba(230,76,255,.10)}
+table.cmp td{width:50%;color:var(--dim)}table.cmp td:last-child{color:var(--ink)}
+
+/* заполнение */
+.fx{font-family:var(--mono)}
+.fx input{font:inherit;font-size:inherit;color:#fff;background:rgba(10,6,26,.55);border:1.5px dashed rgba(170,140,255,.6);border-radius:10px;padding:2px 7px;min-width:3.5ch;max-width:100%}
+.fx input.ok{border-style:solid;border-color:var(--lime)}
+.fx input.bad{border-style:solid;border-color:var(--magenta)}
+.fillbar{display:none;flex-wrap:wrap;gap:10px;align-items:center;padding:8px 12px;border:1px dashed var(--edge);border-radius:14px}
+body.fill .fillbar{display:flex}
+.fillbar .pr{font-family:var(--mono);font-size:14px;color:var(--dim);margin-right:auto}
+.fillbar .pr b{color:var(--lime)}
+.rowshow{margin-left:8px;vertical-align:middle}
+body:not(.fill) .rowshow{display:none}
+.onlyfill{display:none}body.fill .onlyfill{display:revert}
+body.fill .onlyshow{display:none}
+
+/* формулы */
+.formula{font-family:var(--mono);font-size:clamp(44px,5.5vw,92px);color:#fff;line-height:1}
+.formula sup{font-size:.5em;color:var(--magenta)}
+
+/* классы: полосы */
+.cbar{display:grid;grid-template-columns:repeat(32,minmax(0,1fr));gap:2px;height:44px}
+.cbar>div{border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:clamp(11px,1vw,15px);color:#fff;overflow:hidden;white-space:nowrap}
+.cbar .fix{border:1px solid var(--magenta);background:rgba(230,76,255,.14)}
+.cbar .nt{background:linear-gradient(90deg,rgba(29,78,216,.8),rgba(59,167,255,.35));border:1px solid rgba(59,167,255,.55)}
+.cbar .hs{background:linear-gradient(90deg,rgba(91,33,182,.75),rgba(123,107,214,.35));border:1px solid rgba(160,140,255,.45)}
+.cls-row{display:grid;grid-template-columns:110px minmax(0,1fr) 54px;gap:14px;align-items:center}
+.cls-row .tag{font-weight:700;color:var(--magenta);font-size:18px}
+.cls-row .pf{font-family:var(--mono);color:var(--magenta)}
+@media(max-width:767px){.cls-row{grid-template-columns:60px minmax(0,1fr) 40px}.cbar>div{font-size:9px}}
+
+/* обзор */
+#ov{position:fixed;inset:0;z-index:50;background:rgba(5,3,14,.94);backdrop-filter:blur(8px);overflow:auto;padding:24px;display:none}
+#ov.on{display:block}
+#ov .g{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;max-width:1600px;margin:0 auto}
+#ov .card{border:1px solid var(--edge);border-radius:14px;background:var(--panel);cursor:pointer;overflow:hidden;text-align:left;padding:0;color:var(--ink);font:inherit}
+#ov .card:hover,#ov .card:focus-visible{border-color:var(--magenta)}
+#ov .th{height:140px;overflow:hidden;position:relative;pointer-events:none}
+#ov .th>div{position:absolute;left:0;top:0;width:1400px;transform:scale(.18);transform-origin:0 0}
+#ov .cap{padding:8px 12px;font-size:13px;border-top:1px solid var(--edge)}
+#ov .cap span{font-family:var(--mono);color:var(--magenta);margin-right:8px}
+
+/* тренажёр */
+.quiz{max-width:1100px;margin:0 auto;width:100%;text-align:center;align-items:center}
+.quiz .q{font-size:clamp(22px,2.6vw,40px);color:#fff;line-height:1.3;font-weight:600;min-height:3em;display:flex;align-items:center;justify-content:center}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;width:100%}
+.opt{font-family:var(--mono);font-size:clamp(16px,1.5vw,21px);padding:14px}
+.opt.right{border-color:var(--lime);color:#fff;box-shadow:0 0 18px rgba(77,255,195,.4)}
+.opt.wrong{border-color:var(--magenta);opacity:.8}
+.verdict{padding:12px 16px;border-radius:14px;border:1px solid var(--edge);font-size:16px;text-align:left;width:100%}
+.verdict.ok{border-color:var(--lime);color:#d9fff2}
+.verdict.no{border-color:var(--magenta);color:#ffe0fb}
+
+@media(max-width:767px){
+  .top .name{display:none}
+  .row{flex-direction:column;align-items:stretch}
+  .navbtn{display:none}
+  nav.tabs{justify-content:flex-start}
+}
+@media(prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+  <symbol id="router" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 20v9c0 4 8.1 7.2 18 7.2S42 33 42 29v-9" fill="var(--icon-fill)"/>
+    <ellipse cx="24" cy="20" rx="18" ry="7.2" fill="var(--icon-fill)"/>
+    <path d="M17 17.2l-5-1.9m0 0l3.7-.6m-3.7.6l1.6 3.2M31 22.8l5 1.9m0 0l-3.7.6m3.7-.6l-1.6-3.2M31 17.2l5-1.9m0 0l-1.6 3.2m1.6-3.2l-3.7-.6M17 22.8l-5 1.9m0 0l1.6-3.2m-1.6 3.2l3.7.6"/>
+  </symbol>
+  <symbol id="switch-l2" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 22l8-7h32l-8 7z" fill="var(--icon-fill)"/><path d="M4 22v10h32V22M36 32l8-7V15"/>
+    <path d="M15 18.5h17m-3-1.8l3 1.8-3 1.8M26 27H11m3-1.8L11 27l3 1.8"/>
+  </symbol>
+  <symbol id="switch-l3" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 25l8-7h32l-8 7z" fill="var(--icon-fill)"/><path d="M4 25v10h32V25M36 35l8-7V18"/>
+    <path d="M13 30h15m-3-1.8l3 1.8-3 1.8M24 21.5v-12m-2.5 2.5L24 9.5l2.5 2.5"/>
+  </symbol>
+  <symbol id="host-pc" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="6" y="8" width="36" height="24" rx="2.5" fill="var(--icon-fill)"/><path d="M20 32l-2 7h12l-2-7M15 39h18"/>
+  </symbol>
+  <symbol id="laptop" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="10" y="10" width="28" height="19" rx="2" fill="var(--icon-fill)"/><path d="M6 34h36l-3-5H9zM21 31.5h6"/>
+  </symbol>
+  <symbol id="server" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="10" y="6" width="28" height="11" rx="2" fill="var(--icon-fill)"/><rect x="10" y="18.5" width="28" height="11" rx="2" fill="var(--icon-fill)"/><rect x="10" y="31" width="28" height="11" rx="2" fill="var(--icon-fill)"/>
+    <path d="M15 11.5h.01M15 24h.01M15 36.5h.01M22 11.5h11M22 24h11M22 36.5h11"/>
+  </symbol>
+  <symbol id="cloud-wan" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M13 36h23a8 8 0 001.2-15.9A11 11 0 0016 17.5 9.3 9.3 0 0013 36z" fill="var(--icon-fill)"/>
+  </symbol>
+  <symbol id="firewall" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="6" y="10" width="36" height="28" rx="2" fill="var(--icon-fill)"/><path d="M6 19.3h36M6 28.6h36M18 10v9.3M30 10v9.3M12 19.3v9.3M24 19.3v9.3M36 19.3v9.3M18 28.6V38M30 28.6V38"/>
+  </symbol>
+  <symbol id="ap-wifi" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 18a14 14 0 0120 0M18.5 22.5a7.5 7.5 0 0111 0"/><circle cx="24" cy="27" r="1.6"/><rect x="9" y="33" width="30" height="7" rx="3.5" fill="var(--icon-fill)"/>
+  </symbol>
+  <symbol id="link-copper" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 24h9l3-6 5 12 5-12 5 12 3-6h12"/>
+  </symbol>
+  <symbol id="link-fiber" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 24h42"/><path d="M3 20c10 0 14 8 21 8s11-8 21-8" stroke-dasharray="2 3"/><circle cx="3" cy="24" r="1.5"/><circle cx="45" cy="24" r="1.5"/>
+  </symbol>
+  <symbol id="packet" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="6" y="12" width="36" height="24" rx="3" fill="var(--bg)"/><path d="M7 14l17 12 17-12"/>
+  </symbol>
+  </defs>
+</svg>
+
+<div id="bg"><i class="b1"></i><i class="b2"></i><i class="b3"></i><div class="grid"></div></div>
+<div id="prog"></div>
+<header class="top">
+  <div class="name">Глава 6. Разбиение IP-сетей на подсети</div>
+  <div class="seg" role="group" aria-label="Режим">
+    <button id="m-show" aria-pressed="true">Показ</button>
+    <button id="m-fill" aria-pressed="false">Заполняем</button>
+  </div>
+  <div class="cnt" id="cnt">1 / 1</div>
+</header>
+
+<main id="stage">
+
+<!-- 1 титул -->
+<section class="slide" data-sec="Начало" data-title="Титул">
+<div class="wrap">
+  <div class="two rev">
+    <div class="stack">
+      <h1>Разбиение IP-сетей на подсети</h1>
+      <p class="lead">Зачем делить сеть, как устроены классы и префиксы, как «занять» биты у узловой части и раздать адреса офису и филиалам без лишних потерь.</p>
+      <p class="sm">Ананко, Качур. Нажмите на схему: пакет пройдёт из филиала в головной офис.</p>
+    </div>
+    <div class="pane" style="padding:10px">
+    <svg class="fig" id="ttl" viewBox="0 0 900 540" role="img" aria-label="Схема: головной офис, облако WAN, два филиала" style="cursor:pointer">
+      <path class="lnk" d="M450 150 L450 262"/><path class="lnk" d="M450 318 L230 420"/><path class="lnk" d="M450 318 L670 420"/>
+      <use href="#router" x="394" y="48" width="112" height="112" style="color:var(--magenta)"/>
+      <use href="#cloud-wan" x="380" y="222" width="140" height="120" style="color:#b69cff"/>
+      <use href="#router" x="178" y="372" width="104" height="104" style="color:#b69cff"/>
+      <use href="#router" x="618" y="372" width="104" height="104" style="color:var(--azure)"/>
+      <use href="#server" x="560" y="60" width="64" height="64" style="color:var(--dim)"/><path class="lnk" d="M504 104 L560 92" stroke-dasharray="3 4"/>
+      <use href="#host-pc" x="276" y="60" width="64" height="64" style="color:var(--dim)"/><path class="lnk" d="M396 104 L340 92" stroke-dasharray="3 4"/>
+      <text x="450" y="40" text-anchor="middle" font-size="20" font-weight="700">HQ</text>
+      <text x="450" y="190" text-anchor="middle" class="mt" font-size="16" style="fill:var(--magenta)">172.16.0.0/23</text>
+      <text x="450" y="296" text-anchor="middle" font-size="15" class="dimt">WAN</text>
+      <text x="230" y="500" text-anchor="middle" font-size="19" font-weight="700">Ф1</text>
+      <text x="230" y="526" text-anchor="middle" class="mt" font-size="15" style="fill:#c9b6ff">172.16.2.128/27</text>
+      <text x="670" y="500" text-anchor="middle" font-size="19" font-weight="700">Ф2</text>
+      <text x="670" y="526" text-anchor="middle" class="mt" font-size="15" style="fill:var(--azure)">172.16.2.0/25</text>
+      <text x="310" y="360" text-anchor="middle" class="mt dimt" font-size="13" transform="rotate(-25 310 360)">172.16.2.160/30</text>
+      <text x="590" y="360" text-anchor="middle" class="mt dimt" font-size="13" transform="rotate(25 590 360)">172.16.2.164/30</text>
+      <g id="ttl-pk" opacity="0"><use href="#packet" x="-20" y="-20" width="40" height="40" style="color:var(--azure)"/>
+        <animateMotion id="ttl-am" dur="2.4s" begin="indefinite" fill="freeze" path="M230 424 L450 290 L450 104"/></g>
+    </svg>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 2 цели -->
+<section class="slide" data-sec="Начало" data-title="Цели главы">
+<div class="wrap">
+  <h2>Цели главы</h2>
+  <div class="two wide">
+    <div class="plain"><p class="lead">Рассмотреть три вещи, на которых держится вся практика адресации в IPv4 и IPv6.</p></div>
+    <ol class="num" style="font-size:clamp(20px,2vw,30px)">
+      <li><b>Понятие подсети</b><p>логическая сеть внутри выделенного адресного блока</p></li>
+      <li><b>Процесс логического разбиения</b><p>заимствование бит узловой части, границы, broadcast</p></li>
+      <li><b>Методы разбиения сети</b><p>по числу подсетей, по числу узлов, VLSM, подсети IPv6</p></li>
+    </ol>
+  </div>
+</div>
+</section>
+
+<!-- 3 причины -->
+<section class="slide" data-sec="Сегментация" data-title="Причины разбиения">
+<div class="wrap">
+  <div class="head"><h2>Необходимость сегментации сети</h2><p>Причины разбиения сети на подсети</p></div>
+  <div class="two even">
+    <svg class="fig" viewBox="0 0 640 380" aria-hidden="true">
+      <rect x="20" y="30" width="600" height="320" rx="20" fill="none" stroke="var(--edge)" stroke-dasharray="4 6"/>
+      <text x="40" y="62" class="dimt" font-size="15">одна большая сеть /16</text>
+      <g stroke="var(--edge)" fill="rgba(139,92,246,.07)">
+        <rect x="50" y="90" width="170" height="220" rx="16"/><rect x="235" y="90" width="170" height="220" rx="16"/><rect x="420" y="90" width="170" height="220" rx="16"/>
+      </g>
+      <use href="#switch-l2" x="95" y="120" width="80" height="80" style="color:var(--azure)"/>
+      <use href="#switch-l2" x="280" y="120" width="80" height="80" style="color:var(--magenta)"/>
+      <use href="#switch-l2" x="465" y="120" width="80" height="80" style="color:#b69cff"/>
+      <text x="135" y="232" text-anchor="middle" font-size="17">Бухгалтерия</text><text x="135" y="262" text-anchor="middle" class="mt" font-size="14" style="fill:var(--azure)">10.1.1.0/24</text>
+      <text x="320" y="232" text-anchor="middle" font-size="17">Телефония</text><text x="320" y="262" text-anchor="middle" class="mt" font-size="14" style="fill:var(--magenta)">10.1.2.0/24</text>
+      <text x="505" y="232" text-anchor="middle" font-size="17">Гости</text><text x="505" y="262" text-anchor="middle" class="mt" font-size="14" style="fill:#c9b6ff">10.1.3.0/24</text>
+    </svg>
+    <ol class="num" style="font-size:clamp(20px,1.9vw,28px);gap:.9em">
+      <li><b>Повышение производительности</b></li>
+      <li><b>Облегчение администрирования</b></li>
+      <li><b>Снижение широковещательного трафика</b></li>
+    </ol>
+  </div>
+</div>
+</section>
+
+<!-- 4 производительность -->
+<section class="slide" data-sec="Сегментация" data-title="Производительность">
+<div class="wrap">
+  <h2>Повышение производительности сети</h2>
+  <div class="two rev">
+    <div class="stack">
+      <p>В больших сетях существует конкуренция за пропускную способность. Ресурс ограничен, и каждое приложение по умолчанию «тянет одеяло» в свою сторону.</p>
+      <p>С помощью сегментации ресурсы распределяются между подсетями: можно выделить <b>приоритет определённого сегмента</b>. Важные приложения находятся в приоритетной сети и не зависят от трафика менее важных.</p>
+      <p>Пример: отдельные подсети для <b class="acc-m">VoIP</b> (передача голоса) и для обычного <b class="acc-a">интернет-трафика</b>. Лишние 10 секунд выгрузки файла в облако несущественны, а 10-секундный перерыв в речи собеседника означает срыв звонка.</p>
+    </div>
+    <div class="pane">
+      <svg class="fig" viewBox="0 0 600 330" aria-hidden="true">
+        <text x="20" y="34" font-size="16">Канал, 100 Мбит/с</text>
+        <rect x="20" y="52" width="560" height="96" rx="14" fill="none" stroke="var(--edge)"/>
+        <rect x="30" y="62" width="200" height="34" rx="8" fill="rgba(230,76,255,.22)" stroke="var(--magenta)"/>
+        <text x="130" y="85" text-anchor="middle" font-size="14">VoIP, приоритет</text>
+        <rect x="30" y="104" width="540" height="34" rx="8" fill="rgba(59,167,255,.14)" stroke="rgba(59,167,255,.6)"/>
+        <text x="300" y="127" text-anchor="middle" font-size="14">интернет, остаток полосы</text>
+        <text x="20" y="196" font-size="16">Задержка, допустимая для приложения</text>
+        <text x="20" y="232" class="dimt" font-size="14">голос</text><rect x="120" y="218" width="30" height="18" rx="6" fill="var(--magenta)"/><text x="162" y="232" class="mt" font-size="14">до 150 мс</text>
+        <text x="20" y="272" class="dimt" font-size="14">файл в облако</text><rect x="120" y="258" width="440" height="18" rx="6" fill="rgba(59,167,255,.55)"/><text x="560" y="300" text-anchor="end" class="mt dimt" font-size="14">+10 с незаметно</text>
+      </svg>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 5 администрирование -->
+<section class="slide" data-sec="Сегментация" data-title="Администрирование">
+<div class="wrap">
+  <h2>Облегчение администрирования</h2>
+  <div class="two">
+    <div class="pane">
+      <svg class="fig" viewBox="0 0 600 400" aria-hidden="true">
+        <use href="#router" x="260" y="16" width="80" height="80" style="color:var(--magenta)"/>
+        <path class="lnk" d="M300 92 L110 190 M300 92 L300 190 M300 92 L490 190"/>
+        <use href="#firewall" x="455" y="112" width="44" height="44" style="color:var(--magenta)"/>
+        <g stroke="var(--edge)" fill="rgba(139,92,246,.06)"><rect x="30" y="190" width="160" height="190" rx="16"/><rect x="220" y="190" width="160" height="190" rx="16"/><rect x="410" y="190" width="160" height="190" rx="16"/></g>
+        <use href="#switch-l2" x="80" y="200" width="60" height="60" style="color:var(--azure)"/><use href="#switch-l2" x="270" y="200" width="60" height="60" style="color:var(--azure)"/><use href="#switch-l2" x="460" y="200" width="60" height="60" style="color:var(--azure)"/>
+        <use href="#host-pc" x="52" y="266" width="44" height="44" style="color:var(--dim)"/><use href="#host-pc" x="124" y="266" width="44" height="44" style="color:var(--dim)"/>
+        <use href="#host-pc" x="242" y="266" width="44" height="44" style="color:var(--dim)"/><use href="#laptop" x="314" y="266" width="44" height="44" style="color:var(--dim)"/>
+        <use href="#server" x="432" y="266" width="44" height="44" style="color:var(--dim)"/><use href="#server" x="504" y="266" width="44" height="44" style="color:var(--dim)"/>
+        <text x="110" y="336" text-anchor="middle" font-size="15">Отдел продаж</text><text x="110" y="360" text-anchor="middle" class="mt" font-size="13" style="fill:var(--azure)">10.0.1.0/24</text>
+        <text x="300" y="336" text-anchor="middle" font-size="15">Разработка</text><text x="300" y="360" text-anchor="middle" class="mt" font-size="13" style="fill:var(--azure)">10.0.2.0/24</text>
+        <text x="490" y="336" text-anchor="middle" font-size="15">Серверы</text><text x="490" y="360" text-anchor="middle" class="mt" font-size="13" style="fill:var(--azure)">10.0.3.0/24</text>
+      </svg>
+    </div>
+    <div class="stack">
+      <p>Разбив большую сеть на мелкие подсети, можно повысить качество её администрирования. Сегмент становится меньше, и взаимодействовать с ним проще: это касается <b>мониторинга</b>, <b>устранения неполадок</b> и <b>обновления приложений</b>.</p>
+      <p>Пример: организация, где каждый отдел обладает своей подсетью. Это значительно облегчает <b>управление доступом</b>: целый отдел отсекается от фрагментов сети, которые ему не предназначены, одним правилом на маршрутизаторе, а не настройкой каждого устройства по отдельности.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 6 broadcast -->
+<section class="slide" data-sec="Сегментация" data-title="Широковещательный трафик">
+<div class="wrap">
+  <div class="head"><h2>Снижение широковещательного трафика</h2></div>
+  <p style="max-width:90ch">Если в небольшом офисе всего 15–20 устройств и приватные адреса (даже самый мелкий блок 192.168.0.0/16), о сегментации можно не задумываться. Но когда организация состоит из нескольких отделов и трафик между ними нужно регулировать, широковещательные рассылки становятся проблемой.</p>
+  <div class="pane">
+    <svg class="fig" id="bc1" viewBox="0 0 1000 330" aria-label="Коммутатор L2 пересылает широковещательный кадр во все порты">
+      <text x="250" y="30" text-anchor="middle" class="dimt" font-size="15">1. узел отправляет broadcast</text>
+      <text x="750" y="30" text-anchor="middle" class="dimt" font-size="15">2. коммутатор рассылает его во все порты</text>
+      <path d="M500 50V310" stroke="var(--edge)" stroke-dasharray="4 6"/>
+      <g class="lnk"><path d="M110 90L360 190M90 190H360M110 290L360 190"/><path d="M610 90L860 190M590 190H860M610 290L860 190"/></g>
+      <use href="#laptop" x="60" y="50" width="80" height="80" style="color:var(--magenta)"/><use href="#laptop" x="40" y="150" width="80" height="80" style="color:#b69cff"/><use href="#laptop" x="60" y="250" width="80" height="80" style="color:#b69cff"/>
+      <use href="#switch-l2" x="330" y="146" width="92" height="92" style="color:var(--azure)"/>
+      <use href="#laptop" x="560" y="50" width="80" height="80" style="color:var(--magenta)"/><use href="#laptop" x="540" y="150" width="80" height="80" style="color:#b69cff"/><use href="#laptop" x="560" y="250" width="80" height="80" style="color:#b69cff"/>
+      <use href="#switch-l2" x="830" y="146" width="92" height="92" style="color:var(--azure)"/>
+      <text x="376" y="262" text-anchor="middle" class="mt dimt" font-size="13">L2 SW</text><text x="876" y="262" text-anchor="middle" class="mt dimt" font-size="13">L2 SW</text>
+    </svg>
+    <div class="row" style="justify-content:center"><button class="btn pri" id="bc1-go">Отправить broadcast</button></div>
+  </div>
+</div>
+</section>
+
+<!-- 7 L2 масштабирование -->
+<section class="slide" data-sec="Сегментация" data-title="Масштабирование L2">
+<div class="wrap">
+  <h2>Масштабирование коммутаторами уровня L2</h2>
+  <div class="two rev">
+    <div class="stack">
+      <p>В сети на коммутаторах L2 широковещательная рассылка одного устройства принимается и обрабатывается <b>всеми</b> остальными. В небольшом сегменте это не проблема. При масштабировании возникает избыточный широковещательный трафик, который нельзя просто устранить по двум причинам:</p>
+      <ol class="num">
+        <li>Коммутатор по принципу работы безусловно передаёт широковещательный кадр во все порты, кроме того, откуда кадр получен.</li>
+        <li>Сети на основе IPv4 не могут обойтись без широковещательных рассылок.</li>
+      </ol>
+    </div>
+    <div class="stack">
+      <div class="pane main">
+        <h3>ARP</h3>
+        <p>Найти другие устройства: по IP-адресу узнать MAC-адрес.</p>
+        <p class="mono" style="color:#fff;margin-top:.6em">Кто 192.168.1.5? Ответьте 192.168.1.10</p>
+      </div>
+      <div class="pane">
+        <h3>DHCP</h3>
+        <p>Воспользоваться сервисом: протокол динамической конфигурации узла ищет DHCP-сервер широковещательной рассылкой.</p>
+        <p class="mono" style="color:#fff;margin-top:.6em">DHCPDISCOVER на 255.255.255.255</p>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 8 рост -->
+<section class="slide" data-sec="Сегментация" data-title="Рост broadcast-трафика">
+<div class="wrap">
+  <div class="head"><h2>Широковещательный домен растёт быстрее сети</h2>
+  <p>Если масштабировать сеть только коммутаторами L2, объём широковещательного трафика растёт не пропорционально числу устройств, а опережающими темпами.</p></div>
+  <div class="pane" style="padding-bottom:14px">
+    <div class="row" style="justify-content:space-between">
+      <div class="field" style="flex:1 1 280px"><label for="l2-k">Коммутаторов в домене: <b id="l2-kl">1</b></label><input type="range" id="l2-k" min="1" max="4" value="1"></div>
+      <button class="btn pri" id="l2-go">Каждый узел шлёт ARP</button>
+    </div>
+    <svg class="fig" id="l2" viewBox="0 0 900 420" style="max-height:48vh"></svg>
+    <div class="res" id="l2-res"></div>
+  </div>
+</div>
+</section>
+
+<!-- 9 маршрутизатор -->
+<section class="slide" data-sec="Сегментация" data-title="Маршрутизатор ограничивает домен">
+<div class="wrap">
+  <h2>Решение: маршрутизатор</h2>
+  <div class="two wide">
+    <div class="stack">
+      <p>Чтобы сеть не занималась лишь пересылкой широковещательного трафика (<b style="color:var(--amber)">оранжевый конверт</b>), который устройства обязаны обработать, область широковещательного домена нужно уменьшить.</p>
+      <p>При этом обмен одноадресным трафиком (<b class="acc-a">синий конверт</b>) между сегментами должен остаться. Маршрутизатор не пересылает broadcast между интерфейсами, но передаёт unicast.</p>
+      <div class="chips"><button class="btn pri" id="r1-bc">Broadcast в домене 1</button><button class="btn" id="r1-uc">Unicast из домена 1 в домен 3</button></div>
+    </div>
+    <div class="pane" style="padding:10px">
+      <svg class="fig" id="r1" viewBox="0 0 900 520" aria-label="Три широковещательных домена за маршрутизатором R1">
+        <g stroke="var(--edge)" fill="rgba(139,92,246,.05)"><rect x="20" y="20" width="330" height="250" rx="18"/><rect x="550" y="20" width="330" height="250" rx="18"/><rect x="285" y="300" width="330" height="205" rx="18"/></g>
+        <text x="40" y="50" class="dimt" font-size="15">Широковещательный домен 1</text><text x="570" y="50" class="dimt" font-size="15">Широковещательный домен 2</text><text x="305" y="492" class="dimt" font-size="15">Широковещательный домен 3</text>
+        <g class="lnk"><path d="M100 90L250 160M80 170H250M100 245L250 160M250 160L450 110M450 110L650 160M650 160L800 90M650 160L820 170M650 160L800 245M450 110L450 350M450 350L360 430M450 350L450 440M450 350L540 430"/></g>
+        <use href="#laptop" x="60" y="52" width="72" height="72" style="color:var(--magenta)"/><use href="#laptop" x="40" y="136" width="72" height="72" style="color:#b69cff"/><use href="#laptop" x="60" y="210" width="72" height="72" style="color:#b69cff"/>
+        <use href="#switch-l2" x="214" y="124" width="76" height="76" style="color:var(--azure)"/>
+        <use href="#router" x="408" y="66" width="86" height="86" style="color:var(--magenta)"/><text x="451" y="58" text-anchor="middle" font-weight="700" font-size="17">R1</text>
+        <use href="#switch-l2" x="612" y="124" width="76" height="76" style="color:var(--azure)"/>
+        <use href="#laptop" x="766" y="52" width="72" height="72" style="color:#b69cff"/><use href="#laptop" x="786" y="136" width="72" height="72" style="color:#b69cff"/><use href="#laptop" x="766" y="210" width="72" height="72" style="color:#b69cff"/>
+        <use href="#switch-l2" x="412" y="312" width="76" height="76" style="color:var(--azure)"/>
+        <use href="#laptop" x="322" y="400" width="72" height="72" style="color:#b69cff"/><use href="#laptop" x="414" y="408" width="72" height="72" style="color:#b69cff"/><use href="#laptop" x="504" y="400" width="72" height="72" style="color:var(--azure)"/>
+      </svg>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 10 нотация -->
+<section class="slide" data-sec="Классы" data-title="Десятичная нотация">
+<div class="wrap">
+  <div class="head"><h2>Классовая IP-адресация</h2><p>Точечно-десятичная нотация: 32 бита делятся на 4 байта, каждый записывается числом 0–255.</p></div>
+  <div class="pane">
+    <div class="tape" id="nt-tape"></div>
+    <p class="center" style="display:flex;justify-content:center;margin-top:10px"><span class="mono" style="font-size:clamp(34px,4.4vw,70px);color:#fff" id="nt-dec"></span></p>
+    <p class="sm center" style="text-align:center">клик по биту меняет 0 и 1, число пересчитывается</p>
+  </div>
+  <div class="two even">
+    <p>IP-адреса во всём мире распределяют <b>IANA</b> (Управление по присвоению номеров в Интернете) и <b>региональные интернет-реестры</b> (RIR).</p>
+    <p>При расчёте числа узловых адресов два адреса исключаются: <b>первый</b> адрес сети зарезервирован как адрес сети, <b>последний</b> как адрес широковещательной рассылки.</p>
+  </div>
+</div>
+</section>
+
+<!-- 11 классы обзор -->
+<section class="slide" data-sec="Классы" data-title="Пять классов">
+<div class="wrap">
+  <h2>Пять классов адресов</h2>
+  <div class="two wide">
+    <div class="stack">
+      <p>Классовая адресация применялась в 1981–1993 годах: адресное пространство IPv4 делилось на фиксированные классы. Класс определялся по <b>первым нескольким битам</b> и задавал сетевую и узловую части.</p>
+      <p><b>A, B, C</b> для одноадресной связи: большие, средние и малые сети. <b>D</b> для многоадресной рассылки. <b>E</b> для экспериментов и исследований.</p>
+    </div>
+    <div class="pane stack" id="cls-bars" style="gap:12px"></div>
+  </div>
+</div>
+</section>
+
+<!-- 12 классы подробно -->
+<section class="slide" data-sec="Классы" data-title="Классы A–E подробно">
+<div class="wrap">
+  <div class="row" style="justify-content:space-between;align-items:center"><h2 id="ct-h">Класс A</h2><div class="chips" id="ct-tabs"></div></div>
+  <div class="pane"><div class="cbar" id="ct-bar" style="height:60px"></div><div class="row" id="ct-cap" style="justify-content:space-between;margin-top:8px"></div></div>
+  <div class="two even">
+    <ul class="pts" id="ct-text"></ul>
+    <div class="res" id="ct-res"></div>
+  </div>
+</div>
+</section>
+
+<!-- 13 определитель класса -->
+<section class="slide" data-sec="Классы" data-title="Определитель класса">
+<div class="wrap">
+  <h2>Класс адреса по старшим битам</h2>
+  <div class="pane">
+    <div class="row">
+      <div class="field"><label for="cl-ip">Адрес</label><input id="cl-ip" value="172.16.25.10" size="15" class="mono"></div>
+      <button class="btn pri" id="cl-rnd">Новое условие</button>
+    </div>
+    <div class="tape" id="cl-bits" style="margin-top:14px"></div>
+  </div>
+  <div class="res" id="cl-out"></div>
+  <div class="tscroll"><table>
+    <thead><tr><th>Класс</th><th>Старшие биты</th><th>Первый октет</th><th>Маска по умолчанию</th><th>Назначение</th></tr></thead>
+    <tbody id="cl-tab"></tbody></table></div>
+</div>
+</section>
+
+<!-- 14 проблемы -->
+<section class="slide" data-sec="Классы" data-title="Проблемы классовой адресации">
+<div class="wrap">
+  <h2>Проблемы классовой адресации</h2>
+  <div class="two">
+    <div class="stack">
+      <p>Фиксированные классы привели к неэффективному использованию адресов, и в 1993 году их заменила бесклассовая междоменная маршрутизация <b>(CIDR)</b>.</p>
+      <ul class="pts">
+        <li>Класс C: сеть 24 бита, узел 8 бит. Сетей 2<sup>21</sup> = <span class="fx">2097152</span>, узлов в сети 2<sup>8</sup> − 2 = <span class="fx">254</span>.</li>
+        <li>Идентификатор узла уникален в пределах сети.</li>
+        <li>Узловая часть из одних <b>нулей</b> зарезервирована под адрес сети.</li>
+        <li>Узловая часть из одних <b>единиц</b> зарезервирована под широковещательный адрес.</li>
+        <li>Сети, начинающиеся со <b>127</b>, зарезервированы для loopback-тестирования.</li>
+      </ul>
+    </div>
+    <div class="pane">
+      <h3>Сколько адресов теряется</h3>
+      <div class="row"><div class="field"><label for="ws-n">Нужно узлов</label><input id="ws-n" type="number" min="1" max="16000000" value="300" class="mono" style="width:150px"></div><button class="btn" id="ws-gen">Новое условие</button></div>
+      <div id="ws-bars" style="margin-top:16px"></div>
+      <div class="res" id="ws-res" style="margin-top:10px"></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 15 CIDR -->
+<section class="slide" data-sec="CIDR" data-title="Бесклассовая адресация">
+<div class="wrap">
+  <h2>Бесклассовая IP-адресация</h2>
+  <div class="pane main"><p class="lead" style="max-width:none">Бесклассовая адресация <b>(CIDR)</b> — способ распределения IP-адресов, при котором сеть определяется не классами A, B и C, а <b>длиной сетевого префикса</b>.</p></div>
+  <div class="pane">
+    <div class="row" style="align-items:center"><div class="field" style="flex:1 1 320px"><label for="cd-p">Граница сети: <b class="mono" id="cd-pl">/20</b></label><input type="range" id="cd-p" min="8" max="30" value="20"></div>
+    <p class="mono" style="color:#fff;font-size:20px" id="cd-info"></p></div>
+    <div class="cbar" id="cd-bar" style="height:52px;margin-top:12px"></div>
+    <div style="display:grid;grid-template-columns:repeat(32,minmax(0,1fr));margin-top:4px" id="cd-ticks"></div>
+  </div>
+  <p class="lead">Главная идея CIDR: размер сети подбирается под нужное количество устройств, а не под стандартные классы.</p>
+</div>
+</section>
+
+<!-- 16 сравнение -->
+<section class="slide" data-sec="CIDR" data-title="Классовая и бесклассовая">
+<div class="wrap">
+  <h2>Классовая и бесклассовая адресация</h2>
+  <div class="tscroll"><table class="cmp">
+    <thead><tr><th>Классовая адресация</th><th>Бесклассовая (CIDR)</th></tr></thead>
+    <tbody>
+      <tr><td>Адреса делятся на фиксированные классы A, B, C, D, E</td><td>Адреса распределяются без классов, префиксами переменной длины</td></tr>
+      <tr><td>Менее практична из-за жёсткого распределения</td><td>Практична и гибка в реальных сетях</td></tr>
+      <tr><td>Сетевая и узловая части зафиксированы классом</td><td>Части определяются длиной префикса</td></tr>
+      <tr><td>Разбиение на подсети по умолчанию не поддерживается</td><td>Подсети поддерживаются по своей сути</td></tr>
+      <tr><td>Маски переменной длины (VLSM) не поддерживаются</td><td>Поддерживает VLSM</td></tr>
+      <tr><td>Значительные потери IP-адресов</td><td>Эффективное использование адресов</td></tr>
+      <tr><td>Большие таблицы маршрутов, нет агрегации</td><td>Агрегация маршрутов, таблицы меньше</td></tr>
+      <tr><td>Ограниченная масштабируемость</td><td>Масштабируется для больших современных сетей</td></tr>
+      <tr><td>Проще, но неэффективна</td><td>Эффективнее и управляемее при чуть большей сложности</td></tr>
+      <tr><td>Граница сети и узла жёсткая</td><td>Граница сети и узла гибкая</td></tr>
+    </tbody></table></div>
+</div>
+</section>
+
+<!-- 17 базовое разбиение -->
+<section class="slide" data-sec="Разбиение" data-title="Базовое разбиение">
+<div class="wrap">
+  <h2>Базовое разбиение на подсети</h2>
+  <div class="two rev">
+    <div class="stack">
+      <p class="lead"><b>Subnetting</b> — разделение одной большой IP-сети на несколько меньших логических сетей, подсетей.</p>
+      <p>При разбиении длина префикса увеличивается (<span class="mono">/24</span> становится <span class="mono">/25</span>): часть бит «забирается» у узловой области и используется для нумерации подсетей.</p>
+      <p>Так адреса расходуются рациональнее, разные группы устройств разделяются, а широковещательный трафик уменьшается.</p>
+    </div>
+    <div class="pane">
+      <svg class="fig" viewBox="0 0 640 300" aria-hidden="true">
+        <text x="20" y="34" font-size="16">192.168.15.0/24</text>
+        <rect x="20" y="50" width="600" height="60" rx="12" fill="rgba(59,167,255,.14)" stroke="rgba(59,167,255,.6)"/>
+        <text x="320" y="87" text-anchor="middle" class="mt" font-size="17">256 адресов</text>
+        <path d="M170 130 L170 160 M470 130 L470 160" stroke="var(--violet)" stroke-width="1.5"/>
+        <text x="20" y="200" font-size="16">1 бит занят: две подсети /25</text>
+        <rect x="20" y="216" width="296" height="60" rx="12" fill="rgba(230,76,255,.14)" stroke="var(--magenta)"/>
+        <rect x="324" y="216" width="296" height="60" rx="12" fill="rgba(123,107,214,.18)" stroke="rgba(160,140,255,.6)"/>
+        <text x="168" y="252" text-anchor="middle" class="mt" font-size="15">192.168.15.0/25</text>
+        <text x="472" y="252" text-anchor="middle" class="mt" font-size="15">192.168.15.128/25</text>
+      </svg>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 18 пошаговый разбор -->
+<section class="slide" data-sec="Разбиение" data-title="192.168.15.0/24 на две подсети">
+<div class="wrap">
+  <div class="row" style="justify-content:space-between;align-items:center"><h2>Делим 192.168.15.0/24 пополам</h2><div class="chips" id="st-btns"></div></div>
+  <p id="st-text" style="max-width:110ch;min-height:4.8em"></p>
+  <div class="pane" style="padding:12px"><div class="tscroll"><table id="st-tab" style="min-width:980px;text-align:center"></table></div></div>
+</div>
+</section>
+
+<!-- 19 разбор по битам -->
+<section class="slide" data-sec="Разбиение" data-title="Разбор адреса по битам">
+<div class="wrap">
+  <div class="pane">
+    <h2 style="margin-bottom:12px">Разбор адреса по битам</h2>
+    <div class="row">
+      <div class="field"><label for="be-ip">Адрес</label><input id="be-ip" value="192.168.15.45" size="15" class="mono"></div>
+      <div class="field" style="flex:1 1 240px"><label for="be-p">Префикс сети: <b id="be-pl" class="mono">/24</b></label><input type="range" id="be-p" min="0" max="32" value="24"></div>
+      <div class="field" style="flex:1 1 240px"><label for="be-b">Заимствовано бит: <b id="be-bl" class="mono">2</b></label><input type="range" id="be-b" min="0" max="8" value="2"></div>
+      <button class="btn pri" id="be-gen">Новое условие</button>
+    </div>
+    <div class="chips" id="be-steps" style="margin-top:14px">
+      <button class="btn sm" data-step="1" aria-pressed="true">биты адреса</button>
+      <button class="btn sm" data-step="2" aria-pressed="false">маска</button>
+      <button class="btn sm" data-step="3" aria-pressed="false">биты подсети</button>
+      <button class="btn sm" data-step="4" aria-pressed="false">биты узла</button>
+    </div>
+    <div class="tape" id="be-bits" style="margin-top:12px"></div>
+    <div class="onlyfill" id="be-maskwrap">
+      <p class="sm" style="text-align:center;margin:8px 0 2px">Маска: расставьте биты кликами. <span class="mono" id="be-mcnt"></span></p>
+      <div class="tape" id="be-mask"></div>
+    </div>
+    <div class="legend"><span><i class="sw n"></i>сеть</span><span><i class="sw s"></i>подсеть (заимствованные биты)</span><span><i class="sw h"></i>узел</span><span>клик по биту адреса меняет 0 и 1</span></div>
+  </div>
+  <div class="res" id="be-out"></div>
+</div>
+</section>
+
+<!-- 20 формула 2^n -->
+<section class="slide" data-sec="Разбиение" data-title="Формула числа подсетей">
+<div class="wrap">
+  <h2>Формулы разделения на подсети</h2>
+  <div class="two wide">
+    <div class="stack center" style="text-align:center">
+      <p>Количество подсетей зависит от числа «заимствованных» бит</p>
+      <div class="formula">2<sup>n</sup></div>
+      <p><b class="acc-m">n</b> — количество заимствованных бит</p>
+    </div>
+    <div class="pane">
+      <p class="mono" style="color:#fff">192.168.15.0/24 = 11000000.10101000.00001111.<u>00000000</u></p>
+      <div class="tscroll"><table class="mono" id="f1-tab"></table></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 21 формула 2^x-2 -->
+<section class="slide" data-sec="Разбиение" data-title="Формула числа узлов">
+<div class="wrap">
+  <div class="two rev">
+    <div class="pane">
+      <p class="mono" style="color:#fff">Подсети сети 192.168.15.0/24</p>
+      <div class="tscroll"><table class="mono" id="f2-tab"></table></div>
+    </div>
+    <div class="stack">
+      <h2>Число узлов в подсети</h2>
+      <p>Узлов в каждой новой подсети на 2 меньше, чем адресов: каждая подсеть содержит адрес сети и адрес широковещательной рассылки.</p>
+      <div class="formula" style="margin:.2em 0">2<sup>x</sup> − 2</div>
+      <p><b class="acc-m">x</b> — оставшееся число бит в узловой части</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 22 таблица префиксов -->
+<section class="slide" data-sec="Разбиение" data-title="Префиксы /25–/30">
+<div class="wrap">
+  <div class="head"><h2>Разбиение по количеству узлов</h2><p>При планировании учитываются два параметра: нужное число адресов узлов в каждой подсети и нужное число отдельных подсетей. Исходная сеть /24.</p></div>
+  <div class="tscroll"><table id="pf-tab"></table></div>
+</div>
+</section>
+
+<!-- 23 задача 172.16.25.10 -->
+<section class="slide" data-sec="Задачи" data-title="Задача: 172.16.25.10">
+<div class="wrap">
+  <div class="two even" style="align-items:start">
+    <div class="stack">
+      <h2>Задача 1</h2>
+      <p class="lead">Компьютеру назначен IP-адрес <b class="mono">172.16.25.10</b>. Определите:</p>
+      <ol class="num"><li>К какому классу относится адрес</li><li>Стандартную маску сети этого класса</li><li>Какая часть адреса относится к сети</li><li>Какая часть относится к узлу</li><li>Адрес сети</li></ol>
+      <p>Первый октет 172. Класс A: 1–126, класс B: 128–191, класс C: 192–223. Для класса B первые два октета относятся к сети, последние два к узлу.</p>
+    </div>
+    <div class="pane main">
+      <h3>Решение</h3>
+      <table><tbody>
+        <tr><td>Класс</td><td class="mono" style="font-size:22px"><span class="fx">B</span></td></tr>
+        <tr><td>Маска</td><td class="mono" style="font-size:22px"><span class="fx">255.255.0.0</span></td></tr>
+        <tr><td>Префикс</td><td class="mono" style="font-size:22px"><span class="fx">/16</span></td></tr>
+        <tr><td>Часть сети</td><td class="mono" style="font-size:22px"><span class="fx">172.16</span></td></tr>
+        <tr><td>Часть узла</td><td class="mono" style="font-size:22px"><span class="fx">25.10</span></td></tr>
+        <tr><td>Адрес сети</td><td class="mono" style="font-size:22px"><span class="fx">172.16.0.0</span></td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 24 задача класс A: маска -->
+<section class="slide" data-sec="Задачи" data-title="Задача: 64 подсети, маска">
+<div class="wrap">
+  <div class="head"><h2>Задача 2. Сеть 10, 64 подсети</h2>
+  <p class="lead" style="max-width:none">Сеть класса A, номер сети 10, нужно организовать <b>64 подсети</b>, номер узла 200. Определить маску подсетей, диапазон адресов сети, адреса 63-й, 12-й и 3-й подсетей. Адреса и маску писать в двоичном и десятичном виде.</p></div>
+  <div class="pane">
+    <h3>1. Маска подсетей</h3>
+    <div class="tscroll"><table><tbody>
+      <tr><td>Стандартная маска класса A</td><td class="mono"><span class="fx">255.0.0.0</span> = <span class="fx">/8</span></td></tr>
+      <tr><td>В двоичном виде</td><td class="mono">11111111.00000000.00000000.00000000</td></tr>
+      <tr><td>Нужно 64 подсети: 2<sup>n</sup> = 64</td><td class="mono">n = <span class="fx">6</span></td></tr>
+      <tr><td>Было /8, станет 8 + 6</td><td class="mono"><span class="fx">/14</span></td></tr>
+      <tr><td>Новая маска в двоичном виде</td><td class="mono"><span class="fx">11111111.11111100.00000000.00000000</span></td></tr>
+      <tr><td>Новая маска в десятичном виде</td><td class="mono" style="font-size:22px"><span class="fx">255.252.0.0</span></td></tr>
+    </tbody></table></div>
+  </div>
+</div>
+</section>
+
+<!-- 25 задача класс A: диапазон и подсети -->
+<section class="slide" data-sec="Задачи" data-title="Задача: 64 подсети, адреса">
+<div class="wrap">
+  <div class="two" style="align-items:start">
+    <div class="pane">
+      <h3>2. Диапазон сети 10</h3>
+      <table><tbody>
+        <tr><td>Исходная сеть</td><td class="mono"><span class="fx">10.0.0.0</span>/8</td></tr>
+        <tr><td>двоично</td><td class="mono">00001010.00000000.00000000.00000000</td></tr>
+        <tr><td>Последний адрес</td><td class="mono"><span class="fx">10.255.255.255</span></td></tr>
+        <tr><td>двоично</td><td class="mono">00001010.11111111.11111111.11111111</td></tr>
+        <tr><td>Весь класс A</td><td class="mono">1.0.0.0 – 126.255.255.255</td></tr>
+      </tbody></table>
+      <p style="margin-top:12px">Шаг подсети во втором октете: 256 − 252 = <span class="fx">4</span>. Подсети идут 10.0.0.0, 10.4.0.0, 10.8.0.0 … 10.252.0.0.</p>
+    </div>
+    <div class="stack">
+      <h2>3. Адреса 63-й, 12-й и 3-й подсетей</h2>
+      <p>6 бит номера подсети занимают старшие биты второго октета, справа дописываются два нуля. Номер можно считать с 0 (от 0 до 63) или «по счёту», когда первая подсеть имеет номер 0.</p>
+      <div class="tscroll"><table>
+        <thead><tr><th>Подсеть</th><th>Номер с 0</th><th>Второй октет</th><th>Адрес</th><th>Узел 200</th></tr></thead>
+        <tbody class="mono">
+          <tr><td>№63</td><td>63 = 111111</td><td><span class="fx">252</span></td><td><span class="fx">10.252.0.0</span></td><td><span class="fx">10.252.0.200</span></td></tr>
+          <tr><td>63-я по счёту</td><td>62 = 111110</td><td><span class="fx">248</span></td><td><span class="fx">10.248.0.0</span></td><td><span class="fx">10.248.0.200</span></td></tr>
+          <tr><td>12-я по счёту</td><td>11 = 001011</td><td><span class="fx">44</span></td><td><span class="fx">10.44.0.0</span></td><td><span class="fx">10.44.0.200</span></td></tr>
+          <tr><td>3-я по счёту</td><td>2 = 000010</td><td><span class="fx">8</span></td><td><span class="fx">10.8.0.0</span></td><td><span class="fx">10.8.0.200</span></td></tr>
+        </tbody></table></div>
+      <p class="mono" style="color:#fff">10.248.0.0 = 00001010.11111000.00000000.00000000</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 26 задача 4 подсети -->
+<section class="slide" data-sec="Задачи" data-title="Задача: 4 подсети">
+<div class="wrap">
+  <div class="head"><h2>Задача 3. Сеть 192.168.15.0/24 на 4 подсети</h2>
+  <p>1 бит даёт 2<sup>1</sup> = 2 подсети, не подходит. 2 бита дают 2<sup>2</sup> = 4, как раз. Остаётся 6 бит под узлы: 64 адреса и 2<sup>6</sup> − 2 = 62 узла в каждой подсети. Маска <span class="fx">255.255.255.192</span>, префикс <span class="fx">/26</span>.</p></div>
+  <div class="two even">
+    <div class="tscroll"><table>
+      <thead><tr><th>Сеть</th><th>Биты 4 октета</th><th>Адрес сети</th><th>Диапазон</th><th>Broadcast</th></tr></thead>
+      <tbody class="mono">
+        <tr><td>1</td><td><b class="acc-m">00</b>000000</td><td><span class="fx">192.168.15.0</span></td><td><span class="fx">.1</span> – <span class="fx">.62</span></td><td><span class="fx">192.168.15.63</span></td></tr>
+        <tr><td>2</td><td><b class="acc-m">01</b>000000</td><td><span class="fx">192.168.15.64</span></td><td><span class="fx">.65</span> – <span class="fx">.126</span></td><td><span class="fx">192.168.15.127</span></td></tr>
+        <tr><td>3</td><td><b class="acc-m">10</b>000000</td><td><span class="fx">192.168.15.128</span></td><td><span class="fx">.129</span> – <span class="fx">.190</span></td><td><span class="fx">192.168.15.191</span></td></tr>
+        <tr><td>4</td><td><b class="acc-m">11</b>000000</td><td><span class="fx">192.168.15.192</span></td><td><span class="fx">.193</span> – <span class="fx">.254</span></td><td><span class="fx">192.168.15.255</span></td></tr>
+      </tbody></table></div>
+    <div class="pane" style="padding:10px">
+      <svg class="fig" viewBox="0 0 760 500" aria-label="Четыре подсети /26 за маршрутизатором">
+        <g stroke-width="1.5" fill="none"><path d="M300 150 L380 240" stroke="var(--magenta)"/><path d="M460 150 L380 240" stroke="var(--azure)"/><path d="M300 350 L380 260" stroke="var(--magenta)"/><path d="M460 350 L380 260" stroke="var(--azure)"/></g>
+        <g fill="rgba(255,255,255,.04)" stroke-width="1.2"><rect x="20" y="20" width="280" height="170" rx="16" stroke="rgba(230,76,255,.6)"/><rect x="460" y="20" width="280" height="170" rx="16" stroke="rgba(59,167,255,.6)"/><rect x="20" y="310" width="280" height="170" rx="16" stroke="rgba(230,76,255,.6)"/><rect x="460" y="310" width="280" height="170" rx="16" stroke="rgba(59,167,255,.6)"/></g>
+        <use href="#router" x="336" y="206" width="88" height="88" style="color:var(--magenta)"/>
+        <use href="#switch-l2" x="120" y="92" width="84" height="84" style="color:var(--azure)"/><use href="#switch-l2" x="560" y="92" width="84" height="84" style="color:var(--azure)"/><use href="#switch-l2" x="120" y="382" width="84" height="84" style="color:var(--azure)"/><use href="#switch-l2" x="560" y="382" width="84" height="84" style="color:var(--azure)"/>
+        <text x="42" y="54" font-size="20" font-weight="700" style="fill:#f3a8ff">Сеть 1</text><text x="482" y="54" font-size="20" font-weight="700" style="fill:#a8d4ff">Сеть 2</text>
+        <text x="42" y="344" font-size="20" font-weight="700" style="fill:#f3a8ff">Сеть 3</text><text x="482" y="344" font-size="20" font-weight="700" style="fill:#a8d4ff">Сеть 4</text>
+        <foreignObject x="40" y="60" width="250" height="36"><div class="fx" style="font-size:18px;color:#fff">192.168.15.0/26</div></foreignObject>
+        <foreignObject x="480" y="60" width="250" height="36"><div class="fx" style="font-size:18px;color:#fff">192.168.15.64/26</div></foreignObject>
+        <foreignObject x="40" y="350" width="250" height="36"><div class="fx" style="font-size:18px;color:#fff">192.168.15.128/26</div></foreignObject>
+        <foreignObject x="480" y="350" width="250" height="36"><div class="fx" style="font-size:18px;color:#fff">192.168.15.192/26</div></foreignObject>
+      </svg>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 27 задача 8 подсетей -->
+<section class="slide" data-sec="Задачи" data-title="Задача: 8 подсетей">
+<div class="wrap">
+  <div class="two wide" style="align-items:start">
+    <div class="stack">
+      <h2>Задача 4. Восемь подсетей</h2>
+      <p>Разбить сеть <b class="mono">192.168.15.0/24</b> на 8 подсетей.</p>
+      <p>Нужно заимствовать <span class="fx">3</span> бита: 2<sup>3</sup> = 8. Маска <span class="fx">255.255.255.224</span>, префикс <span class="fx">/27</span>, шаг <span class="fx">32</span>.</p>
+      <p class="sm">В режиме «Заполняем» таблица скрыта: группа заполняет её сама.</p>
+    </div>
+    <div class="tscroll"><table>
+      <thead><tr><th>Сеть</th><th>Биты</th><th>Адрес сети</th><th>Диапазон адресов</th><th>Broadcast</th></tr></thead>
+      <tbody class="mono" id="t8"></tbody></table></div>
+  </div>
+</div>
+</section>
+
+<!-- 28 задача /16 на 50 -->
+<section class="slide" data-sec="Задачи" data-title="Задача: /16 на 50 подсетей">
+<div class="wrap">
+  <div class="head"><h2>Задача 5. Сеть /16 на 50 подсетей</h2>
+  <p>Создать 50 подсетей из пространства <b class="mono">192.168.0.0/16</b>. 2<sup>5</sup> = 32 мало, 2<sup>6</sup> = <span class="fx">64</span> хватает: заимствуем <span class="fx">6</span> бит. Префикс <span class="fx">/22</span>, маска <span class="fx">255.255.252.0</span>, шаг в третьем октете <span class="fx">4</span>.</p></div>
+  <div class="pane" style="padding:12px">
+    <div class="tscroll"><div class="mono" style="display:flex;gap:3px;min-width:720px;margin-bottom:10px" id="t50-bits"></div>
+    <table>
+      <thead><tr><th>№ сети</th><th>Адрес сети</th><th>Диапазон адресов</th><th>Broadcast</th></tr></thead>
+      <tbody class="mono" id="t50"></tbody></table></div>
+  </div>
+</div>
+</section>
+
+<!-- 29 задача 50 узлов -->
+<section class="slide" data-sec="Задачи" data-title="Задача: не менее 50 узлов">
+<div class="wrap">
+  <h2>Задача 6. Не менее 50 узлов в подсети</h2>
+  <p style="max-width:100ch">Организации выделена сеть <b class="mono">192.168.10.0/24</b>. Разделить её так, чтобы в каждой подсети помещалось не менее 50 узлов. Определить биты узла, маску, число подсетей и узлов, адреса, диапазоны и broadcast.</p>
+  <div class="two wide" style="align-items:start">
+    <div class="pane">
+      <table><tbody class="mono">
+        <tr><td>2<sup>5</sup> − 2</td><td>30, мало</td></tr>
+        <tr><td>2<sup>6</sup> − 2</td><td>62, подходит</td></tr>
+        <tr><td>Бит под узлы</td><td><span class="fx">6</span></td></tr>
+        <tr><td>Префикс 32 − 6</td><td><span class="fx">/26</span></td></tr>
+        <tr><td>Маска</td><td><span class="fx">255.255.255.192</span></td></tr>
+        <tr><td>двоично</td><td style="font-size:.85em">11111111.11111111.11111111.11000000</td></tr>
+        <tr><td>Занято бит 26 − 24</td><td><span class="fx">2</span></td></tr>
+        <tr><td>Подсетей 2<sup>2</sup></td><td><span class="fx">4</span></td></tr>
+        <tr><td>Шаг 256 − 192</td><td><span class="fx">64</span></td></tr>
+      </tbody></table>
+    </div>
+    <div class="tscroll"><table>
+      <thead><tr><th>Подсеть</th><th>Адрес сети</th><th>Доступные узлы</th><th>Broadcast</th></tr></thead>
+      <tbody class="mono">
+        <tr><td>1</td><td><span class="fx">192.168.10.0</span>/26</td><td><span class="fx">192.168.10.1</span> – <span class="fx">.62</span></td><td><span class="fx">192.168.10.63</span></td></tr>
+        <tr><td>2</td><td><span class="fx">192.168.10.64</span>/26</td><td><span class="fx">192.168.10.65</span> – <span class="fx">.126</span></td><td><span class="fx">192.168.10.127</span></td></tr>
+        <tr><td>3</td><td><span class="fx">192.168.10.128</span>/26</td><td><span class="fx">192.168.10.129</span> – <span class="fx">.190</span></td><td><span class="fx">192.168.10.191</span></td></tr>
+        <tr><td>4</td><td><span class="fx">192.168.10.192</span>/26</td><td><span class="fx">192.168.10.193</span> – <span class="fx">.254</span></td><td><span class="fx">192.168.10.255</span></td></tr>
+      </tbody></table></div>
+  </div>
+</div>
+</section>
+
+<!-- 30 CIDR калькулятор -->
+<section class="slide" data-sec="Разбиение" data-title="Калькулятор CIDR">
+<div class="wrap">
+  <div class="pane">
+    <h2 style="margin-bottom:12px">Деление сети на подсети</h2>
+    <div class="row">
+      <div class="field"><label for="ci-ip">Адрес сети</label><input id="ci-ip" value="192.168.15.0" size="15" class="mono"></div>
+      <div class="field"><label for="ci-p">Префикс</label><input id="ci-p" type="number" min="0" max="30" value="24" style="width:84px" class="mono"></div>
+      <div class="field"><label for="ci-mode">Режим</label><select id="ci-mode"><option value="nets">по числу подсетей</option><option value="hosts">по числу узлов</option></select></div>
+      <div class="field"><label for="ci-n">Количество</label><input id="ci-n" type="number" min="1" value="4" style="width:110px" class="mono"></div>
+      <button class="btn pri" id="ci-gen">Новое условие</button>
+    </div>
+  </div>
+  <div class="res" id="ci-out"></div>
+  <div class="tscroll tall"><table>
+    <thead><tr><th>№</th><th>Адрес сети</th><th>Первый узел</th><th>Последний узел</th><th>Broadcast</th></tr></thead>
+    <tbody id="ci-tab" class="mono"></tbody></table></div>
+</div>
+</section>
+
+<!-- 31 VLSM теория -->
+<section class="slide" data-sec="VLSM" data-title="Маски переменной длины">
+<div class="wrap">
+  <h2>Маски переменной длины (VLSM)</h2>
+  <div class="two rev">
+    <div class="stack">
+      <p>При стандартном делении все подсети рассчитываются по размеру <b>наибольшей</b> сети, и в маленьких сегментах адреса простаивают. VLSM даёт каждой подсети свою маску.</p>
+      <ul class="pts">
+        <li>Эффективное использование адресного пространства</li>
+        <li>Маски разной длины в одной сети</li>
+        <li>Иерархическое использование адресного пространства</li>
+        <li>Деление крупного блока на мелкие по требованиям</li>
+      </ul>
+    </div>
+    <div class="pane">
+      <svg class="fig" viewBox="0 0 620 300" aria-hidden="true">
+        <text x="10" y="30" font-size="16">Равные подсети /25 под сеть на 70 узлов</text>
+        <g stroke-width="1.2"><rect x="10" y="44" width="148" height="50" rx="10" fill="rgba(230,76,255,.25)" stroke="var(--magenta)"/><rect x="162" y="44" width="148" height="50" rx="10" fill="rgba(123,107,214,.14)" stroke="rgba(160,140,255,.5)"/><rect x="314" y="44" width="148" height="50" rx="10" fill="rgba(123,107,214,.14)" stroke="rgba(160,140,255,.5)"/><rect x="466" y="44" width="148" height="50" rx="10" fill="rgba(123,107,214,.14)" stroke="rgba(160,140,255,.5)"/></g>
+        <text x="84" y="75" text-anchor="middle" class="mt" font-size="14">70 из 126</text><text x="236" y="75" text-anchor="middle" class="mt dimt" font-size="14">20 из 126</text><text x="388" y="75" text-anchor="middle" class="mt dimt" font-size="14">2 из 126</text><text x="540" y="75" text-anchor="middle" class="mt dimt" font-size="14">2 из 126</text>
+        <text x="10" y="160" font-size="16">VLSM: блок по размеру</text>
+        <g stroke-width="1.2"><rect x="10" y="174" width="300" height="50" rx="10" fill="rgba(230,76,255,.25)" stroke="var(--magenta)"/><rect x="314" y="174" width="74" height="50" rx="10" fill="rgba(59,167,255,.25)" stroke="var(--azure)"/><rect x="392" y="174" width="30" height="50" rx="8" fill="rgba(59,167,255,.25)" stroke="var(--azure)"/><rect x="426" y="174" width="30" height="50" rx="8" fill="rgba(59,167,255,.25)" stroke="var(--azure)"/></g>
+        <text x="160" y="205" text-anchor="middle" class="mt" font-size="14">/25, 70 узлов</text><text x="351" y="205" text-anchor="middle" class="mt" font-size="12">/27</text>
+        <text x="540" y="205" text-anchor="middle" class="dimt" font-size="14">свободно</text>
+        <text x="392" y="250" class="mt dimt" font-size="12">/30 /30</text>
+      </svg>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 32 VLSM задача -->
+<section class="slide" data-sec="VLSM" data-title="VLSM: условие">
+<div class="wrap">
+  <div class="head"><h2>Задача VLSM: офис и два филиала</h2>
+  <p>HQ, головной офис: 300 узлов. Ф1, филиал №1: 20 узлов. Ф2, филиал №2: 70 узлов. Рассчитать адреса из пространства <b class="mono">172.16.0.0/12</b>. Сегменты сортируются по убыванию.</p></div>
+  <div class="two wide">
+    <div class="tscroll"><table>
+      <thead><tr><th>№</th><th>Описание</th><th>Узлов нужно</th><th>Узлов фактически</th><th>Префикс</th></tr></thead>
+      <tbody class="mono">
+        <tr><td>1</td><td>HQ, головной офис</td><td>300</td><td><span class="fx">510</span></td><td><span class="fx">/23</span></td></tr>
+        <tr><td>2</td><td>Ф2, филиал №2</td><td>70</td><td><span class="fx">126</span></td><td><span class="fx">/25</span></td></tr>
+        <tr><td>3</td><td>Ф1, филиал №1</td><td>20</td><td><span class="fx">30</span></td><td><span class="fx">/27</span></td></tr>
+        <tr><td>4</td><td>Канал Ф1 и HQ</td><td>2</td><td><span class="fx">2</span></td><td><span class="fx">/30</span></td></tr>
+        <tr><td>5</td><td>Канал Ф2 и HQ</td><td>2</td><td><span class="fx">2</span></td><td><span class="fx">/30</span></td></tr>
+      </tbody></table></div>
+    <div class="pane" style="padding:10px">
+      <svg class="fig" viewBox="0 0 700 440" aria-hidden="true">
+        <path d="M350 170 L150 330 M350 170 L550 330" class="lnk"/><path d="M350 100 V140 M150 250 V290 M550 250 V290" stroke="var(--violet)" stroke-dasharray="2 5" stroke-width="2"/>
+        <use href="#cloud-wan" x="280" y="0" width="140" height="120" style="color:var(--magenta)"/><text x="350" y="78" text-anchor="middle" font-weight="700" font-size="19">300</text>
+        <use href="#cloud-wan" x="80" y="150" width="140" height="120" style="color:#b69cff"/><text x="150" y="228" text-anchor="middle" font-weight="700" font-size="19">20</text>
+        <use href="#cloud-wan" x="480" y="150" width="140" height="120" style="color:var(--azure)"/><text x="550" y="228" text-anchor="middle" font-weight="700" font-size="19">70</text>
+        <use href="#router" x="305" y="126" width="90" height="90" style="color:var(--magenta)"/><text x="350" y="236" text-anchor="middle" font-weight="700" font-size="17">HQ</text>
+        <use href="#router" x="105" y="290" width="90" height="90" style="color:#b69cff"/><text x="150" y="400" text-anchor="middle" font-weight="700" font-size="17">Ф1</text>
+        <use href="#router" x="505" y="290" width="90" height="90" style="color:var(--azure)"/><text x="550" y="400" text-anchor="middle" font-weight="700" font-size="17">Ф2</text>
+      </svg>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 33 VLSM линейка -->
+<section class="slide" data-sec="VLSM" data-title="VLSM: подбор масок">
+<div class="wrap">
+  <div class="row" style="justify-content:space-between;align-items:center"><h2>Подбор масок: 2<sup style="font-size:.55em">x</sup> − 2 ≥ узлов</h2><div class="chips" id="vr-btns"></div></div>
+  <div class="pane" style="padding:12px"><div class="tscroll"><table id="vr-tab" class="mono" style="min-width:980px;text-align:center"></table></div></div>
+  <p id="vr-text" class="lead" style="max-width:none;min-height:2.6em"></p>
+</div>
+</section>
+
+<!-- 34 VLSM распределение -->
+<section class="slide" data-sec="VLSM" data-title="VLSM: распределение">
+<div class="wrap">
+  <h2>Распределение адресного пространства</h2>
+  <div class="two wide">
+    <div class="tscroll"><table>
+      <thead><tr><th>№</th><th>Описание</th><th>Адрес сети</th><th>Диапазон узлов</th><th>Broadcast</th></tr></thead>
+      <tbody class="mono">
+        <tr><td>1</td><td>HQ</td><td><span class="fx">172.16.0.0/23</span></td><td><span class="fx">172.16.0.1</span> – <span class="fx">172.16.1.254</span></td><td><span class="fx">172.16.1.255</span></td></tr>
+        <tr><td>2</td><td>Ф2</td><td><span class="fx">172.16.2.0/25</span></td><td><span class="fx">172.16.2.1</span> – <span class="fx">172.16.2.126</span></td><td><span class="fx">172.16.2.127</span></td></tr>
+        <tr><td>3</td><td>Ф1</td><td><span class="fx">172.16.2.128/27</span></td><td><span class="fx">172.16.2.129</span> – <span class="fx">172.16.2.158</span></td><td><span class="fx">172.16.2.159</span></td></tr>
+        <tr><td>4</td><td>Ф1 и HQ</td><td><span class="fx">172.16.2.160/30</span></td><td><span class="fx">172.16.2.161</span> – <span class="fx">172.16.2.162</span></td><td><span class="fx">172.16.2.163</span></td></tr>
+        <tr><td>5</td><td>Ф2 и HQ</td><td><span class="fx">172.16.2.164/30</span></td><td><span class="fx">172.16.2.165</span> – <span class="fx">172.16.2.166</span></td><td><span class="fx">172.16.2.167</span></td></tr>
+      </tbody></table></div>
+    <div class="pane" style="padding:10px">
+      <svg class="fig" viewBox="0 0 700 460" aria-hidden="true">
+        <path d="M350 180 L150 350" stroke="var(--magenta)" stroke-width="1.5"/><path d="M350 180 L550 350" stroke="var(--azure)" stroke-width="1.5"/>
+        <path d="M350 104 V146 M150 262 V316 M550 262 V316" stroke="var(--violet)" stroke-dasharray="2 5" stroke-width="2"/>
+        <use href="#cloud-wan" x="290" y="8" width="120" height="104" style="color:var(--magenta)"/><text x="350" y="72" text-anchor="middle" font-size="15" font-weight="700">300</text>
+        <use href="#cloud-wan" x="90" y="170" width="120" height="104" style="color:#b69cff"/><text x="150" y="234" text-anchor="middle" font-size="15" font-weight="700">20</text>
+        <use href="#cloud-wan" x="490" y="170" width="120" height="104" style="color:var(--azure)"/><text x="550" y="234" text-anchor="middle" font-size="15" font-weight="700">70</text>
+        <use href="#router" x="308" y="138" width="84" height="84" style="color:var(--magenta)"/><text x="350" y="244" text-anchor="middle" font-weight="700" font-size="16">HQ</text>
+        <use href="#router" x="108" y="312" width="84" height="84" style="color:#b69cff"/><text x="150" y="418" text-anchor="middle" font-weight="700" font-size="16">Ф1</text>
+        <use href="#router" x="508" y="312" width="84" height="84" style="color:var(--azure)"/><text x="550" y="418" text-anchor="middle" font-weight="700" font-size="16">Ф2</text>
+        <g class="mt" font-size="14">
+          <text x="366" y="134" style="fill:var(--magenta)">.1</text>
+          <text x="200" y="300" style="fill:#c9b6ff">.129</text><text x="30" y="440" style="fill:#c9b6ff">172.16.2.128/27</text>
+          <text x="570" y="300" style="fill:var(--azure)">.1</text><text x="560" y="440" style="fill:var(--azure)">172.16.2.0/25</text>
+          <text x="300" y="206" text-anchor="end" style="fill:var(--magenta)">.162</text><text x="190" y="328" style="fill:var(--magenta)">.161</text>
+          <text x="402" y="206" style="fill:var(--azure)">.166</text><text x="508" y="328" text-anchor="end" style="fill:var(--azure)">.165</text>
+          <text x="190" y="250" transform="rotate(-40 190 250)" class="dimt">172.16.2.160/30</text><text x="440" y="200" transform="rotate(40 440 200)" class="dimt">172.16.2.164/30</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 35 VLSM калькулятор -->
+<section class="slide" data-sec="VLSM" data-title="Калькулятор VLSM">
+<div class="wrap">
+  <div class="pane">
+    <h2 style="margin-bottom:12px">VLSM на любых данных</h2>
+    <div class="row">
+      <div class="field"><label for="vl-ip">Базовая сеть</label><input id="vl-ip" value="172.16.0.0" size="15" class="mono"></div>
+      <div class="field"><label for="vl-p">Префикс</label><input id="vl-p" type="number" min="0" max="30" value="16" style="width:84px" class="mono"></div>
+      <div class="field" style="flex:1 1 380px"><label for="vl-seg">Сегменты: название:узлы, через запятую</label><input id="vl-seg" value="HQ:300, Ф2:70, Ф1:20, Ф1-HQ:2, Ф2-HQ:2" style="width:100%"></div>
+      <button class="btn" id="vl-sort">Сортировать по убыванию</button>
+      <button class="btn pri" id="vl-gen">Новое условие</button>
+    </div>
+  </div>
+  <div class="tscroll tall"><table>
+    <thead><tr><th>№</th><th>Сегмент</th><th>Нужно</th><th>Бит m</th><th>Фактически</th><th>Адрес сети</th><th>Первый</th><th>Последний</th><th>Broadcast</th><th>Префикс</th></tr></thead>
+    <tbody id="vl-tab"></tbody></table></div>
+  <div class="res" id="vl-out"></div>
+</div>
+</section>
+
+<!-- 36 IPv6 причина -->
+<section class="slide" data-sec="IPv6" data-title="Подсети IPv6">
+<div class="wrap">
+  <h2>Разбиение IPv6-сети на подсети</h2>
+  <div class="two">
+    <div class="stack">
+      <p>Причина та же, что у IPv4: <b>управление трафиком</b>. Но экономить адресное пространство не приходится.</p>
+      <p>Глобальный индивидуальный адрес IPv6: 48-битный глобальный префикс маршрутизации, 16-битный идентификатор подсети и 64-битный идентификатор интерфейса. Цель разбиения: иерархия адресов по числу нужных подсетей.</p>
+    </div>
+    <div class="stack">
+      <div class="pane"><h3>Локальный (link-local)</h3><p>Существует только в локальном канале, <b>никогда не делится</b> на подсети.</p><p class="mono" style="color:#fff">FE80::/10</p></div>
+      <div class="pane main"><h3>Глобальный индивидуальный</h3><p>Может быть разбит на требуемые подсети.</p><p class="mono" style="color:#fff">2000::/3</p></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 37 IPv6 структура -->
+<section class="slide" data-sec="IPv6" data-title="Идентификатор подсети">
+<div class="wrap">
+  <div class="head"><h2>Подсети через идентификатор подсети</h2><p>Провайдер выдаёт клиенту 48-битный префикс. Дальше клиент сам настраивает подсети 16-битным идентификатором.</p></div>
+  <div class="pane">
+    <svg class="fig" viewBox="0 0 1000 250" aria-hidden="true">
+      <text x="240" y="40" text-anchor="middle" font-size="18" style="fill:#b69cff">Префикс глобальной маршрутизации</text>
+      <text x="560" y="40" text-anchor="middle" font-size="18" style="fill:var(--azure)">Идентификатор подсети</text>
+      <text x="820" y="40" text-anchor="middle" font-size="18" style="fill:#ff7ae8">Идентификатор интерфейса</text>
+      <rect x="10" y="64" width="460" height="80" rx="14" fill="rgba(139,92,246,.18)" stroke="var(--violet)" stroke-width="1.5"/>
+      <rect x="480" y="64" width="160" height="80" rx="14" fill="rgba(59,167,255,.18)" stroke="var(--azure)" stroke-width="1.5"/>
+      <rect x="650" y="64" width="340" height="80" rx="14" fill="rgba(230,76,255,.14)" stroke="var(--magenta)" stroke-width="1.5"/>
+      <text x="240" y="113" text-anchor="middle" class="mt" font-size="24">48 бит</text><text x="560" y="113" text-anchor="middle" class="mt" font-size="24">16 бит</text><text x="820" y="113" text-anchor="middle" class="mt" font-size="24">64 бита</text>
+      <path d="M14 180H640M650 180H986" stroke="var(--dim)" stroke-width="1.5"/>
+      <text x="325" y="214" text-anchor="middle" class="dimt" font-size="17">выдаётся провайдером (48) и клиентом (16)</text><text x="818" y="214" text-anchor="middle" class="dimt" font-size="17">интерфейс</text>
+    </svg>
+  </div>
+  <div class="two even">
+    <div class="pane main center" style="text-align:center"><p>подсетей у клиента</p><div class="formula" style="font-size:clamp(40px,4.5vw,72px)">2<sup>16</sup></div><p class="mono" style="color:#fff"><span class="fx">65536</span></p></div>
+    <div class="pane center" style="text-align:center"><p>адресов в каждой подсети</p><div class="formula" style="font-size:clamp(40px,4.5vw,72px)">2<sup>64</sup> = 2<sup>32</sup> × 2<sup>32</sup></div><p>весь IPv4 в квадрате</p></div>
+  </div>
+</div>
+</section>
+
+<!-- 38 IPv6 пять подсетей -->
+<section class="slide" data-sec="IPv6" data-title="Пять подсетей IPv6">
+<div class="wrap">
+  <div class="two wide">
+    <div class="stack">
+      <h2>Пять подсетей из 2001:ABCD:BCDA::/48</h2>
+      <p>Берём выданный провайдером префикс и указываем идентификатор подсети.</p>
+      <table><tbody class="mono">
+        <tr><td>HQ</td><td><span class="fx">2001:ABCD:BCDA:0000::/64</span></td></tr>
+        <tr><td>Ф1</td><td><span class="fx">2001:ABCD:BCDA:0001::/64</span></td></tr>
+        <tr><td>Ф2</td><td><span class="fx">2001:ABCD:BCDA:0002::/64</span></td></tr>
+        <tr><td>Ф1 и HQ</td><td><span class="fx">2001:ABCD:BCDA:0003::/64</span></td></tr>
+        <tr><td>Ф2 и HQ</td><td><span class="fx">2001:ABCD:BCDA:0004::/64</span></td></tr>
+      </tbody></table>
+    </div>
+    <div class="pane" style="padding:10px">
+      <svg class="fig" viewBox="0 0 760 470" aria-hidden="true">
+        <path d="M380 190 L170 360" stroke="var(--magenta)" stroke-width="1.5"/><path d="M380 190 L590 360" stroke="var(--azure)" stroke-width="1.5"/>
+        <path d="M380 116 V152 M170 280 V324 M590 280 V324" stroke="var(--violet)" stroke-dasharray="2 5" stroke-width="2"/>
+        <use href="#cloud-wan" x="270" y="-20" width="220" height="150" style="color:var(--magenta)"/><text x="380" y="78" text-anchor="middle" class="mt" font-size="14">2001:ABCD:BCDA:0/64</text>
+        <use href="#cloud-wan" x="40" y="150" width="220" height="150" style="color:#b69cff"/><text x="150" y="248" text-anchor="middle" class="mt" font-size="14">2001:ABCD:BCDA:1/64</text>
+        <use href="#cloud-wan" x="500" y="150" width="220" height="150" style="color:var(--azure)"/><text x="610" y="248" text-anchor="middle" class="mt" font-size="14">2001:ABCD:BCDA:2/64</text>
+        <use href="#router" x="336" y="146" width="88" height="88" style="color:var(--magenta)"/><text x="380" y="256" text-anchor="middle" font-weight="700" font-size="17">HQ</text>
+        <use href="#router" x="126" y="320" width="88" height="88" style="color:#b69cff"/><text x="170" y="430" text-anchor="middle" font-weight="700" font-size="17">Ф1</text>
+        <use href="#router" x="546" y="320" width="88" height="88" style="color:var(--azure)"/><text x="590" y="430" text-anchor="middle" font-weight="700" font-size="17">Ф2</text>
+        <text x="230" y="262" transform="rotate(-39 230 262)" class="mt" font-size="13" style="fill:#f3a8ff">2001:ABCD:BCDA:3/64</text>
+        <text x="440" y="228" transform="rotate(39 440 228)" class="mt" font-size="13" style="fill:#a8d4ff">2001:ABCD:BCDA:4/64</text>
+      </svg>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 39 IPv6 /68 -->
+<section class="slide" data-sec="IPv6" data-title="Подсети из идентификатора интерфейса">
+<div class="wrap">
+  <div class="head"><h2>Заимствование из идентификатора интерфейса</h2>
+  <p>В IPv6 можно занимать биты идентификатора интерфейса по тому же принципу, что в IPv4. Заимствование идёт кратно 4: одна шестнадцатеричная цифра за раз.</p></div>
+  <div class="pane">
+    <svg class="fig" viewBox="0 0 1000 230" aria-hidden="true">
+      <rect x="10" y="30" width="420" height="80" rx="14" fill="rgba(139,92,246,.18)" stroke="var(--violet)" stroke-width="1.5"/>
+      <rect x="440" y="30" width="150" height="80" rx="14" fill="rgba(59,167,255,.18)" stroke="var(--azure)" stroke-width="1.5"/>
+      <rect x="600" y="30" width="44" height="80" rx="10" fill="rgba(255,181,71,.18)" stroke="var(--amber)" stroke-width="1.5"/>
+      <rect x="654" y="30" width="336" height="80" rx="14" fill="rgba(230,76,255,.14)" stroke="var(--magenta)" stroke-width="1.5"/>
+      <text x="220" y="79" text-anchor="middle" class="mt" font-size="22">48 бит</text><text x="515" y="79" text-anchor="middle" class="mt" font-size="22">16 бит</text><text x="622" y="79" text-anchor="middle" class="mt" font-size="22" style="fill:var(--amber)">4</text><text x="822" y="79" text-anchor="middle" class="mt" font-size="22">60 бит</text>
+      <path d="M14 150H644M654 150H986" stroke-width="1.5" stroke="var(--dim)"/>
+      <text x="330" y="190" text-anchor="middle" font-size="22" style="fill:#b69cff">68 бит</text><text x="820" y="190" text-anchor="middle" font-size="22" style="fill:#ff7ae8">60 бит</text>
+    </svg>
+  </div>
+  <div class="two even">
+    <div class="stack">
+      <div class="row" style="align-items:center"><button class="btn pri" id="v6-next">Следующая подсеть</button><span class="mono" id="v6-cnt" style="color:var(--dim)"></span></div>
+      <p class="mono" style="font-size:clamp(18px,1.9vw,28px);color:#fff" id="v6-cur"></p>
+      <p>4 бита дают 2<sup>4</sup> = <span class="fx">16</span> подсетей /68.</p>
+    </div>
+    <div class="mono" id="v6-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:4px 16px;color:var(--dim);font-size:15px"></div>
+  </div>
+</div>
+</section>
+
+<!-- 40 тренажёр -->
+<section class="slide" data-sec="Тренажёр" data-title="Тренажёр">
+<div class="wrap">
+  <div class="stack quiz">
+    <div class="row" style="justify-content:center;align-items:center">
+      <h2>Тренажёр</h2>
+      <select id="q-type" aria-label="Тип задачи">
+        <option value="any">вперемешку</option><option value="net">адрес сети</option><option value="bcast">широковещательный адрес</option>
+        <option value="hosts">число узлов</option><option value="mask">маска по префиксу</option><option value="pfx">префикс по числу узлов</option>
+        <option value="class">класс адреса</option><option value="belong">принадлежность адреса</option>
+      </select>
+      <span class="mono" id="q-score" style="font-size:22px;color:#fff">0 / 0</span>
+    </div>
+    <p class="q" id="q-text"></p>
+    <div class="opts" id="q-opts"></div>
+    <div id="q-fb" style="width:100%"></div>
+    <button class="btn pri" id="q-next">Новая задача</button>
+  </div>
+</div>
+</section>
+
+</main>
+
+<nav class="tabs" id="tabs" aria-label="Разделы"></nav>
+<button class="navbtn" id="pv" aria-label="Предыдущий слайд">&lsaquo;</button>
+<button class="navbtn" id="nx" aria-label="Следующий слайд">&rsaquo;</button>
+<div id="ov" role="dialog" aria-label="Все слайды"><div class="g" id="ov-g"></div></div>
+
+<script>
+/* ===================== движок расчётов ===================== */
+const toInt=ip=>ip.trim().split('.').map(Number).reduce((a,o)=>a*256+(o&255),0)>>>0;
+const toIp=n=>[24,16,8,0].map(s=>(n>>>s)&255).join('.');
+const maskOf=p=>p===0?0:(0xFFFFFFFF<<(32-p))>>>0;
+const maskIp=p=>toIp(maskOf(p));
+const validIp=s=>/^(\d{1,3}\.){3}\d{1,3}$/.test(s.trim())&&s.trim().split('.').every(o=>+o<256);
+const bitsOf=n=>[...Array(32)].map((_,i)=>(n>>>(31-i))&1);
+const cidrBorrow=(p,mode,want)=>{
+  let b=mode==='nets'?Math.ceil(Math.log2(want)):(32-p)-Math.ceil(Math.log2(want+2));
+  return Math.max(0,Math.min(32-p,b));
+};
+const vlsmBits=need=>Math.max(2,Math.ceil(Math.log2(need+2)));
+const CLASSES=[
+ {k:'A',bits:'0',range:'1–126',mask:'255.0.0.0',p:8,use:'крупнейшие сети'},
+ {k:'B',bits:'10',range:'128–191',mask:'255.255.0.0',p:16,use:'средние и крупные сети'},
+ {k:'C',bits:'110',range:'192–223',mask:'255.255.255.0',p:24,use:'малые сети'},
+ {k:'D',bits:'1110',range:'224–239',mask:'нет',p:null,use:'многоадресная рассылка'},
+ {k:'E',bits:'1111',range:'240–255',mask:'нет',p:null,use:'эксперименты, резерв'}];
+function classOf(o1){if(o1<128)return CLASSES[0];if(o1<192)return CLASSES[1];if(o1<224)return CLASSES[2];if(o1<240)return CLASSES[3];return CLASSES[4];}
+
+/* ===================== утилиты ===================== */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const nfm=n=>n.toLocaleString('ru-RU');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const NS='http://www.w3.org/2000/svg';
+const fx=(a,k)=>`<span class="fx" data-a="${esc(a)}" data-k="${esc(k)}">${esc(a)}</span>`;
+const rc=(k,v,big)=>`<div class="c${big?' big':''}"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+
+/* ===================== режим «Заполняем» ===================== */
+let FILL=false;
+const typed=new Map();
+const norm=s=>String(s).toLowerCase().replace(/\s+/g,'').replace(/[–—−]/g,'-').replace(/ё/g,'е')
+  .replace(/[авсе]/g,c=>({'а':'a','в':'b','с':'c','е':'e'}[c])).replace(/^\//,'').replace(/^класс/,'');
+function slideOf(el){return el.closest('.slide');}
+function keyOf(span){const s=slideOf(span);return s.dataset.idx+':'+span.dataset.k;}
+function checkInput(inp,span){
+  const v=inp.value;typed.set(keyOf(span),v);
+  inp.classList.remove('ok','bad');
+  if(!v.trim())return;
+  inp.classList.add(norm(v)===norm(span.dataset.a)?'ok':'bad');
+}
+function applyFill(root){
+  $$('.fx',root).forEach(span=>{
+    if(FILL){
+      if(!span.querySelector('input')){
+        const inp=document.createElement('input');
+        inp.setAttribute('aria-label','Ответ');inp.autocomplete='off';inp.spellcheck=false;
+        inp.style.width=(Math.max(3,span.dataset.a.length)+2)+'ch';
+        span.textContent='';span.appendChild(inp);
+        const v=typed.get(keyOf(span));if(v!=null)inp.value=v;
+        checkInput(inp,span);
+      }
+    }else if(span.querySelector('input')){span.textContent=span.dataset.a;}
+  });
+  $$('.rowshow',root).forEach(b=>b.remove());
+  if(FILL){
+    const rows=new Set();
+    $$('.fx',root).forEach(s=>rows.add(s.closest('tr')||s.closest('li,p,foreignObject,.c')||s.parentNode));
+    rows.forEach(r=>{
+      const b=document.createElement('button');b.className='btn sm rowshow';b.textContent='Показать ответ';b.type='button';
+      b.onclick=()=>{$$('.fx',r).forEach(s=>{const i=s.querySelector('input');if(i){i.value=s.dataset.a;checkInput(i,s);}});updProg(slideOf(r));};
+      if(r.tagName==='TR')r.lastElementChild.appendChild(b);
+      else if(r.tagName==='foreignObject')return;
+      else r.appendChild(b);
+    });
+  }
+  const s=root.classList&&root.classList.contains('slide')?root:slideOf(root);
+  if(s)updProg(s);
+}
+function updProg(slide){
+  const pr=$('.fillbar .pr',slide);if(!pr)return;
+  const ins=$$('.fx input',slide);const ok=ins.filter(i=>i.classList.contains('ok')).length;
+  pr.innerHTML=`верно <b>${ok}</b> из ${ins.length}`;
+}
+document.addEventListener('input',e=>{
+  const span=e.target.closest&&e.target.closest('.fx');
+  if(span&&e.target.tagName==='INPUT'){checkInput(e.target,span);updProg(slideOf(span));}
+});
+function clearSlide(slide){
+  const pre=slide.dataset.idx+':';
+  [...typed.keys()].forEach(k=>{if(k.startsWith(pre))typed.delete(k);});
+  $$('.fx input',slide).forEach(i=>{i.value='';i.classList.remove('ok','bad');});
+  if(slide.dataset.reset&&RESET[slide.dataset.reset])RESET[slide.dataset.reset]();
+  updProg(slide);
+}
+const RESET={};
+function setMode(f){
+  FILL=f;document.body.classList.toggle('fill',f);
+  $('#m-show').setAttribute('aria-pressed',!f);$('#m-fill').setAttribute('aria-pressed',f);
+  RERENDER.forEach(fn=>fn());
+  $$('.slide').forEach(applyFill);
+}
+const RERENDER=[];
+$('#m-show').onclick=()=>setMode(false);$('#m-fill').onclick=()=>setMode(true);
+
+/* ===================== анимация пакетов ===================== */
+function fly(svg,pts,color='var(--amber)',dur=800,size=34){
+  return new Promise(res=>{
+    const u=document.createElementNS(NS,'use');u.setAttribute('href','#packet');
+    u.setAttribute('width',size);u.setAttribute('height',size);u.style.color=color;svg.appendChild(u);
+    const segs=[];let L=0;
+    for(let i=1;i<pts.length;i++){const d=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);segs.push(d);L+=d;}
+    const t0=performance.now();
+    function step(t){
+      const k=RM?1:Math.min(1,(t-t0)/dur);let d=k*L,i=0;
+      while(i<segs.length-1&&d>segs[i]){d-=segs[i];i++;}
+      const f=segs[i]?Math.min(1,d/segs[i]):1;
+      const x=pts[i][0]+(pts[i+1][0]-pts[i][0])*f,y=pts[i][1]+(pts[i+1][1]-pts[i][1])*f;
+      u.setAttribute('x',x-size/2);u.setAttribute('y',y-size/2);
+      if(k<1)requestAnimationFrame(step);else setTimeout(()=>{u.remove();res();},RM?350:220);
+    }
+    requestAnimationFrame(step);
+  });
+}
+let busy=false;
+async function once(fn){if(busy)return;busy=true;try{await fn();}finally{busy=false;}}
+
+/* ----- 1 титул ----- */
+$('#ttl').addEventListener('click',()=>{
+  const g=$('#ttl-pk'),am=$('#ttl-am');
+  if(RM){g.setAttribute('opacity',1);setTimeout(()=>g.setAttribute('opacity',0),800);return;}
+  g.setAttribute('opacity',1);am.beginElement();
+  clearTimeout(g._t);g._t=setTimeout(()=>g.setAttribute('opacity',0),2700);
+});
+
+/* ----- 6 broadcast ----- */
+$('#bc1-go').onclick=()=>once(async()=>{
+  const s=$('#bc1');
+  await fly(s,[[110,90],[372,190]],'var(--amber)',700);
+  await Promise.all([fly(s,[[872,190],[590,190]]),fly(s,[[872,190],[610,290]]),fly(s,[[872,190],[610,90]])]);
+});
+
+/* ----- 8 рост L2 ----- */
+const L2POS=[[450,110],[180,210],[720,210],[450,320]];
+const L2HOST=[[[330,40],[450,24],[570,40]],[[40,120],[40,230],[120,330]],[[860,120],[860,230],[780,330]],[[300,400],[450,400],[600,400]]];
+function l2Render(){
+  const k=+$('#l2-k').value;$('#l2-kl').textContent=k;
+  let h='';
+  for(let i=1;i<k;i++)h+=`<path class="lnk" d="M${L2POS[0][0]} ${L2POS[0][1]}L${L2POS[i][0]} ${L2POS[i][1]}"/>`;
+  for(let i=0;i<k;i++)L2HOST[i].forEach(p=>h+=`<path class="lnk" d="M${L2POS[i][0]} ${L2POS[i][1]}L${p[0]} ${p[1]}"/>`);
+  for(let i=0;i<k;i++){h+=`<use href="#switch-l2" x="${L2POS[i][0]-40}" y="${L2POS[i][1]-40}" width="80" height="80" style="color:var(--azure)"/>`;
+    L2HOST[i].forEach(p=>h+=`<use href="#laptop" x="${p[0]-28}" y="${p[1]-28}" width="56" height="56" style="color:#b69cff"/>`);}
+  $('#l2').innerHTML=h;
+  const N=3*k;
+  $('#l2-res').innerHTML=rc('Узлов в домене',fx(N,'n'))+rc('Приёмов от одного ARP',fx(N-1,'one'))+
+    rc('Приёмов, если каждый узел пошлёт ARP',fx(N*(N-1),'all'),true);
+  applyFill($('#l2-res'));
+}
+$('#l2-k').addEventListener('input',l2Render);
+$('#l2-go').onclick=()=>once(async()=>{
+  const k=+$('#l2-k').value,s=$('#l2');
+  const hosts=[];for(let i=0;i<k;i++)L2HOST[i].forEach(p=>hosts.push([i,p]));
+  const route=(from,to)=>{const [si,sp]=from,[ti,tp]=to;const pts=[sp,L2POS[si]];
+    if(si!==ti){if(si!==0)pts.push(L2POS[0]);if(ti!==0)pts.push(L2POS[ti]);}pts.push(tp);return pts;};
+  const senders=hosts.slice(0,Math.min(hosts.length,4));
+  for(const snd of senders){
+    await Promise.all(hosts.filter(h=>h!==snd).map(h=>fly(s,route(snd,h),'var(--amber)',RM?1:900,26)));
+  }
+});
+
+/* ----- 9 маршрутизатор ----- */
+const R1={sw1:[252,162],r:[451,110],sw2:[650,162],sw3:[450,350],a:[96,88],b:[76,172],c:[96,246],z:[540,436]};
+$('#r1-bc').onclick=()=>once(async()=>{
+  const s=$('#r1');await fly(s,[R1.a,R1.sw1]);
+  await Promise.all([fly(s,[R1.sw1,R1.b]),fly(s,[R1.sw1,R1.c]),fly(s,[R1.sw1,R1.r])]);
+  const x=document.createElementNS(NS,'text');x.setAttribute('x',451);x.setAttribute('y',180);x.setAttribute('text-anchor','middle');
+  x.setAttribute('font-size','16');x.style.fill='var(--amber)';x.textContent='не пересылается';s.appendChild(x);setTimeout(()=>x.remove(),1400);
+});
+$('#r1-uc').onclick=()=>once(()=>fly($('#r1'),[R1.a,R1.sw1,R1.r,R1.sw3,R1.z],'var(--azure)',1800));
+
+/* ----- 10 нотация ----- */
+let ntVal=toInt('128.11.3.31');
+function ntRender(){
+  const b=bitsOf(ntVal);let h='';
+  for(let o=0;o<4;o++){let c='';for(let i=0;i<8;i++){const x=o*8+i;c+=`<button class="bit ${['net','sub','host','net'][o]}" data-i="${x}" aria-label="бит ${x+1}">${b[x]}</button>`;}
+    h+=`<div class="oct"><div class="cap">${o+1}-й байт</div><div class="bits">${c}</div><div class="dec">${fx((ntVal>>>(24-8*o))&255,'o'+o)}</div></div>`;}
+  $('#nt-tape').innerHTML=h;$('#nt-dec').textContent=toIp(ntVal);
+  applyFill($('#nt-tape'));
+}
+$('#nt-tape').addEventListener('click',e=>{const t=e.target.closest('.bit');if(!t)return;ntVal=(ntVal^(1<<(31-+t.dataset.i)))>>>0;ntRender();});
+RERENDER.push(ntRender);
+
+/* ----- 11 полосы классов ----- */
+function barHtml(fixBits,netBits,hostLab,netLab){
+  let h='';[...fixBits].forEach(b=>h+=`<div class="fix">${b}</div>`);
+  if(netBits>0)h+=`<div class="nt" style="grid-column:span ${netBits}">${netLab}</div>`;
+  const rest=32-fixBits.length-netBits;h+=`<div class="hs" style="grid-column:span ${rest}">${hostLab}</div>`;return h;
+}
+$('#cls-bars').innerHTML=[['A','0',7,'ID хоста, 24 бита','сеть 7','/8'],['B','10',14,'ID хоста, 16 бит','сеть 14 бит','/16'],['C','110',21,'хост 8','сеть 21 бит','/24'],
+  ['D','1110',0,'групповой адрес, 28 бит','',''],['E','1111',0,'резерв, 28 бит','','']].map(r=>
+  `<div class="cls-row"><div class="tag">Класс ${r[0]}</div><div class="cbar">${barHtml(r[1],r[2],r[3],r[4])}</div><div class="pf">${r[5]}</div></div>`).join('')+
+  `<div class="legend" style="justify-content:flex-start"><span><i class="sw s"></i>фиксированный префикс</span><span><i class="sw n"></i>ID сети</span><span><i class="sw h"></i>ID хоста</span></div>`;
+
+/* ----- 12 классы подробно ----- */
+const CT={
+ A:{fix:'0',net:7,host:24,text:['Назначаются сетям с очень большим количеством хостов.','Сетевой идентификатор 8 бит, идентификатор хоста 24 бита.','Старший бит (MSB) первого октета всегда 0, остальные 7 бит идентифицируют сеть.'],
+   res:[['Маска по умолчанию','255.0.0.0'],['Сетей','128'],['Хостов в сети','16777214'],['Диапазон','0.0.0.0–127.255.255.255']]},
+ B:{fix:'10',net:14,host:16,text:['Назначаются средним и крупным сетям.','Сетевой идентификатор 16 бит, идентификатор хоста 16 бит.','Первые два бита первого октета всегда 10, остальные 14 бит определяют сеть.'],
+   res:[['Маска по умолчанию','255.255.0.0'],['Сетей','16384'],['Хостов в сети','65534'],['Диапазон','128.0.0.0–191.255.255.255']]},
+ C:{fix:'110',net:21,host:8,text:['Назначаются малым сетям.','Сетевой идентификатор 24 бита, идентификатор хоста 8 бит.','Первые три бита первого октета всегда 110, остальные 21 бит определяют сеть.'],
+   res:[['Маска по умолчанию','255.255.255.0'],['Сетей','2097152'],['Хостов в сети','254'],['Диапазон','192.0.0.0–223.255.255.255']]},
+ D:{fix:'1110',net:0,host:28,text:['Зарезервированы для многоадресной связи.','Первые четыре бита всегда 1110, остальные 28 бит задают адрес группы, к которой присоединяются заинтересованные хосты.','Нет идентификатора сети и хоста, маска не определена.'],
+   res:[['Маска','нет'],['Бит группы','28'],['Диапазон','224.0.0.0–239.255.255.255']]},
+ E:{fix:'1111',net:0,host:28,text:['Защищены для экспериментальных и исследовательских целей.','Первые четыре бита всегда 1111.','Нет идентификатора сети и хоста, маска не определена.'],
+   res:[['Маска','нет'],['Бит после префикса','28'],['Диапазон','240.0.0.0–255.255.255.255']]}
+};
+let ctCur='A';
+function ctRender(){
+  const c=CT[ctCur];$('#ct-h').textContent='Класс '+ctCur;
+  $$('#ct-tabs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===ctCur));
+  $('#ct-bar').innerHTML=barHtml(c.fix,c.net,c.net?'Host':'Host, 28 бит',`Network, ${c.net} бит`);
+  $('#ct-cap').innerHTML=`<span class="sm">фиксированный префикс <b class="mono">${c.fix}</b></span>`+(c.net?`<span class="sm">сетевая часть ${c.net} бит</span>`:'')+`<span class="sm">часть хоста ${c.host} бит</span>`;
+  $('#ct-text').innerHTML=c.text.map(t=>`<li>${t}</li>`).join('');
+  $('#ct-res').innerHTML=c.res.map((r,i)=>rc(r[0],/^\d+$/.test(r[1])?fx(r[1],ctCur+i):fx(r[1],ctCur+i),i===0&&ctCur<'D')).join('');
+  applyFill($('#ct-res'));
+}
+$('#ct-tabs').innerHTML='ABCDE'.split('').map(k=>`<button class="btn sm" data-k="${k}">${k}</button>`).join('');
+$('#ct-tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b){ctCur=b.dataset.k;ctRender();}});
+RERENDER.push(ctRender);
+
+/* ----- 13 определитель класса ----- */
+function clRender(){
+  const v=$('#cl-ip').value;if(!validIp(v))return;
+  const n=toInt(v),o1=(n>>>24)&255,c=classOf(o1),bits=bitsOf(n);let h='';
+  for(let o=0;o<4;o++){let cells='';for(let i=0;i<8;i++){const x=o*8+i;
+    const cls=x<c.bits.length?'sub':c.p===null?'host':x<c.p?'net':'host';cells+=`<div class="bit ${cls}">${bits[x]}</div>`;}
+    h+=`<div class="oct"><div class="bits">${cells}</div><div class="dec">${(n>>>(24-8*o))&255}</div></div>`;}
+  $('#cl-bits').innerHTML=h;
+  const o2=(n>>>16)&255;
+  const note=o1===127?'loopback, 127.0.0.0/8':(o1===10||(o1===172&&o2>=16&&o2<=31)||(o1===192&&o2===168))?'частный диапазон, RFC 1918':'публичный диапазон';
+  $('#cl-out').innerHTML=rc('Класс',fx(c.k,'k'),true)+rc('Старшие биты',fx(c.bits,'b'))+rc('Маска по умолчанию',fx(c.mask,'m'))+
+    rc('Сеть и хост',c.p?fx(c.p,'np')+' и '+fx(32-c.p,'hp')+' бит':'не делится')+rc('Хостов в сети',c.p?fx(2**(32-c.p)-2,'h'):'нет')+rc('Замечание',note);
+  applyFill($('#cl-out'));
+}
+$('#cl-tab').innerHTML=CLASSES.map(c=>`<tr><td><b>${c.k}</b></td><td class="mono">${c.bits}</td><td class="mono">${c.range}</td><td class="mono">${c.mask}</td><td>${c.use}</td></tr>`).join('');
+$('#cl-ip').addEventListener('input',clRender);
+$('#cl-rnd').onclick=()=>{clearSlide(slideOf($('#cl-ip')));$('#cl-ip').value=[pick([rnd(1,126),rnd(128,191),rnd(192,223),rnd(224,239),10,172,192,127]),rnd(0,255),rnd(0,255),rnd(1,254)].join('.');clRender();};
+RERENDER.push(clRender);
+
+/* ----- 14 потери ----- */
+function wsRender(){
+  const need=Math.max(1,+$('#ws-n').value||1);
+  const c=need<=254?CLASSES[2]:need<=65534?CLASSES[1]:CLASSES[0];
+  const cap=2**(32-c.p)-2,waste=cap-need;
+  const m=vlsmBits(need),cid=2**m-2;
+  const bar=(lab,used,tot,col)=>`<p class="sm">${lab}</p><div style="height:26px;border:1px solid var(--edge);border-radius:8px;overflow:hidden;margin:4px 0 10px"><div style="height:100%;width:${Math.max(.6,100*used/tot)}%;background:${col}"></div></div>`;
+  $('#ws-bars').innerHTML=need>16777214?'<p>Больше, чем вмещает класс A.</p>':bar(`класс ${c.k}: занято ${nfm(need)} из ${nfm(cap)}`,need,cap,'var(--magenta)')+bar(`CIDR /${32-m}: занято ${nfm(need)} из ${nfm(cid)}`,need,cid,'var(--azure)');
+  $('#ws-res').innerHTML=rc('Подходящий класс',fx(c.k,'c'))+rc('Потеряно адресов',fx(waste,'w'),true)+rc('Префикс CIDR',fx('/'+(32-m),'p'))+rc('Потеряно при CIDR',fx(cid-need,'cw'));
+  applyFill($('#ws-res'));
+}
+$('#ws-n').addEventListener('input',wsRender);
+$('#ws-gen').onclick=()=>{clearSlide(slideOf($('#ws-n')));$('#ws-n').value=pick([rnd(30,250),rnd(260,2000),rnd(2000,40000)]);wsRender();};
+RERENDER.push(wsRender);
+
+/* ----- 15 CIDR граница ----- */
+function cdRender(){
+  const p=+$('#cd-p').value;$('#cd-pl').textContent='/'+p;
+  $('#cd-bar').innerHTML=`<div class="nt" style="grid-column:span ${p}">сеть, ${p} бит</div><div class="hs" style="grid-column:span ${32-p}">узел, ${32-p}</div>`;
+  $('#cd-info').textContent=`${maskIp(p)}  ${nfm(2**(32-p)-2)} узлов`;
+}
+$('#cd-ticks').innerHTML=[...Array(32)].map((_,i)=>`<span class="mono" style="font-size:10px;text-align:center;color:${(i+1)%8===0?'var(--magenta)':'transparent'}">/${i+1}</span>`).join('');
+$('#cd-p').addEventListener('input',cdRender);
+
+/* ----- 18 пошагово ----- */
+const ST=[
+ {ip:'192.168.15.0',p:24,t:'Исходная сеть 192.168.15.0 с маской 255.255.255.0 (/24). В узловой части 8 бит, значит адресов 2<sup>8</sup> = 256. Чтобы разбить сеть, заимствуем восьмой бит четвёртого октета: получим две подсети с равным количеством адресов.'},
+ {ip:'192.168.15.0',p:25,t:'Берём один бит из узловой части: маска 255.255.255.128. Префикс /25, так как к 24 битам сети добавился 1 бит. Адрес первой подсети: 192.168.15.0.'},
+ {ip:'192.168.15.127',p:25,t:'Широковещательный адрес: заполняем всю узловую часть единицами и получаем 192.168.15.127/25. Маска /25 на сети 192.168.15.0 ограничивает подсеть 128 адресами.'},
+ {ip:'192.168.15.128',p:25,t:'Границы первой подсети найдены, всё между ними и есть её диапазон. Где вторая? Заимствованный бит становится 1: адрес второй подсети 192.168.15.128.'},
+ {ip:'192.168.15.255',p:25,t:'Заполняем узловую часть единицами: 255. Широковещательный адрес второй подсети 192.168.15.255/25.'},
+ {ip:'192.168.15.255',p:25,t:'Итог: добавив один бит к маске /24, получили две сети /25: <b class="mono">192.168.15.0/25</b> и <b class="mono">192.168.15.128/25</b>. Обратный процесс, объединение подсетей в более крупную сеть, называется суммаризацией; он применяется в динамической маршрутизации и в курсе не рассматривается.'}
+];
+let stCur=0;
+function stRender(){
+  const s=ST[stCur],ib=bitsOf(toInt(s.ip)),mb=bitsOf(maskOf(s.p));
+  $$('#st-btns button').forEach((b,i)=>b.setAttribute('aria-pressed',i===stCur));
+  $('#st-text').innerHTML=s.t;
+  const cell=(v,i)=>`<td class="mono" style="padding:6px 0;${i<s.p?'background:rgba(139,92,246,.30)':'background:rgba(40,20,70,.6)'};${i%8===0?'border-left:1px solid var(--edge)':''}">${v}</td>`;
+  const oc=(n,k)=>[24,16,8,0].map((sh,o)=>`<td colspan="8" class="mono" style="border-left:1px solid var(--edge);font-size:18px">${fx((n>>>sh)&255,k+o)}</td>`).join('');
+  $('#st-tab').innerHTML=`<tr><th></th><th colspan="${s.p}" style="text-align:center;color:#fff;background:rgba(139,92,246,.4)">Сетевая часть</th><th colspan="${32-s.p}" style="text-align:center;color:#fff;background:rgba(40,20,70,.9)">Узловая часть</th></tr>
+   <tr><th></th>${[1,2,3,4].map(o=>`<th colspan="8" style="text-align:center">${o} октет</th>`).join('')}</tr>
+   <tr><td>Биты</td>${[...Array(32)].map((_,i)=>`<td class="mono sm" style="padding:4px 0;${i%8===0?'border-left:1px solid var(--edge)':''}">${7-i%8}</td>`).join('')}</tr>
+   <tr><td style="white-space:nowrap">IP-адрес, 2</td>${ib.map(cell).join('')}</tr>
+   <tr><td>IP-адрес, 10</td>${oc(toInt(s.ip),'st'+stCur+'i')}</tr>
+   <tr><td>Маска, 2</td>${mb.map(cell).join('')}</tr>
+   <tr><td>Маска, 10</td>${oc(maskOf(s.p),'st'+stCur+'m')}</tr>`;
+  applyFill($('#st-tab'));
+}
+$('#st-btns').innerHTML=['сеть /24','подсеть 1','broadcast 1','подсеть 2','broadcast 2','итог'].map((t,i)=>`<button class="btn sm" data-i="${i}">${t}</button>`).join('');
+$('#st-btns').addEventListener('click',e=>{const b=e.target.closest('button');if(b){stCur=+b.dataset.i;stRender();}});
+RERENDER.push(stRender);
+
+/* ----- 19 разбор по битам ----- */
+let beStep=1,beSel=-1,beMask=Array(32).fill(null);
+function beRender(){
+  const ipEl=$('#be-ip');if(!validIp(ipEl.value))return;
+  const n=toInt(ipEl.value),p=+$('#be-p').value;
+  $('#be-b').max=Math.max(0,32-p);
+  const b=Math.min(+$('#be-b').value,32-p);$('#be-b').value=b;
+  $('#be-pl').textContent='/'+p;$('#be-bl').textContent=b+', подсетей '+nfm(2**b);
+  const bits=bitsOf(n),np=p+b,w=[128,64,32,16,8,4,2,1];let h='';
+  for(let o=0;o<4;o++){let c='';
+    for(let i=0;i<8;i++){const x=o*8+i;let cls=x<p?'net':x<np?'sub':'host';
+      if(beStep===1)cls='';if(beStep===2&&x>=np)cls='';if(beStep===3&&(x<p||x>=np))cls='';if(beStep===4&&x<np)cls='';
+      c+=`<button class="bit ${cls}${x===beSel?' sel':''}" data-i="${x}" aria-label="бит ${x+1}">${bits[x]}</button>`;}
+    h+=`<div class="oct"><div class="cap">октет ${o+1}</div><div class="bits">${c}</div><div class="wts">${w.map(v=>`<span>${v}</span>`).join('')}</div><div class="dec">${(n>>>(24-8*o))&255}</div></div>`;}
+  $('#be-bits').innerHTML=h;
+  let mh='',set=0;
+  for(let o=0;o<4;o++){let c='';for(let i=0;i<8;i++){const x=o*8+i,v=beMask[x];if(v!==null)set++;
+    const st=v===null?'emp':(v===(x<np?1:0)?'ok':'bad');c+=`<button class="bit ${st}" data-m="${x}" aria-label="бит маски ${x+1}">${v===null?'':v}</button>`;}
+    mh+=`<div class="oct"><div class="bits">${c}</div></div>`;}
+  $('#be-mask').innerHTML=mh;$('#be-mcnt').textContent=`расставлено ${set} из 32`;
+  const size=2**(32-np),net=(n&maskOf(np))>>>0,bc=(net+size-1)>>>0;
+  $('#be-out').innerHTML=rc('Адрес подсети',fx(toIp(net),'net'),true)+rc('Новый префикс',fx('/'+np,'np'),true)+
+    rc('Маска',fx(maskIp(np),'m'))+rc('Первый узел',size>2?fx(toIp(net+1),'f'):'нет')+rc('Последний узел',size>2?fx(toIp(bc-1),'l'):'нет')+
+    rc('Широковещательный',size>1?fx(toIp(bc),'bc'):'нет')+rc('Адресов в подсети',fx(size,'sz'))+rc('Узлов',fx(Math.max(0,size-2),'h'))+rc('Подсетей',fx(2**b,'ns'));
+  applyFill($('#be-out'));
+}
+$('#be-bits').addEventListener('click',e=>{const t=e.target.closest('.bit[data-i]');if(!t)return;const i=+t.dataset.i;beSel=i;
+  $('#be-ip').value=toIp((toInt($('#be-ip').value)^(1<<(31-i)))>>>0);beRender();});
+$('#be-mask').addEventListener('click',e=>{const t=e.target.closest('.bit[data-m]');if(!t)return;const i=+t.dataset.m;
+  beMask[i]=beMask[i]===null?1:beMask[i]===1?0:null;beRender();});
+$$('#be-steps button').forEach(b=>b.onclick=()=>{beStep=+b.dataset.step;$$('#be-steps button').forEach(x=>x.setAttribute('aria-pressed',x===b));beRender();});
+['#be-ip','#be-p','#be-b'].forEach(s=>$(s).addEventListener('input',beRender));
+RESET.be=()=>{beMask=Array(32).fill(null);beRender();};
+$('#be-gen').onclick=()=>{const p=pick([8,16,20,24,24,26]);$('#be-ip').value=[rnd(1,223),rnd(0,255),rnd(0,255),rnd(1,254)].join('.');
+  $('#be-p').value=p;$('#be-b').max=32-p;$('#be-b').value=rnd(1,Math.min(6,30-p));clearSlide(slideOf($('#be-ip')));beRender();};
+RERENDER.push(beRender);
+
+/* ----- 20–22 таблицы формул ----- */
+function stair(lit,dark){return [...Array(8)].map((_,i)=>`<span style="display:inline-block;width:1.6em;text-align:center;border-radius:4px;background:${i<lit?'rgba(230,76,255,.45)':dark?'rgba(40,20,70,.8)':'transparent'}">${i<lit?1:0}</span>`).join('');}
+$('#f1-tab').innerHTML='<thead><tr><th>Заимствовано бит</th><th>Узловая часть</th><th>Подсетей</th></tr></thead><tbody>'+
+  [1,2,3,4,5,6].map(n=>`<tr><td>${n}</td><td>${stair(n)}</td><td>2<sup>${n}</sup> = ${fx(2**n,'s'+n)}</td></tr>`).join('')+'</tbody>';
+$('#f2-tab').innerHTML='<thead><tr><th>Осталось бит</th><th>Узловая часть</th><th>Узлов</th></tr></thead><tbody>'+
+  [7,6,5,4,3,2].map(x=>`<tr><td>${x}</td><td>${stair(8-x,true)}</td><td>2<sup>${x}</sup> − 2 = ${fx(2**x-2,'h'+x)}</td></tr>`).join('')+'</tbody>';
+$('#pf-tab').innerHTML='<thead><tr><th>Префикс</th><th>Маска</th><th>Двоично, последний октет</th><th>Подсетей</th><th>Узлов</th></tr></thead><tbody class="mono">'+
+  [25,26,27,28,29,30].map(p=>{const k=p-24;return `<tr><td>/${p}</td><td>${fx(maskIp(p),'m'+p)}</td><td>11111111.11111111.11111111.<span class="acc-m">${'1'.repeat(k)}</span><span class="acc-a">${'0'.repeat(8-k)}</span></td><td>${fx(2**k,'s'+p)}</td><td>${fx(2**(8-k)-2,'h'+p)}</td></tr>`;}).join('')+'</tbody>';
+
+/* ----- 27, 28 таблицы задач ----- */
+$('#t8').innerHTML=[...Array(8)].map((_,i)=>{const s=toInt('192.168.15.0')+i*32;
+  return `<tr><td>${i+1}</td><td><b class="acc-m">${i.toString(2).padStart(3,'0')}</b>00000</td><td>${fx(toIp(s)+'/27','n'+i)}</td><td>${fx(toIp(s+1),'f'+i)} – ${fx(toIp(s+30),'l'+i)}</td><td>${fx(toIp(s+31),'b'+i)}</td></tr>`;}).join('');
+$('#t50-bits').innerHTML=['192','168'].map(v=>`<span class="bit net" style="width:auto;padding:0 12px">${v}</span>`).join('')+
+  [...Array(16)].map((_,i)=>`<span class="bit ${i<6?'sub':'host'}">0</span>`).join('');
+$('#t50').innerHTML=[1,2,3,'…',50,'…',64].map((k,i)=>{if(k==='…')return '<tr><td>…</td><td>…</td><td>…</td><td>…</td></tr>';
+  const s=toInt('192.168.0.0')+(k-1)*1024;return `<tr${k===50?' class="hl"':''}><td>${k}</td><td>${fx(toIp(s)+'/22','n'+k)}</td><td>${fx(toIp(s+1),'f'+k)} – ${fx(toIp(s+1022),'l'+k)}</td><td>${fx(toIp(s+1023),'b'+k)}</td></tr>`;}).join('');
+
+/* ----- 30 CIDR ----- */
+function ciRender(){
+  const ip=$('#ci-ip').value;if(!validIp(ip))return;
+  const p=Math.max(0,Math.min(30,+$('#ci-p').value)),mode=$('#ci-mode').value,want=Math.max(1,+$('#ci-n').value||1);
+  const borrow=cidrBorrow(p,mode,want),np=p+borrow,size=2**(32-np),base=(toInt(ip)&maskOf(p))>>>0;
+  $('#ci-out').innerHTML=rc('Новый префикс',fx('/'+np,'np'),true)+rc('Маска',fx(maskIp(np),'m'),true)+rc('Заимствовано бит n',fx(borrow,'n'))+
+    rc('Бит под узлы m',fx(32-np,'hm'))+rc('Подсетей',fx(2**borrow,'ns'))+rc('Узлов в подсети',fx(Math.max(0,size-2),'h'))+rc('Шаг',fx(size,'st'));
+  const rows=Math.min(2**borrow,FILL?16:64);let t='';
+  for(let i=0;i<rows;i++){const s=(base+i*size)>>>0,b=(s+size-1)>>>0;
+    t+=`<tr><td>${i+1}</td><td>${fx(toIp(s)+'/'+np,'r'+i+'n')}</td><td>${size>2?fx(toIp(s+1),'r'+i+'f'):'нет'}</td><td>${size>2?fx(toIp(b-1),'r'+i+'l'):'нет'}</td><td>${fx(toIp(b),'r'+i+'b')}</td></tr>`;}
+  if(2**borrow>rows)t+=`<tr><td colspan="5" class="sm">показаны первые ${rows} из ${nfm(2**borrow)}</td></tr>`;
+  $('#ci-tab').innerHTML=t;applyFill(slideOf($('#ci-tab')));
+}
+['#ci-ip','#ci-p','#ci-mode','#ci-n'].forEach(s=>$(s).addEventListener('input',ciRender));
+$('#ci-gen').onclick=()=>{const c=pick([['10.0.0.0',8],['172.16.0.0',16],['192.168.0.0',16],['192.168.10.0',24],['192.168.15.0',24],['10.20.0.0',16]]);
+  $('#ci-ip').value=c[0];$('#ci-p').value=c[1];const m=pick(['nets','hosts']);$('#ci-mode').value=m;
+  $('#ci-n').value=m==='nets'?pick([2,3,4,6,8,12,16,50]):pick([2,6,14,20,30,50,62,100,500].filter(v=>v<2**(32-c[1])-2));
+  clearSlide(slideOf($('#ci-ip')));ciRender();};
+RERENDER.push(ciRender);
+
+/* ----- 35 VLSM ----- */
+function vlParse(){return $('#vl-seg').value.split(',').map(s=>s.trim()).filter(Boolean).map(s=>{const i=s.lastIndexOf(':');
+  return i<0?{name:s,need:2}:{name:s.slice(0,i).trim(),need:Math.max(1,+s.slice(i+1)||1)};});}
+function vlRender(){
+  const ip=$('#vl-ip').value;if(!validIp(ip))return;
+  const p=Math.max(0,Math.min(30,+$('#vl-p').value)),segs=vlParse();
+  let cur=(toInt(ip)&maskOf(p))>>>0;const limit=(cur+2**(32-p))>>>0;let used=0,t='',over=false;
+  segs.forEach((s,i)=>{const m=vlsmBits(s.need),blk=2**m,net=cur,bc=(net+blk-1)>>>0;
+    if(bc>=limit&&limit!==0)over=true;
+    t+=`<tr><td>${i+1}</td><td>${esc(s.name)}</td><td class="mono">${nfm(s.need)}</td><td class="mono">${fx(m,'m'+i)}</td><td class="mono">${fx(blk-2,'fa'+i)}</td><td class="mono">${fx(toIp(net),'n'+i)}</td><td class="mono">${fx(toIp(net+1),'f'+i)}</td><td class="mono">${fx(toIp(bc-1),'l'+i)}</td><td class="mono">${fx(toIp(bc),'b'+i)}</td><td class="mono">${fx('/'+(32-m),'p'+i)}</td></tr>`;
+    cur=(cur+blk)>>>0;used+=blk;});
+  $('#vl-tab').innerHTML=t;const total=2**(32-p);
+  $('#vl-out').innerHTML=rc('Использовано адресов',fx(used,'u'),true)+rc('Всего в базовой сети',nfm(total))+rc('Остаток',fx(total-used,'o'))+
+    rc('Эффективность',(100*segs.reduce((a,s)=>a+s.need,0)/Math.max(1,used)).toFixed(1)+' %')+(over?rc('Внимание','адресов не хватает',true):'');
+  applyFill(slideOf($('#vl-tab')));
+}
+$('#vl-sort').onclick=()=>{$('#vl-seg').value=vlParse().sort((a,b)=>b.need-a.need).map(x=>`${x.name}:${x.need}`).join(', ');vlRender();};
+['#vl-ip','#vl-p','#vl-seg'].forEach(s=>$(s).addEventListener('input',vlRender));
+$('#vl-gen').onclick=()=>{const b=pick([['10.10.0.0',16],['172.16.0.0',16],['192.168.0.0',22],['192.168.4.0',23]]);
+  const names=['Офис','Склад','Цех','Wi-Fi','Серверы','Бухгалтерия','Камеры'];const k=rnd(3,5);
+  const segs=names.sort(()=>Math.random()-.5).slice(0,k).map(n=>`${n}:${b[1]>=22?rnd(5,120):rnd(20,900)}`);segs.push('Канал R1-R2:2');
+  $('#vl-ip').value=b[0];$('#vl-p').value=b[1];$('#vl-seg').value=segs.join(', ');clearSlide(slideOf($('#vl-ip')));vlRender();};
+RERENDER.push(vlRender);
+
+/* ----- 33 VLSM линейка ----- */
+const VR=[{need:300,p:23,t:'HQ, 300 узлов: 2<sup>8</sup> − 2 = 254 мало, 2<sup>9</sup> − 2 = 510 хватает. Граница /23.'},
+  {need:70,p:25,t:'Ф2, 70 узлов: 2<sup>6</sup> − 2 = 62 мало, 2<sup>7</sup> − 2 = 126 хватает. Граница /25.'},
+  {need:20,p:27,t:'Ф1, 20 узлов: 2<sup>4</sup> − 2 = 14 мало, 2<sup>5</sup> − 2 = 30 хватает. Граница /27.'},
+  {need:2,p:30,t:'Каналы между маршрутизаторами, 2 узла: 2<sup>2</sup> − 2 = 2. Граница /30.'}];
+let vrCur=-1;
+function vrRender(){
+  $$('#vr-btns button').forEach((b,i)=>b.setAttribute('aria-pressed',i===vrCur));
+  const sel=vrCur>=0?VR[vrCur].p:-1;
+  const cells=[...Array(16)].map((_,i)=>{const pf=17+i,x=15-i;return {pf,x,h:x>=10?'−':String(2**x-2)};});
+  const bd=pf=>pf===sel?'box-shadow:inset 3px 0 0 var(--magenta)':'';
+  $('#vr-tab').innerHTML=`<tr><td></td><td></td>${cells.map(c=>`<td class="sm" style="${bd(c.pf)}">/${c.pf-1}</td>`).join('')}</tr>
+   <tr><td style="background:rgba(59,130,246,.35)">172</td><td style="background:rgba(59,130,246,.35)">16</td>${cells.map(c=>`<td style="background:${c.pf<=sel?'rgba(139,92,246,.4)':'rgba(59,130,246,.18)'};${bd(c.pf)}">0</td>`).join('')}</tr>
+   <tr><td></td><td></td>${cells.map(c=>`<td class="sm" style="${bd(c.pf)}">${c.x%8}</td>`).join('')}</tr>
+   <tr><td></td><td></td>${cells.map(c=>`<td style="${bd(c.pf)}">2<sup>${c.x}</sup>−2</td>`).join('')}</tr>
+   <tr><td></td><td></td>${cells.map(c=>`<td style="${bd(c.pf)};${c.pf-1===sel?'color:#fff;font-weight:700':''}">${c.h==='−'?'−':fx(c.h,'h'+c.x)}</td>`).join('')}</tr>`;
+  $('#vr-text').innerHTML=vrCur>=0?VR[vrCur].t:'Выберите требуемое число узлов: граница маски встанет на первую степень двойки, которой хватает.';
+  applyFill($('#vr-tab'));
+}
+$('#vr-btns').innerHTML=VR.map((v,i)=>`<button class="btn sm" data-i="${i}">${v.need} узлов</button>`).join('');
+$('#vr-btns').addEventListener('click',e=>{const b=e.target.closest('button');if(b){vrCur=+b.dataset.i;vrRender();}});
+RERENDER.push(vrRender);
+
+/* ----- 39 IPv6 /68 ----- */
+let v6=0;
+function v6Render(){
+  const hex=i=>i.toString(16).toUpperCase();
+  $('#v6-cur').innerHTML=`2001:ABCD:BCDA:0000:<span style="color:var(--amber)">${hex(v6)}</span>000::/68`;
+  $('#v6-cnt').textContent=`подсеть ${v6+1} из 16`;
+  $('#v6-list').innerHTML=[...Array(16)].map((_,i)=>`<span style="color:${i===v6?'#fff':i<v6?'var(--ink)':'rgba(155,146,194,.45)'}">2001:ABCD:BCDA:0000:${hex(i)}000::/68</span>`).join('');
+}
+$('#v6-next').onclick=()=>{v6=(v6+1)%16;v6Render();};
+
+/* ----- 40 тренажёр ----- */
+let score=[0,0],answered=false,curQ=null;
+const rndIp=()=>[1+Math.floor(Math.random()*222),...[0,0,0].map(()=>Math.floor(Math.random()*256))].join('.');
+const shuffle=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+const uniq=(right,gen)=>{const s=new Set([right]);let g=0;while(s.size<4&&g++<60)s.add(gen());return shuffle([...s]);};
+function makeQ(type){
+  if(type==='any')type=pick(['net','bcast','hosts','mask','pfx','class','belong']);
+  const p=8+Math.floor(Math.random()*22),ip=rndIp(),n=toInt(ip),size=2**(32-p),net=(n&maskOf(p))>>>0,bc=(net+size-1)>>>0;
+  switch(type){
+    case 'net':return{q:`Какой адрес сети у узла ${ip}/${p}?`,a:toIp(net),o:uniq(toIp(net),()=>toIp((toInt(rndIp())&maskOf(p))>>>0)),why:`Маска ${maskIp(p)}; побитовое И с адресом даёт ${toIp(net)}.`};
+    case 'bcast':return{q:`Широковещательный адрес подсети ${toIp(net)}/${p}?`,a:toIp(bc),o:uniq(toIp(bc),()=>toIp((net+2**(32-(8+Math.floor(Math.random()*22)))-1)>>>0)),why:`В узловой части все единицы: ${toIp(net)} + ${nfm(size)} − 1 = ${toIp(bc)}.`};
+    case 'hosts':return{q:`Сколько узлов можно адресовать в сети /${p}?`,a:nfm(size-2),o:uniq(nfm(size-2),()=>nfm(2**(32-(8+Math.floor(Math.random()*22)))-2)),why:`2^${32-p} − 2 = ${nfm(size-2)}: минус адрес сети и широковещательный.`};
+    case 'mask':return{q:`Какая маска соответствует префиксу /${p}?`,a:maskIp(p),o:uniq(maskIp(p),()=>maskIp(8+Math.floor(Math.random()*24))),why:`${p} старших единиц подряд дают ${maskIp(p)}.`};
+    case 'pfx':{const need=pick([2,6,14,30,62,126,254,510,1000]),m=Math.ceil(Math.log2(need+2)),r='/'+(32-m);
+      return{q:`Какой минимальный префикс вместит ${nfm(need)} узлов?`,a:r,o:uniq(r,()=>'/'+(20+Math.floor(Math.random()*12))),why:`Нужно ${m} бит под узлы: 2^${m} − 2 = ${nfm(2**m-2)}, этого хватает, префикс /${32-m}.`};}
+    case 'class':{const c=classOf((n>>>24)&255);
+      return{q:`К какому классу относится адрес ${ip}?`,a:'Класс '+c.k,o:shuffle(['Класс '+c.k,...shuffle(CLASSES.filter(x=>x.k!==c.k)).slice(0,3).map(x=>'Класс '+x.k)]),why:`Первый октет ${(n>>>24)&255} попадает в диапазон ${c.range}, класс ${c.k}.`};}
+    default:{const test=Math.random()<.5?toIp((net+1+Math.floor(Math.random()*Math.max(1,size-2)))>>>0):rndIp();const inside=toInt(test)>=net&&toInt(test)<=bc;
+      return{q:`Принадлежит ли адрес ${test} подсети ${toIp(net)}/${p}?`,a:inside?'да, входит':'не входит',o:['да, входит','не входит'],why:`Диапазон подсети: ${toIp(net)} – ${toIp(bc)}.`};}
+  }
+}
+function nextQ(){
+  answered=false;curQ=makeQ($('#q-type').value);$('#q-text').textContent=curQ.q;$('#q-fb').innerHTML='';
+  $('#q-opts').innerHTML=curQ.o.map(o=>`<button class="btn opt">${esc(o)}</button>`).join('');
+  $$('#q-opts .opt').forEach(b=>b.onclick=()=>{
+    if(answered)return;answered=true;const ok=b.textContent===curQ.a;score[1]++;if(ok)score[0]++;
+    $('#q-score').textContent=score[0]+' / '+score[1];
+    $$('#q-opts .opt').forEach(x=>{if(x.textContent===curQ.a)x.classList.add('right');else if(x===b)x.classList.add('wrong');});
+    $('#q-fb').innerHTML=`<div class="verdict ${ok?'ok':'no'}">${ok?'Верно. ':'Правильный ответ: '+esc(curQ.a)+'. '}${esc(curQ.why)}</div>`;
+  });
+}
+$('#q-next').onclick=nextQ;$('#q-type').onchange=nextQ;
+
+/* ===================== навигация ===================== */
+const slides=$$('.slide');let cur=0;
+slides.forEach((s,i)=>{s.dataset.idx=i;});
+$('#be-ip').closest('.slide').dataset.reset='be';
+function addFillbars(){
+  slides.forEach(s=>{
+    if($('.fillbar',s)||!($('.fx',s)||$('#be-mask',s)))return;
+    const bar=document.createElement('div');bar.className='fillbar';
+    bar.innerHTML='<span class="pr"></span><button class="btn sm" data-a="all" type="button">Показать все</button><button class="btn sm" data-a="clr" type="button">Очистить слайд</button>';
+    bar.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+      if(b.dataset.a==='clr')clearSlide(s);
+      else{$$('.fx',s).forEach(sp=>{const i=sp.querySelector('input');if(i){i.value=sp.dataset.a;checkInput(i,sp);}});updProg(s);}});
+    $('.wrap',s).prepend(bar);
+  });
+}
+const secs=[];slides.forEach((s,i)=>{if(!secs.find(x=>x.n===s.dataset.sec))secs.push({n:s.dataset.sec,i});});
+$('#tabs').innerHTML=secs.map(x=>`<button data-i="${x.i}">${x.n}</button>`).join('');
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)go(+b.dataset.i);});
+function go(i){
+  i=Math.max(0,Math.min(slides.length-1,i));if(i===cur&&slides[i].classList.contains('on'))return;
+  const back=i<cur;cur=i;
+  slides.forEach((s,k)=>{s.classList.toggle('on',k===cur);s.classList.toggle('back',k===cur&&back);});
+  $('#prog').style.width=(100*cur/(slides.length-1))+'%';$('#cnt').textContent=(cur+1)+' / '+slides.length;
+  const sec=slides[cur].dataset.sec;$$('#tabs button').forEach(b=>b.setAttribute('aria-current',slides[+b.dataset.i].dataset.sec===sec));
+  const act=$('#tabs button[aria-current=true]');if(act)act.scrollIntoView({block:'nearest',inline:'center'});
+  slides[cur].scrollTop=0;
+}
+$('#pv').onclick=()=>go(cur-1);$('#nx').onclick=()=>go(cur+1);
+function toggleOv(on){
+  const ov=$('#ov');on=on===undefined?!ov.classList.contains('on'):on;
+  if(on&&!$('#ov-g').children.length){
+    $('#ov-g').innerHTML=slides.map((s,i)=>`<button class="card" data-i="${i}"><div class="th"><div></div></div><div class="cap"><span>${i+1}</span>${esc(s.dataset.title||'')}</div></button>`).join('');
+    $$('#ov-g .card').forEach((c,i)=>{const cl=$('.wrap',slides[i]).cloneNode(true);$$('[id]',cl).forEach(e=>e.removeAttribute('id'));$$('input,button,select',cl).forEach(e=>e.tabIndex=-1);$('.th>div',c).appendChild(cl);});
+    $('#ov-g').addEventListener('click',e=>{const c=e.target.closest('.card');if(c){toggleOv(false);go(+c.dataset.i);}});
+  }
+  ov.classList.toggle('on',on);if(on){const c=$(`#ov-g .card[data-i="${cur}"]`);c&&c.focus();}
+}
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();toggleOv();return;}
+  if($('#ov').classList.contains('on'))return;
+  const tg=e.target.tagName;if(tg==='INPUT'||tg==='SELECT'||tg==='TEXTAREA')return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'){e.preventDefault();go(cur+1);}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1);}
+  else if(/^[1-9]$/.test(e.key)&&!e.ctrlKey&&!e.altKey&&!e.metaKey)go(+e.key-1);
+});
+let tx=null,ty=null;
+addEventListener('touchstart',e=>{const t=e.target;if(t.closest('input,select,.tscroll,.tape,svg'))return tx=null;tx=e.touches[0].clientX;ty=e.touches[0].clientY;},{passive:true});
+addEventListener('touchend',e=>{if(tx===null)return;const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;
+  if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)go(cur+(dx<0?1:-1));tx=null;});
+
+/* ===================== старт ===================== */
+l2Render();ntRender();ctRender();clRender();wsRender();cdRender();stRender();beRender();ciRender();vlRender();vrRender();v6Render();nextQ();
+slides.forEach(s=>$$('.fx',s).forEach((sp,j)=>{if(sp.dataset.a==null){sp.dataset.a=sp.textContent.trim();sp.dataset.k='s'+j;}}));
+addFillbars();$$('.slide').forEach(s=>applyFill(s));
+cur=-1;go(0);
+
+/* ===================== тесты движка =====================
+(function(){
+  const n=toInt('192.168.15.45'),p=26,net=(n&maskOf(p))>>>0,bc=(net+2**(32-p)-1)>>>0;
+  console.assert(toIp(net)==='192.168.15.0','сеть .0');
+  console.assert(toIp(bc)==='192.168.15.63','broadcast .63');
+  const b=5,np=8+b;console.assert(np===13&&2**(32-np)===524288,'/13, шаг 524288');
+  console.assert(cidrBorrow(8,'nets',32)===5,'32 подсети из /8: 5 бит');
+  console.assert(32-vlsmBits(1000)===22,'1000 узлов: /22');
+  console.assert(toIp(maskOf(1))==='128.0.0.0'&&toIp(toInt('200.1.2.3')&maskOf(1))==='128.0.0.0','работа выше 127.x и на /1');
+  console.log('тесты движка пройдены');
+})();
+*/
+</script>
+</body>
+</html>
