@@ -802,11 +802,12 @@ svg .rough{filter:url(#rough)}
   var slides=[].slice.call(document.querySelectorAll('.slide'));
   var n=slides.length, i=0, curRaf=null;
   slides.forEach(function(s,k){ var c=document.createElement('div'); c.className='counter'; c.textContent=(k+1)+' / '+n; s.appendChild(c); });
-  function fit(){ var s=Math.min(window.innerWidth/1920, window.innerHeight/1080); if(!(s>0)||!isFinite(s))s=1; deck.style.transform='scale('+s+')'; }
+  var DW=1920,DH=1080;
+  function fit(){ var W=window.innerWidth,H=window.innerHeight; if(!(W>0&&H>0))return; DW=1920;DH=1080; if(W/H>16/9)DW=Math.round(1080*W/H); else DH=Math.round(1920*H/W); deck.style.width=DW+'px'; deck.style.height=DH+'px'; deck.style.transform='scale('+(W/DW)+')'; }
   function fitSlide(sl){
     if(!sl)return; var pad=sl.querySelector('.pad'); if(!pad)return;
     pad.style.transform='none';
-    var dr=deck.getBoundingClientRect(), sc=dr.width/1920; if(!(sc>0))return;
+    var dr=deck.getBoundingClientRect(), sc=dr.width/DW; if(!(sc>0))return;
     var CT=1e9,CB=-1e9,CL=1e9,CR=-1e9, any=false;
     [].forEach.call(pad.children,function(c){
       var r=c.getBoundingClientRect(); if(r.width===0&&r.height===0)return; any=true;
@@ -814,7 +815,7 @@ svg .rough{filter:url(#rough)}
       if(t<CT)CT=t; if(b>CB)CB=b; if(l<CL)CL=l; if(rr>CR)CR=rr;
     });
     if(!any)return;
-    var availB=1080-20, availR=1920-20;
+    var availB=DH-20, availR=DW-20;
     if(CB<=availB && CR<=availR)return;
     var sh=Math.min((availB-CT)/(CB-CT),(availR-CL)/(CR-CL),1);
     if(sh<0.999){ pad.style.transformOrigin=CL+'px '+CT+'px'; pad.style.transform='scale('+sh.toFixed(4)+')'; }
