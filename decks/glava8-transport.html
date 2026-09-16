@@ -1,845 +1,615 @@
-<!doctype html>
-<html lang="ru">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Транспортный уровень · Глава 8</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Caveat:wght@500;600;700&family=Nunito+Sans:ital,wght@0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
-<style>
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Глава 8. Транспортный уровень</title><style>
 :root{
-  --blue:#1B6B93; --blue-d:#145374; --yellow:#F0A500; --white:#F0F4F8;
-  --ink:#1A2332; --paper:#EDF2F7;
-  --sage:#2D9596; --sage-d:#1F7A7A;
-  --peach:#FFD89C; --blush:#FF8C8C; --sky:#A8D8EA; --kraft:#C4D7E0;
-  --card:#F7FAFC;
-  --fd:"Fredoka",sans-serif; --fs:"Caveat",cursive; --fb:"Nunito Sans",sans-serif;
+  --paper:#f4f5fb;--card:#ffffff;--line:#dfe2f2;--tint:#eceefb;
+  --navy:#111a52;--indigo:#2a2fd0;--blue:#1f56ff;--violet:#6b3ff0;--crimson:#d81b60;
+  --ink:#1b2150;--dim:#5a6288;--ok:#1d8a5b;
+  --f:"Golos Text","Inter","Manrope","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono","Cascadia Mono","Consolas","Roboto Mono",ui-monospace,monospace;
+  --r:14px;--sh:0 1px 2px rgba(17,26,82,.05),0 8px 24px rgba(17,26,82,.07);
+  --ez:cubic-bezier(.22,.7,.3,1);--sp:1;
+  color-scheme:light;
 }
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;background:#1A2332;overflow:hidden;-webkit-tap-highlight-color:transparent}
-#stage{position:fixed;inset:0;display:grid;place-items:center;overflow:hidden}
-.deck{width:1920px;height:1080px;position:relative;transform-origin:center;flex:none}
-.slide{position:absolute;inset:0;display:none;overflow:hidden}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:clamp(14px,min(1.02vw,1.86vh),28px)}
+html,body{height:100%;overflow:hidden;background:var(--paper);color:var(--ink);font-family:var(--f)}
+body::before,body::after{content:"";position:fixed;z-index:0;width:clamp(56px,8vw,190px);aspect-ratio:1;pointer-events:none;
+  background:repeating-linear-gradient(135deg,rgba(255,255,255,.16) 0 2px,transparent 2px 13px),var(--navy)}
+body::before{left:0;top:0;clip-path:polygon(0 0,100% 0,0 100%)}
+body::after{right:0;bottom:0;clip-path:polygon(100% 0,100% 100%,0 100%)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+b{font-weight:700}
+#prog{position:fixed;left:0;top:0;height:4px;width:100%;z-index:30;background:var(--line)}
+#prog i{display:block;height:100%;width:0;background:var(--indigo);transition:width .3s var(--ez)}
+.slide{position:fixed;inset:0;z-index:1;display:none}
 .slide.on{display:block}
-.slide.bg-blue{background:var(--blue-d)}
-.slide.bg-white{background:var(--paper)}
-.slide.bg-white::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
-  background-image:
-    linear-gradient(rgba(26,35,50,.04) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(26,35,50,.04) 1px,transparent 1px);
-  background-size:48px 48px}
-.slide::after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.35;mix-blend-mode:multiply;
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23g)' opacity='0.32'/></svg>")}
-.slide.bg-blue::after{opacity:.25}
-.pad{position:absolute;inset:0;padding:96px 120px;z-index:2}
-
-.kick{font-family:var(--fs);font-weight:600;font-size:42px;line-height:1;letter-spacing:.01em}
-.h-d{font-family:var(--fd);font-weight:700;text-transform:uppercase;line-height:.95;letter-spacing:-.01em}
-.h-xl{font-size:150px}.h-lg{font-size:104px}.h-md{font-size:76px}.h-sm{font-size:54px}
-.cover-title{color:var(--blue);-webkit-text-stroke:7px var(--white);paint-order:stroke fill;
-  text-shadow:6px 7px 0 rgba(26,35,50,.22)}
-.cover-title .yl{color:var(--yellow);-webkit-text-stroke:7px var(--ink)}
-.body{font-family:var(--fb);font-weight:400;line-height:1.4}
-.b-xl{font-size:40px}.b-lg{font-size:34px}.b-md{font-size:29px}.b-sm{font-size:24px}
-.on-blue{color:var(--white)} .on-blue .yl{color:var(--yellow)}
-.on-white{color:var(--ink)} .on-white .yl{color:var(--ink);background:var(--yellow);padding:0 .12em;border-radius:.18em}
-.blue{color:var(--blue)} .white{color:var(--white)} .ink{color:var(--ink)} .yellowt{color:var(--yellow)}
-b,strong{font-weight:900}
-.mono-num{font-family:var(--fd);font-weight:600}
-
-.lead{max-width:22ch}
-.col{display:flex;flex-direction:column}
-.bullets{list-style:none;display:grid;gap:22px}
-.bullets li{position:relative;padding-left:52px;font-family:var(--fb);line-height:1.34}
-.bullets li::before{content:"";position:absolute;left:0;top:.12em;width:30px;height:30px;background:var(--yellow);
-  clip-path:polygon(50% 0,63% 37%,100% 50%,63% 63%,50% 100%,37% 63%,0 50%,37% 37%)}
-.bullets.dark li::before{background:var(--blue)}
-.steps{list-style:none;display:grid;gap:20px;counter-reset:s}
-.steps li{position:relative;padding-left:78px;font-family:var(--fb);line-height:1.34;min-height:52px;padding-top:6px}
-.steps li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:0;width:56px;height:56px;
-  border-radius:50%;background:var(--blue);color:#fff;font-family:var(--fd);font-weight:700;font-size:32px;
-  display:grid;place-items:center}
-.on-white .steps li::before{background:var(--blue);color:#fff}
-.on-blue .steps li::before{background:var(--yellow);color:var(--ink)}
-
-.card{background:var(--card);border:5px solid var(--blue);border-radius:34px;padding:44px 48px;
-  font-family:var(--fb);color:var(--ink);position:relative;
-  box-shadow:7px 9px 0 rgba(26,35,50,.13);transform:rotate(-.7deg)}
-.card .tag{font-family:var(--fs);font-weight:700;font-size:40px;color:var(--blue);display:block;margin-bottom:10px}
-.card.analogy{background:var(--yellow);border-color:var(--ink);transform:rotate(.8deg)}
-.card.analogy .tag{color:var(--ink)}
-.card::after{content:"";position:absolute;top:-15px;left:44px;width:118px;height:34px;
-  background:rgba(240,165,0,.6);transform:rotate(-5deg);box-shadow:0 2px 7px rgba(26,35,50,.14)}
-.card.analogy::after{background:rgba(168,216,234,.72)}
-
-.callout{background:var(--card);border-radius:28px;padding:40px 48px 40px 60px;position:relative;overflow:hidden;
-  font-family:var(--fb);color:var(--ink);box-shadow:0 0 0 4px var(--blue) inset,6px 8px 0 rgba(26,35,50,.12)}
-.callout::before{content:"";position:absolute;left:0;top:0;bottom:0;width:22px;background:var(--yellow)}
-.callout .term{font-family:var(--fd);font-weight:700;text-transform:uppercase;color:var(--blue);font-size:46px;margin-bottom:12px;line-height:1}
-.callout .def{font-size:32px;line-height:1.36}
-
-.lab{font-family:var(--fb);font-weight:700;font-size:24px;fill:var(--ink)}
-.lab-s{font-family:var(--fb);font-weight:700;font-size:19px;fill:var(--ink)}
-.note-hand{font-family:var(--fs);font-weight:600;font-size:38px;color:var(--blue)}
-
-.counter{position:absolute;right:64px;bottom:52px;z-index:5;font-family:var(--fd);font-weight:600;font-size:28px}
-.slide.bg-blue .counter{color:rgba(255,255,255,.72)} .slide.bg-white .counter{color:rgba(27,107,147,.5)}
-.tophint{position:absolute;left:120px;top:60px;z-index:3;font-family:var(--fb);font-weight:700;font-size:23px;
-  letter-spacing:.14em;text-transform:uppercase}
-.slide.bg-blue .tophint{color:var(--yellow)} .slide.bg-white .tophint{color:var(--blue)}
-
-.mtable{border-collapse:separate;border-spacing:0;width:100%;font-family:var(--fb);
-  border-radius:20px;overflow:hidden;box-shadow:6px 8px 0 rgba(26,35,50,.13);background:var(--card)}
-.mtable th,.mtable td{text-align:left;padding:22px 28px;font-size:28px;border-bottom:4px solid var(--blue)}
-.mtable th{font-family:var(--fd);font-weight:600;text-transform:uppercase;font-size:26px;color:var(--white);background:var(--blue)}
-.mtable td{color:var(--ink)}
-.mtable tr:last-child td{border-bottom:none}
-.mtable .hot td{background:var(--yellow)}
-
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
-.g2a{display:grid;grid-template-columns:1.05fr .95fr;gap:72px;align-items:center}
-.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:40px}
-
-.divider{height:0;border-top:5px dashed currentColor;opacity:.5}
-svg .rough{filter:url(#rough)}
-.doodle{position:absolute;z-index:1;pointer-events:none}
-
-.hintnav{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:20;color:#7a99b0;
-  font-family:var(--fb);font-size:15px;letter-spacing:.12em;text-transform:uppercase;opacity:.6}
-
-/* пакет-бар для схем TCP */
-.pkt-bar{display:flex;align-items:stretch;border-radius:12px;overflow:hidden;box-shadow:4px 5px 0 rgba(26,35,50,.13);font-family:var(--fd);font-weight:600;font-size:22px;color:#fff}
-.pkt-bar .field{padding:10px 16px;text-align:center;border-right:3px solid rgba(255,255,255,.3)}
-.pkt-bar .field:last-child{border-right:none}
-.pkt-bar .f-src{background:var(--blue)} .pkt-bar .f-dst{background:var(--sage)}
-.pkt-bar .f-seq{background:var(--blue-d)} .pkt-bar .f-ack{background:#2D9596}
-.pkt-bar .f-flags{background:var(--yellow);color:var(--ink)} .pkt-bar .f-win{background:#FF8C8C;color:var(--ink)}
-.pkt-bar .f-data{background:var(--card);color:var(--ink);flex:1;min-width:100px}
-
-/* Q&A карточки */
-.qa{background:var(--card);border:4px solid var(--blue);border-radius:20px;padding:26px 32px;cursor:pointer;
-  font-family:var(--fb);color:var(--ink);transition:.2s;box-shadow:4px 5px 0 rgba(26,35,50,.1)}
-.qa:hover{border-color:var(--yellow);transform:translateY(-2px)}
-.qa .q{font-weight:900;font-size:28px;margin-bottom:0}
-.qa .a{max-height:0;overflow:hidden;font-size:24px;line-height:1.4;opacity:0;transition:.3s}
-.qa.open .a{max-height:500px;opacity:1;margin-top:14px}
-.qa.open{border-color:var(--yellow);background:var(--peach)}
-
-@media print{
-  html,body{overflow:visible;background:#fff}
-  @page{size:1920px 1080px;margin:0}
-  #stage{position:static;display:block}
-  .deck{transform:none!important;width:1920px;height:auto}
-  .slide{position:relative!important;display:block!important;width:1920px;height:1080px;page-break-after:always;break-after:page}
-  .hintnav,.counter{--x:0}
-  .hintnav{display:none}
+.sc{height:100%;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;
+  padding:clamp(18px,5.4vh,70px) clamp(16px,6vw,130px) calc(5.4rem + 12px);scrollbar-width:thin}
+.wrap{margin:auto;width:100%;max-width:96rem}
+.sh{margin-bottom:1.6rem}
+.kick{font-size:.8rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--indigo);margin-bottom:.4rem}
+h2{font-size:2.5rem;line-height:1.08;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:-.01em;max-width:40ch}
+h3{font-size:1.1rem;color:var(--navy);font-weight:700;margin-bottom:.7rem;line-height:1.3}
+.p{font-size:1.2rem;line-height:1.5;margin-bottom:1rem;max-width:62ch}
+.p.lg{font-size:1.4rem}.p.sm{font-size:1.05rem;margin-bottom:.7rem}
+.p.wide{max-width:none;margin-bottom:1.3rem}
+.two{display:grid;grid-template-columns:minmax(0,1fr);gap:1.6rem 3rem;align-items:center}
+.g2{display:grid;grid-template-columns:minmax(0,1fr);gap:1.4rem}
+.g3{display:grid;grid-template-columns:minmax(0,1fr);gap:1.2rem}
+.vstack{display:flex;flex-direction:column;gap:.4rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+.dgcard{padding:1rem 1.2rem}
+.dg{display:block;width:100%;height:auto;max-height:66vh;overflow:visible}
+.wide2 .dg{max-height:46vh}
+/* steps & badges */
+.steps{list-style:none;display:flex;flex-direction:column;gap:1rem}
+.steps li{display:flex;gap:1rem;align-items:flex-start;font-size:1.2rem;line-height:1.45}
+.steps.sm li{font-size:1.02rem;gap:.8rem}
+.steps.big li{font-size:1.65rem;align-items:center}
+.steps.cols{display:grid;grid-template-columns:minmax(0,1fr);gap:1rem 3rem}
+.badge{flex:none;display:grid;place-items:center;width:2.1em;height:2.1em;border-radius:6px;color:#fff;font-weight:700;font-family:var(--mono);font-size:.9em;
+  background:linear-gradient(135deg,var(--indigo),var(--violet))}
+.steps.big .badge{font-size:.75em}
+.bul{list-style:none;display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem}
+.bul li{font-size:1.25rem;padding-left:1.4rem;position:relative}
+.bul li::before{content:"";position:absolute;left:0;top:.5em;width:.55rem;height:.55rem;border-radius:2px;background:var(--indigo)}
+.lst{padding:1.3rem 1.5rem}
+.lst .steps li{font-size:1.1rem}
+.callout{background:var(--tint);border-radius:var(--r);padding:.9rem 1.1rem}
+.note2{color:var(--dim);margin-top:1rem}
+.src{font-size:.85rem;color:var(--dim);margin-top:1rem}
+/* colors */
+.c-ind{--c:var(--indigo)}.c-blue{--c:var(--blue)}.c-vio{--c:var(--violet)}.c-cr{--c:var(--crimson)}.c-navy{--c:var(--navy)}.c-dim{--c:var(--dim)}
+/* reveal engine */
+[data-s]{opacity:0;transform:translateY(8px);
+  transition:opacity calc(220ms / var(--sp)) var(--ez) calc(var(--dl,0ms) / var(--sp)),transform calc(220ms / var(--sp)) var(--ez) calc(var(--dl,0ms) / var(--sp))}
+[data-s].in{opacity:1;transform:none}
+tr[data-s]{transform:none}
+.arr[data-s]{opacity:1;transform:none}
+.arr .draw{fill:none;stroke:var(--c);stroke-width:3.2;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;
+  transition:stroke-dashoffset calc(600ms / var(--sp)) linear}
+.arr.in .draw{stroke-dashoffset:0}
+.arr .head{fill:var(--c);opacity:0;transition:opacity calc(90ms / var(--sp)) linear calc(560ms / var(--sp))}
+.arr.in .head{opacity:1}
+.arr .lbl{opacity:0;fill:var(--c);font-size:21px;transition:opacity calc(220ms / var(--sp)) var(--ez) calc(750ms / var(--sp))}
+.arr.in .lbl{opacity:1}
+.arr .lbl .b{font-weight:800;font-family:var(--f)}
+.arr.kl .draw{stroke:var(--crimson);stroke-dasharray:.035 .03;opacity:.55;transition:opacity calc(300ms / var(--sp))}
+.arr.kl .lbl{fill:var(--crimson)}
+.mv{transition:transform calc(var(--md,900ms) / var(--sp)) var(--ez) calc(var(--dl,0ms) / var(--sp))}
+.mv.lin{transition-timing-function:linear}
+.mv.go{transform:translate(var(--dx,0px),var(--dy,0px))}
+.roll{transition:transform calc(1400ms / var(--sp)) steps(11,end)}
+.roll.go{transform:translateY(-374px)}
+.fd{transition:opacity calc(260ms / var(--sp)) var(--ez)}
+.fd.kl{opacity:0!important}
+.life{transition:opacity calc(700ms / var(--sp)) ease calc(var(--kd,0ms) / var(--sp))}
+.life.kl{opacity:.28}
+.dgm rect{transition:fill .3s,stroke .3s,opacity .3s}
+.dgm.kl rect{fill:none;stroke:var(--crimson);stroke-dasharray:6 5;opacity:.7}
+.ni,.ni *{transition:none!important}
+.pulse{animation:pls calc(400ms / var(--sp)) var(--ez) 1}
+@keyframes pls{0%,100%{background:var(--card);color:var(--navy)}25%,75%{background:var(--c);color:#fff}}
+/* svg primitives */
+.dg text{font-family:var(--f);font-size:22px;fill:var(--ink)}
+.dg .mono{font-family:var(--mono)}
+.ll{stroke:var(--dim);stroke-width:2;stroke-dasharray:6 7;opacity:.55}
+.node{fill:var(--navy)}.dg .nodet{fill:#fff;font-weight:700;font-size:23px}
+.okp{fill:var(--tint);stroke:var(--indigo);stroke-width:2}.dg .okpt{fill:var(--navy);font-weight:700}
+.segb{fill:#fff;stroke:var(--indigo);stroke-width:2.4}.segh{fill:var(--indigo)}
+.dg .segl{fill:#fff;font-size:15px;font-weight:600}.dg .segn{font-size:21px;font-weight:700;fill:var(--navy)}.dg .segs{font-size:15px;fill:var(--dim)}
+.roll text{font-family:var(--mono);font-size:26px;font-weight:700;fill:var(--indigo)}
+.file{fill:var(--tint);stroke:var(--indigo);stroke-width:2.4}.dg .filet{font-size:26px;font-weight:700;fill:var(--navy)}.dg .filen{font-size:32px;font-weight:700;fill:var(--indigo)}
+.dg .dgc{fill:var(--dim);font-size:22px}.dg .dgbig{font-size:28px;font-weight:700;fill:var(--navy)}
+.src.c-ind,.src.c-blue,.src.c-vio{}
+rect.src{fill:#fff;stroke:var(--c);stroke-width:2.4}.dg .srct{font-size:21px;font-weight:600;fill:var(--navy)}
+.muxb{fill:var(--navy)}.dg .muxt{fill:#fff;font-weight:800;font-size:26px}
+.rseg{fill:var(--c);stroke:#fff;stroke-width:1.5}
+.track{stroke:var(--line);stroke-width:4;stroke-linecap:round}
+.addr{fill:#fff;stroke:var(--line);stroke-width:2}.dg .addrk{fill:var(--dim);font-size:18px}.dg .addrv{font-size:24px;font-weight:700;fill:var(--navy)}
+.pairb{fill:var(--navy)}.dg .pairt{fill:#fff;font-weight:700;font-size:20px}
+.brk{fill:none;stroke:var(--indigo);stroke-width:2.4}.dg .brkt{fill:var(--indigo);font-size:18px;font-weight:600}
+.waitl{stroke:var(--crimson);stroke-width:5;stroke-dasharray:8 7}.dg .waitt{fill:var(--crimson);font-size:19px;font-weight:600}
+.xmark{stroke:var(--crimson);stroke-width:5;stroke-linecap:round;fill:none}.dg .lostt{fill:var(--crimson);font-size:20px;font-weight:700}
+.frame{fill:var(--tint);stroke:var(--line);stroke-width:2}.dg .framet{fill:var(--dim);font-size:19px}
+/* title */
+.tslide .sc{padding-left:clamp(16px,10vw,220px)}
+.title h1{font-size:clamp(2.4rem,6.5vw,5.6rem);line-height:1;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:-.02em;max-width:14ch;margin:.3rem 0 1.4rem}
+.kick.big{font-size:1rem}
+.lead{font-size:1.45rem;line-height:1.45;color:var(--dim);max-width:44ch;margin-bottom:2rem}
+.tchips{display:flex;flex-wrap:wrap;gap:.7rem;margin-bottom:3rem}
+.chip{border:1px solid var(--line);background:#fff;border-radius:var(--r);padding:.5rem .95rem;font-weight:700;color:var(--indigo);font-size:1.1rem}
+.authors{font-size:1.05rem;line-height:1.6;color:var(--ink)}
+/* specific */
+.pgrid{display:grid;gap:1rem}
+.proto{padding:1.4rem 1.6rem;display:flex;align-items:center;gap:1.4rem;font-size:1.2rem}
+.proto .pn{font-size:2.6rem;font-weight:800;color:var(--c)}
+.osi{display:flex;flex-direction:column;gap:.45rem}
+.layer{display:flex;gap:1rem;align-items:center;padding:.6rem 1rem;border:1px solid var(--line);border-radius:var(--r);background:#fff;font-size:1.15rem;color:var(--navy)}
+.layer .mono{color:var(--dim);width:1.4rem}
+.layer.hl{border-color:var(--indigo);font-weight:700;box-shadow:inset 0 0 0 1px var(--indigo)}
+.addrbig{display:flex;align-items:baseline;justify-content:center;padding:1.2rem;font-size:clamp(1.6rem,3.2vw,3.2rem);font-weight:700}
+.addrbig .ip{color:var(--indigo)}.addrbig .port{color:var(--violet)}.addrbig .colon{color:var(--dim)}
+.addrcap{display:flex;justify-content:space-around;font-weight:600;color:var(--c);margin-bottom:1rem}
+.addrcap span{color:var(--c)}
+.tw{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:1.1rem}
+.tbl th,.tbl td{text-align:left;padding:.5rem 1rem;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl thead th{background:var(--navy);color:#fff;font-weight:700}
+.tbl tbody th{font-weight:600;color:var(--navy)}
+.ports .tbl td{font-weight:700;color:var(--indigo);text-align:right}
+.ports .tbl thead th:last-child{text-align:right}
+.cmp{font-size:1rem;min-width:44rem}.cmp th:first-child{width:18%}
+.pg{padding:1.3rem 1.4rem}.pg .rng{font-size:1.7rem;font-weight:800;color:var(--c);margin-bottom:.5rem}.pg p{font-size:1.05rem;line-height:1.5}
+.hdrcard{padding:1.2rem 1.4rem}
+.ruler{display:flex;justify-content:space-between;color:var(--dim);font-size:.8rem;margin-bottom:.3rem}
+.hdr{display:flex;flex-direction:column;gap:.4rem}
+.hrow{display:grid;grid-template-columns:repeat(32,minmax(0,1fr));gap:.4rem}
+.fld{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:.15rem;
+  min-height:3.6rem;padding:.4rem;border:1.5px solid var(--line);border-radius:var(--r);background:var(--tint);cursor:help;outline:none;
+  transition:background .15s,border-color .15s}
+.fld b{font-size:1.02rem;color:var(--navy);line-height:1.15}.fld .mono{font-size:.8rem;color:var(--dim)}
+.fld:hover,.fld:focus-visible{background:#fff;border-color:var(--indigo);z-index:5}
+.tip{position:absolute;left:50%;bottom:calc(100% + 10px);transform:translate(-50%,4px);width:min(24rem,80vw);background:var(--navy);color:#fff;
+  font-size:.95rem;line-height:1.4;text-align:left;padding:.7rem .9rem;border-radius:var(--r);opacity:0;pointer-events:none;transition:opacity .15s,transform .15s}
+.fld:hover .tip,.fld:focus-visible .tip{opacity:1;transform:translate(-50%,0)}
+.hrow:first-child .tip{bottom:auto;top:calc(100% + 10px)}
+.hdata{margin-top:.4rem;padding:.8rem;text-align:center;border:1.5px dashed var(--line);border-radius:var(--r);color:var(--dim)}
+.fstrip{display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:1.3rem}
+.fplate{font-family:var(--mono);font-weight:800;font-size:1.2rem;padding:.45rem 1rem;border-radius:var(--r);border:1.5px solid var(--c);color:var(--navy);background:var(--card)}
+.fcard{padding:1.3rem 1.4rem}.fcard p{font-size:1.02rem;line-height:1.5}
+.ftag{display:inline-block;font-family:var(--mono);font-weight:800;font-size:1.5rem;color:var(--c);margin-bottom:.5rem}
+.ftag.sm{font-size:.95rem;margin:0 0 0 auto}
+.wcard{padding:1.1rem 1.2rem}
+.whead{display:flex;align-items:center;gap:.7rem;margin-bottom:.7rem;font-size:1.1rem;color:var(--navy)}
+.kv{display:flex;justify-content:space-between;gap:.8rem;font-size:.92rem;padding:.28rem 0;border-bottom:1px solid var(--line)}
+.kv span{color:var(--dim)}.kv b{color:var(--navy)}
+.note{font-size:.9rem;line-height:1.45;margin-top:.7rem;color:var(--ink)}
+.udph{display:grid;grid-template-columns:1fr 1fr;gap:.45rem;padding:1rem}
+.uf{display:flex;flex-direction:column;align-items:center;padding:.8rem;border-radius:var(--r);background:var(--tint);border:1.5px solid var(--line)}
+.uf b{color:var(--navy)}.uf .mono{color:var(--dim);font-size:.85rem}
+.ud{grid-column:span 2;background:#fff;border-style:dashed;color:var(--dim)}
+.app{padding:1.4rem}.appn{font-size:2rem;font-weight:800;color:var(--violet);margin-bottom:.6rem}.app p{font-size:1.1rem;line-height:1.5}
+/* trainers */
+.trn,.quiz{padding:1.5rem 1.6rem}
+.quiz{max-width:60rem}
+.tq{font-size:1.35rem;line-height:1.4;color:var(--navy);margin-bottom:1rem}
+.trow{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-bottom:.8rem}
+.trow input{font-size:1.3rem;width:8em;padding:.5rem .7rem;border:1.5px solid var(--line);border-radius:var(--r);color:var(--navy);background:#fff}
+.trow input:focus-visible{outline:3px solid var(--indigo);outline-offset:1px}
+.btn{font:inherit;font-size:.95rem;font-weight:600;padding:.55rem .95rem;border-radius:var(--r);border:1.5px solid var(--line);background:#fff;color:var(--navy);cursor:pointer;transition:background .15s,border-color .15s}
+.btn:hover{border-color:var(--indigo)}
+.btn:active{background:var(--tint)}
+.btn.pri{background:var(--indigo);border-color:var(--indigo);color:#fff}
+.btn.pri:hover{background:var(--navy)}
+.btn:focus-visible,.opt:focus-visible,#nav button:focus-visible,.ovi:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
+.tres{min-height:2.6rem;font-size:1.1rem;line-height:1.45;margin-bottom:.6rem}
+.tres.ok{color:var(--ok)}.tres.no{color:var(--crimson)}
+.tscore{color:var(--dim)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem}
+.opts.col{grid-template-columns:1fr 1fr}
+.opt{font:inherit;text-align:left;font-size:1.1rem;padding:.75rem 1rem;border-radius:var(--r);border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.opt:hover{border-color:var(--indigo)}
+.opt.ok{border-color:var(--ok);background:#e8f6ef}.opt.no{border-color:var(--crimson);background:#fdecf2}
+.qtop{display:flex;justify-content:space-between;color:var(--dim);margin-bottom:.6rem}
+/* nav */
+#nav{position:fixed;z-index:40;left:50%;bottom:12px;transform:translateX(-50%);display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;justify-content:center;
+  background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:.35rem .5rem;font-size:14px;max-width:calc(100vw - 24px)}
+#nav button{font:inherit;font-size:13px;font-weight:600;border:1px solid transparent;background:transparent;color:var(--navy);border-radius:10px;padding:.42rem .65rem;cursor:pointer;display:inline-flex;align-items:center;gap:.3rem}
+#nav button:hover{background:var(--tint)}
+#nav button[aria-pressed="true"]{background:var(--navy);color:#fff}
+#nav svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.nsep{width:1px;height:22px;background:var(--line);margin:0 .2rem}
+#ind{font-family:var(--mono);font-size:13px;color:var(--ink);padding:0 .4rem;white-space:nowrap}
+#ind .st{color:var(--dim);margin-left:.8rem}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;padding:2px}
+#ov{position:fixed;inset:0;z-index:60;background:rgba(244,245,251,.97);overflow:auto;padding:clamp(16px,5vh,60px) clamp(16px,6vw,120px)}
+#ov h2{margin-bottom:1.2rem;font-size:1.8rem}
+.ovg{display:grid;grid-template-columns:repeat(auto-fill,minmax(14rem,1fr));gap:.7rem}
+.ovi{font:inherit;text-align:left;display:flex;gap:.8rem;align-items:center;padding:.8rem 1rem;background:#fff;border:1px solid var(--line);border-radius:var(--r);cursor:pointer;color:var(--navy);font-size:1rem}
+.ovi:hover{border-color:var(--indigo)}.ovi.cur{border-color:var(--indigo);box-shadow:inset 0 0 0 1px var(--indigo)}
+.ovi .mono{color:var(--indigo);font-weight:700;width:2rem}
+@media (min-width:768px){.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (min-width:768px) and (max-width:1279px){.g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (min-width:1280px){
+  .two{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .steps.cols{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pgrid{grid-template-columns:1fr}
 }
-</style>
-
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <defs>
-    <filter id="rough" x="-6%" y="-30%" width="112%" height="160%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.014" numOctaves="2" seed="7" result="n"/>
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/>
-    </filter>
-    <symbol id="spark" viewBox="0 0 100 100">
-      <path d="M50 2 L60 40 L98 50 L60 60 L50 98 L40 60 L2 50 L40 40 Z"/>
-    </symbol>
-  </defs>
-</svg>
-
-<div id="stage"><div class="deck" id="deck">
-
-<!-- ===== 1. ТИТУЛ ===== -->
-<section class="slide bg-blue on-blue">
-  <svg class="doodle" style="left:-140px;bottom:-160px;width:820px;height:680px;opacity:.12" viewBox="0 0 600 500" preserveAspectRatio="none"><path d="M60,180 C40,80 160,20 300,30 C460,40 590,70 560,220 C540,340 590,470 420,470 C280,470 120,500 70,400 C30,320 80,270 60,180 Z" fill="var(--white)"/></svg>
-  <svg class="doodle" style="right:120px;top:120px;width:150px;transform:rotate(-12deg)" viewBox="0 0 100 100"><use href="#spark" fill="var(--yellow)"/></svg>
-  <svg class="doodle" style="left:70px;top:360px;width:110px;transform:rotate(8deg)" viewBox="0 0 100 100"><path d="M50 2 L60 40 L98 50 L60 60 L50 98 L40 60 L2 50 L40 40 Z" fill="none" stroke="var(--yellow)" stroke-width="6" stroke-linejoin="round"/></svg>
-  <div class="pad" style="display:flex;flex-direction:column;justify-content:center">
-    <div class="kick yellowt" style="margin-bottom:26px">учебная лекция · компьютерные сети</div>
-    <h1 class="h-d h-xl cover-title">ТРАНС<br>ПОРТНЫЙ <span class="yl">·</span><br>УРОВЕНЬ</h1>
-    <div class="body b-lg" style="margin-top:40px;opacity:.9">Глава 8 · TCP, UDP и как данные находят своё приложение</div>
-    <div class="kick" style="margin-top:64px;color:var(--white)">Ананко · Качур &nbsp;—&nbsp; VK · TG</div>
+@media (max-width:767px){
+  html{font-size:15px}
+  h2{font-size:min(1.9rem,30px)}
+  .sc{padding-bottom:9rem}
+  .steps.big li{font-size:1.3rem}
+  .hrow{gap:.25rem}.fld b{font-size:.75rem}.fld .mono{font-size:.65rem}.fld{min-height:3rem;padding:.25rem}
+  .opts,.opts.col{grid-template-columns:1fr}
+  .dg{max-height:none}
+  #nav{bottom:6px;font-size:12px}
+  #nav .lbl2{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none!important;animation:none!important}
+}
+@media print{.slide{display:block;position:relative;height:auto;page-break-after:always}[data-s]{opacity:1;transform:none}.arr .draw{stroke-dashoffset:0}.arr .head,.arr .lbl{opacity:1}#nav,#prog{display:none}html,body{overflow:visible;height:auto}}
+</style></head><body><div id="prog"><i></i></div><main id="deck"><section class="slide tslide" data-label="Титул"><div class="sc"><div class="wrap">
+<div class="title">
+  <div class="kick big">Глава 8</div>
+  <h1>Транспортный уровень</h1>
+  <p class="lead">Протоколы TCP и UDP: порты, сокеты, установка сеанса, надёжная и ускоренная передача данных</p>
+  <div class="tchips"><span class="chip mono">TCP</span><span class="chip mono">UDP</span><span class="chip mono">0 – 65535</span></div>
+  <p class="authors">Ананко Софья Михайловна<br>Качур Анна Юрьевна</p>
+</div></div></div></section><section class="slide " data-label="Цели главы"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Введение</div><h2>Цели данной главы</h2></header><ol class="steps big"><li data-s="1"><span class="badge">1</span><div>Протоколы, используемые на транспортном уровне;</div></li><li data-s="2"><span class="badge">2</span><div>Функции и задачи данных протоколов;</div></li><li data-s="3"><span class="badge">3</span><div>Установление сеанса и надежная передача данных с использованием протокола TCP;</div></li><li data-s="4"><span class="badge">4</span><div>Ускоренная передача данных через протокол UDP.</div></li></ol></div></div></section><section class="slide " data-label="Протоколы"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Введение</div><h2>Протоколы транспортного уровня</h2></header>
+<div class="two">
+  <p class="p lg">Основными протоколами транспортного уровня являются <b>TCP</b> и <b>UDP</b>. Они предназначены для передачи данных по сети, разделяя их на сегменты установленного размера. Более подробная информация о каждом протоколе будет представлена в рамках последующих тематических блоков.</p>
+  <div class="pgrid">
+    <div class="card proto c-ind" data-s="1"><span class="mono pn">TCP</span><span>надёжная доставка, установление сеанса</span></div>
+    <div class="card proto c-vio" data-s="2"><span class="mono pn">UDP</span><span>ускоренная передача без подтверждений</span></div>
   </div>
-</section>
-
-<!-- ===== 2. ЦЕЛИ ГЛАВЫ ===== -->
-<section class="slide bg-white on-white">
-  <div class="tophint">о чём эта глава</div>
-  <svg class="doodle" style="right:130px;top:110px;width:120px;transform:rotate(14deg)" viewBox="0 0 100 100"><use href="#spark" fill="var(--yellow)"/></svg>
-  <div class="pad" style="display:flex;flex-direction:column;justify-content:center">
-    <h2 class="h-d h-md blue" style="margin-bottom:54px">ЧЕТЫРЕ ВОПРОСА ЭТОЙ ГЛАВЫ</h2>
-    <ul class="steps b-xl ink" style="max-width:44ch;gap:34px">
-      <li>Какие <b>протоколы</b> используются на транспортном уровне</li>
-      <li>Каковы <b>функции и задачи</b> данных протоколов</li>
-      <li>Как работает <b>установление сеанса и надёжная передача</b> через TCP</li>
-      <li>Чем отличается <b>ускоренная передача</b> через UDP</li>
-    </ul>
+</div></div></div></section><section class="slide " data-label="Функции уровня"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Введение</div><h2>Значение и функции транспортного уровня</h2></header>
+<div class="two">
+  <div>
+    <p class="p" data-s="2">Транспортный уровень, являющийся <b>четвертым</b> уровнем в модели OSI, осуществляет передачу сегментов и выполняет роль посредника между уровнем приложений и нижними уровнями, которые используются сетевыми устройствами для передачи данных.</p>
+    <p class="p" data-s="3">Транспортный уровень может поддерживать несколько одновременных сеансов связи, сформированных несколькими приложениями, при этом отслеживая каждый процесс отдельно.</p>
   </div>
-</section>
-
-<!-- ===== 3. ПРОТОКОЛЫ ТРАНСПОРТНОГО УРОВНЯ — ЗНАЧЕНИЕ И ФУНКЦИИ ===== -->
-<section class="slide bg-white on-white">
-  <div class="tophint">8.1 · значение и функции</div>
-  <div class="pad g2a" style="top:56px">
-    <div class="col">
-      <h2 class="h-d h-sm blue" style="margin-bottom:28px">ПРОТОКОЛЫ<br>ТРАНСПОРТНОГО<br>УРОВНЯ</h2>
-      <p class="body b-md ink" style="max-width:32ch;margin-bottom:24px">Основными протоколами транспортного уровня являются <b>TCP</b> и <b>UDP</b>. Они предназначены для передачи данных по сети, разделяя их на пакеты установленного размера.</p>
-      <p class="body b-md ink" style="max-width:32ch">Транспортный уровень — <b>четвёртый</b> в модели OSI — осуществляет передачу сегментов и выполняет роль посредника между уровнем приложений и нижними уровнями.</p>
-    </div>
-    <svg viewBox="0 0 480 720" style="width:100%;height:740px">
-      <rect class="rough" x="60" y="20" width="360" height="82" rx="16" fill="#A8D8EA" stroke="var(--blue)" stroke-width="3"/><text x="240" y="70" text-anchor="middle" class="lab" fill="var(--ink)">Приложений</text>
-      <rect class="rough" x="60" y="118" width="360" height="82" rx="16" fill="#C4D7E0" stroke="var(--blue)" stroke-width="3"/><text x="240" y="168" text-anchor="middle" class="lab" fill="var(--ink)">Представления</text>
-      <rect class="rough" x="60" y="216" width="360" height="82" rx="16" fill="#C4D7E0" stroke="var(--blue)" stroke-width="3"/><text x="240" y="266" text-anchor="middle" class="lab" fill="var(--ink)">Сеансовый</text>
-      <rect class="rough" x="60" y="314" width="360" height="82" rx="16" fill="var(--yellow)" stroke="var(--blue)" stroke-width="5"/><text x="240" y="364" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:28px" fill="var(--ink)">Транспортный</text>
-      <text x="240" y="410" text-anchor="middle" class="lab-s" fill="var(--blue)">← TCP · UDP →</text>
-      <rect class="rough" x="60" y="428" width="360" height="82" rx="16" fill="#C4D7E0" stroke="var(--blue)" stroke-width="3"/><text x="240" y="478" text-anchor="middle" class="lab" fill="var(--ink)">Сетевой</text>
-      <rect class="rough" x="60" y="526" width="360" height="82" rx="16" fill="#C4D7E0" stroke="var(--blue)" stroke-width="3"/><text x="240" y="576" text-anchor="middle" class="lab" fill="var(--ink)">Канальный</text>
-      <rect class="rough" x="60" y="624" width="360" height="82" rx="16" fill="#C4D7E0" stroke="var(--blue)" stroke-width="3"/><text x="240" y="674" text-anchor="middle" class="lab" fill="var(--ink)">Физический</text>
-    </svg>
+  <div class="osi"><div class="layer" data-s="1" style="--dl:0ms"><span class="mono">7</span>Прикладной</div><div class="layer" data-s="1" style="--dl:70ms"><span class="mono">6</span>Представления</div><div class="layer" data-s="1" style="--dl:140ms"><span class="mono">5</span>Сеансовый</div><div class="layer hl c-ind" data-s="1" style="--dl:210ms" data-p="2"><span class="mono">4</span>Транспортный</div><div class="layer" data-s="1" style="--dl:280ms"><span class="mono">3</span>Сетевой</div><div class="layer" data-s="1" style="--dl:350ms"><span class="mono">2</span>Канальный</div><div class="layer" data-s="1" style="--dl:420ms"><span class="mono">1</span>Физический</div></div>
+</div></div></div></section><section class="slide " data-label="Сегментация"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Сегменты и потоки</div><h2>Сегментация TCP/UDP</h2></header>
+<div class="two">
+  <div>
+    <p class="p">С целью передачи больших объемов данных существует <b>сегментация</b>. Суть сегментации состоит в разделении большого объема данных на меньшие фрагменты, которые затем снабжаются заголовками и передаются по сети. В большинстве случаев данные разбиваются на сегменты размером не превышающим <b class="mono">1460</b> байт. Например, при передаче файла размером <b class="mono">300</b> килобайт он будет разделен на <b class="mono">206</b> фрагментов, которые затем передадутся по сети.</p>
+    <p class="p" data-s="5">Использование сегментации позволяет передавать большие объемы данных в средах передачи данных с ограниченной пропускной способностью. Кроме того, сегментация позволяет мультиплексировать данные из различных приложений через один канал передачи.</p>
   </div>
-</section>
-
-<!-- ===== 4. СЕГМЕНТАЦИЯ TCP/UDP ===== -->
-<section class="slide bg-white on-white">
-  <div class="tophint">8.1 · сегментация</div>
-  <div class="pad" style="top:70px">
-    <h2 class="h-d h-sm blue" style="margin-bottom:24px">СЕГМЕНТАЦИЯ TCP/UDP</h2>
-    <p class="body b-md ink" style="max-width:60ch;margin-bottom:32px">С целью передачи больших объёмов данных существует <b>сегментация</b> — разделение данных на меньшие фрагменты, которые затем снабжаются заголовками и передаются по сети.</p>
-    <svg viewBox="0 0 1680 520" style="width:100%;height:440px">
-      <rect class="rough" x="540" y="20" width="600" height="70" rx="16" fill="var(--sky)" stroke="var(--blue)" stroke-width="3"/>
-      <text x="840" y="64" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:30px" fill="var(--ink)">Файл 300 Кбайт</text>
-      <line x1="840" y1="90" x2="840" y2="150" stroke="var(--blue)" stroke-width="4" marker-end="url(#arrowB)"/>
-      <rect class="rough" x="140" y="160" width="230" height="70" rx="14" fill="var(--peach)" stroke="var(--yellow)" stroke-width="3"/>
-      <text x="255" y="204" text-anchor="middle" class="lab" fill="var(--ink)">Сегмент 1</text>
-      <text x="255" y="250" text-anchor="middle" class="lab-s" fill="var(--blue)">1500 байт</text>
-      <rect class="rough" x="420" y="160" width="230" height="70" rx="14" fill="var(--peach)" stroke="var(--yellow)" stroke-width="3"/>
-      <text x="535" y="204" text-anchor="middle" class="lab" fill="var(--ink)">Сегмент 2</text>
-      <text x="535" y="250" text-anchor="middle" class="lab-s" fill="var(--blue)">1500 байт</text>
-      <text x="810" y="204" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:40px" fill="var(--ink)">. . .</text>
-      <rect class="rough" x="960" y="160" width="260" height="70" rx="14" fill="var(--peach)" stroke="var(--yellow)" stroke-width="3"/>
-      <text x="1090" y="204" text-anchor="middle" class="lab" fill="var(--ink)">Сегмент 200</text>
-      <text x="1090" y="250" text-anchor="middle" class="lab-s" fill="var(--blue)">1500 байт</text>
-      <line x1="255" y1="270" x2="255" y2="330" stroke="var(--sage)" stroke-width="3" marker-end="url(#arrowG)"/>
-      <line x1="535" y1="270" x2="535" y2="330" stroke="var(--sage)" stroke-width="3" marker-end="url(#arrowG)"/>
-      <line x1="1090" y1="270" x2="1090" y2="330" stroke="var(--sage)" stroke-width="3" marker-end="url(#arrowG)"/>
-      <rect class="rough" x="60" y="340" width="130" height="70" rx="12" fill="var(--sage)" stroke="var(--sage-d)" stroke-width="3"/>
-      <text x="125" y="384" text-anchor="middle" style="font-family:Fredoka;font-weight:600;font-size:20px" fill="#fff">Загол. 1</text>
-      <rect class="rough" x="190" y="340" width="230" height="70" rx="12" fill="var(--peach)" stroke="var(--yellow)" stroke-width="3"/>
-      <text x="305" y="384" text-anchor="middle" class="lab" fill="var(--ink)">Данные 1</text>
-      <rect class="rough" x="480" y="340" width="130" height="70" rx="12" fill="var(--sage)" stroke="var(--sage-d)" stroke-width="3"/>
-      <text x="545" y="384" text-anchor="middle" style="font-family:Fredoka;font-weight:600;font-size:20px" fill="#fff">Загол. 2</text>
-      <rect class="rough" x="610" y="340" width="230" height="70" rx="12" fill="var(--peach)" stroke="var(--yellow)" stroke-width="3"/>
-      <text x="725" y="384" text-anchor="middle" class="lab" fill="var(--ink)">Данные 2</text>
-      <text x="930" y="384" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:36px" fill="var(--ink)">. . .</text>
-      <rect class="rough" x="1060" y="340" width="140" height="70" rx="12" fill="var(--sage)" stroke="var(--sage-d)" stroke-width="3"/>
-      <text x="1130" y="384" text-anchor="middle" style="font-family:Fredoka;font-weight:600;font-size:18px" fill="#fff">Загол. 200</text>
-      <rect class="rough" x="1200" y="340" width="240" height="70" rx="12" fill="var(--peach)" stroke="var(--yellow)" stroke-width="3"/>
-      <text x="1320" y="384" text-anchor="middle" class="lab" fill="var(--ink)">Данные 200</text>
-      <text x="840" y="480" text-anchor="middle" style="font-family:Caveat;font-weight:600;font-size:34px" fill="var(--blue)">Сегментация позволяет мультиплексировать данные от разных приложений</text>
-    </svg>
+  <div class="card dgcard"><svg class="dg" viewBox="0 0 1000 320" role="img"><g class="fd" data-s="1" data-k="2" data-w="700"><rect class="file" x="30" y="90" width="330" height="140" rx="14"/><text class="filet" x="195" y="150" text-anchor="middle">Файл</text><text class="mono filen" x="195" y="192" text-anchor="middle">300 КБ</text></g><g data-s="2"><g class="mv" data-m="3" style="--dx:500px;--dl:0ms;--md:800ms"><rect class="segb" x="40" y="100" width="74" height="120" rx="10"/><rect class="segh" x="40" y="100" width="74" height="28" rx="10"/><rect class="segh" x="40" y="116" width="74" height="12"/><text class="segl" x="77" y="120" text-anchor="middle">заг.</text><text class="mono segn" x="77" y="170" text-anchor="middle">1460</text><text class="segs" x="77" y="196" text-anchor="middle">байт</text></g></g><g data-s="2"><g class="mv" data-m="3" style="--dx:536px;--dl:80ms;--md:800ms"><rect class="segb" x="122" y="100" width="74" height="120" rx="10"/><rect class="segh" x="122" y="100" width="74" height="28" rx="10"/><rect class="segh" x="122" y="116" width="74" height="12"/><text class="segl" x="159" y="120" text-anchor="middle">заг.</text><text class="mono segn" x="159" y="170" text-anchor="middle">1460</text><text class="segs" x="159" y="196" text-anchor="middle">байт</text></g></g><g data-s="2"><g class="mv" data-m="3" style="--dx:572px;--dl:160ms;--md:800ms"><rect class="segb" x="204" y="100" width="74" height="120" rx="10"/><rect class="segh" x="204" y="100" width="74" height="28" rx="10"/><rect class="segh" x="204" y="116" width="74" height="12"/><text class="segl" x="241" y="120" text-anchor="middle">заг.</text><text class="mono segn" x="241" y="170" text-anchor="middle">1460</text><text class="segs" x="241" y="196" text-anchor="middle">байт</text></g></g><g data-s="2"><g class="mv" data-m="3" style="--dx:608px;--dl:240ms;--md:800ms"><rect class="segb" x="286" y="100" width="74" height="120" rx="10"/><rect class="segh" x="286" y="100" width="74" height="28" rx="10"/><rect class="segh" x="286" y="116" width="74" height="12"/><text class="segl" x="323" y="120" text-anchor="middle">заг.</text><text class="mono segn" x="323" y="170" text-anchor="middle">1460</text><text class="segs" x="323" y="196" text-anchor="middle">байт</text></g></g><text class="dgc" data-s="3" x="740" y="70" text-anchor="middle" style="--dl:500ms">сегменты по 1460 байт</text><text class="mono dgbig" data-s="4" x="500" y="296" text-anchor="middle">300 КБ   =   206 фрагментов</text></svg></div>
+</div></div></div></section><section class="slide " data-label="Мультиплексирование"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Сегменты и потоки</div><h2>Мультиплексирование</h2></header>
+<p class="p wide">Чтобы предотвратить заполнение всей полосы пропускания одним типом данных, что может привести к блокированию передачи другой информации, используется сегментация. С помощью <b>мультиплексирования</b> (чередования) сегментов существует возможность передачи большого количества различных данных в одной и той же сети.</p>
+<div class="card dgcard wide2"><svg class="dg" viewBox="0 0 1000 400" role="img"><g data-s="1"><rect class="src c-ind" x="20" y="40" width="180" height="60" rx="12"/><text class="srct" x="110" y="78" text-anchor="middle">Приложение 1</text></g><g class="arr c-ind" data-s="1" data-w="800"><path class="draw" pathLength="1" d="M200 70 C330 70 360 180 470 185"/></g><g data-s="2"><rect class="src c-blue" x="20" y="170" width="180" height="60" rx="12"/><text class="srct" x="110" y="208" text-anchor="middle">Приложение 2</text></g><g class="arr c-blue" data-s="2" data-w="800"><path class="draw" pathLength="1" d="M200 200 C330 200 360 200 470 200"/></g><g data-s="3"><rect class="src c-vio" x="20" y="300" width="180" height="60" rx="12"/><text class="srct" x="110" y="338" text-anchor="middle">Приложение 3</text></g><g class="arr c-vio" data-s="3" data-w="800"><path class="draw" pathLength="1" d="M200 330 C330 330 360 220 470 215"/></g><g data-s="5" style="--dl:200ms"><line class="track" x1="580" y1="236" x2="990" y2="236"/><text class="dgc" x="785" y="280" text-anchor="middle">один канал передачи</text></g><g data-s="5" data-w="1500"><g class="mv c-ind" data-m="5" style="--dx:120px;--dl:880ms;--md:900ms"><rect class="rseg" x="490" y="180" width="38" height="40" rx="6"/></g><g class="mv c-blue" data-m="5" style="--dx:164px;--dl:770ms;--md:900ms"><rect class="rseg" x="490" y="180" width="38" height="40" rx="6"/></g><g class="mv c-vio" data-m="5" style="--dx:208px;--dl:660ms;--md:900ms"><rect class="rseg" x="490" y="180" width="38" height="40" rx="6"/></g><g class="mv c-ind" data-m="5" style="--dx:252px;--dl:550ms;--md:900ms"><rect class="rseg" x="490" y="180" width="38" height="40" rx="6"/></g><g class="mv c-blue" data-m="5" style="--dx:296px;--dl:440ms;--md:900ms"><rect class="rseg" x="490" y="180" width="38" height="40" rx="6"/></g><g class="mv c-vio" data-m="5" style="--dx:340px;--dl:330ms;--md:900ms"><rect class="rseg" x="490" y="180" width="38" height="40" rx="6"/></g><g class="mv c-ind" data-m="5" style="--dx:384px;--dl:220ms;--md:900ms"><rect class="rseg" x="490" y="180" width="38" height="40" rx="6"/></g><g class="mv c-blue" data-m="5" style="--dx:428px;--dl:110ms;--md:900ms"><rect class="rseg" x="490" y="180" width="38" height="40" rx="6"/></g><g class="mv c-vio" data-m="5" style="--dx:472px;--dl:0ms;--md:900ms"><rect class="rseg" x="490" y="180" width="38" height="40" rx="6"/></g></g><g data-s="4"><rect class="muxb" x="470" y="140" width="110" height="120" rx="14"/><text class="muxt" x="525" y="208" text-anchor="middle">MUX</text></g></svg></div></div></div></section><section class="slide " data-label="Адресация"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Порты и сокеты</div><h2>Адресация транспортного уровня</h2></header>
+<div class="two">
+  <div>
+    <p class="p">Идентификация приложений на транспортном уровне осуществляется с использованием портов.</p>
+    <p class="p" data-s="1"><b>Порт</b> – это идентификатор приложения (протокола), которое обрабатывает текущий сегмент на устройстве отправителя и на устройстве получателя.</p>
+    <p class="p" data-s="2">Порты являются дополнительным компонентом IP-адреса и представляют собой значения в диапазоне от <b class="mono">0</b> до <b class="mono">65535</b>. Они указываются в заголовке TCP/UDP и состоят из 16-битных чисел, отвечающих за порт источника и порт назначения соответственно.</p>
   </div>
-</section>
-
-<!-- ===== 5. МУЛЬТИПЛЕКСИРОВАНИЕ ===== -->
-<section class="slide bg-blue on-blue">
-  <svg class="doodle" style="right:-100px;top:-100px;width:600px;height:500px;opacity:.1" viewBox="0 0 600 500" preserveAspectRatio="none"><path d="M60,180 C40,80 160,20 300,30 C460,40 590,70 560,220 C540,340 590,470 420,470 C280,470 120,500 70,400 C30,320 80,270 60,180 Z" fill="var(--white)"/></svg>
-  <div class="pad" style="display:flex;flex-direction:column;justify-content:center">
-    <div class="tophint">8.1 · мультиплексирование</div>
-    <h2 class="h-d h-md" style="margin-bottom:32px">МУЛЬТИПЛЕКСИ<br>РОВАНИЕ</h2>
-    <p class="body b-lg white" style="max-width:52ch;margin-bottom:36px;opacity:.95">Чтобы предотвратить заполнение всей полосы пропускания одним типом данных, используется <b class="yellowt">сегментация</b>. С помощью <b class="yellowt">мультиплексирования</b> (чередования) сегментов существует возможность передачи большого количества различных данных в одной и той же сети.</p>
-    <svg viewBox="0 0 1600 400" style="width:100%;height:340px">
-      <rect x="40" y="40" width="200" height="120" rx="20" fill="var(--sage)" stroke="var(--yellow)" stroke-width="4"/>
-      <text x="140" y="90" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:24px" fill="#fff">Telegram</text>
-      <text x="140" y="120" text-anchor="middle" style="font-family:Nunito Sans;font-weight:700;font-size:18px" fill="var(--yellow)">сегменты</text>
-      <rect x="40" y="220" width="200" height="120" rx="20" fill="var(--blue)" stroke="var(--yellow)" stroke-width="4"/>
-      <text x="140" y="270" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:24px" fill="#fff">Chrome</text>
-      <text x="140" y="300" text-anchor="middle" style="font-family:Nunito Sans;font-weight:700;font-size:18px" fill="var(--yellow)">сегменты</text>
-      <!-- стрелки к маршрутизатору -->
-      <line x1="240" y1="100" x2="600" y2="190" stroke="var(--peach)" stroke-width="5"/>
-      <line x1="240" y1="280" x2="600" y2="210" stroke="var(--sky)" stroke-width="5"/>
-      <!-- маршрутизатор -->
-      <rect x="600" y="150" width="200" height="100" rx="20" fill="var(--yellow)" stroke="var(--ink)" stroke-width="4"/>
-      <text x="700" y="210" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:26px" fill="var(--ink)">Маршрутизатор</text>
-      <!-- стрелки к получателям -->
-      <line x1="800" y1="190" x2="1100" y2="100" stroke="var(--peach)" stroke-width="5"/>
-      <line x1="800" y1="210" x2="1100" y2="280" stroke="var(--sky)" stroke-width="5"/>
-      <!-- получатели -->
-      <rect x="1100" y="40" width="220" height="120" rx="20" fill="var(--sage)" stroke="var(--yellow)" stroke-width="4"/>
-      <text x="1210" y="90" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:24px" fill="#fff">Telegram</text>
-      <text x="1210" y="120" text-anchor="middle" style="font-family:Nunito Sans;font-weight:700;font-size:18px" fill="var(--yellow)">получатель</text>
-      <rect x="1100" y="220" width="220" height="120" rx="20" fill="var(--blue)" stroke="var(--yellow)" stroke-width="4"/>
-      <text x="1210" y="270" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:24px" fill="#fff">Chrome</text>
-      <text x="1210" y="300" text-anchor="middle" style="font-family:Nunito Sans;font-weight:700;font-size:18px" fill="var(--yellow)">получатель</text>
-    </svg>
+  <div class="vstack">
+    <p class="p" data-s="3">Номер порта представлен вместе с IP-адресом в следующем формате:</p>
+    <div class="addrbig card" data-s="3"><span class="mono ip">192.168.1.19</span><span class="mono colon">:</span><span class="mono port">80</span></div>
+    <div class="addrcap" data-s="4"><span class="c-ind">IP-адрес узла</span><span class="c-vio">порт приложения</span></div>
+    <p class="p" data-s="5">В таблице на следующем слайде показаны наиболее известные порты и приложения, которые они идентифицируют.</p>
   </div>
-</section>
-
-<!-- ===== 6. АДРЕСАЦИЯ — ПОРТЫ ===== -->
-<section class="slide bg-white on-white">
-  <div class="tophint">8.1 · адресация транспортного уровня</div>
-  <div class="pad g2a" style="top:60px">
-    <div class="col">
-      <h2 class="h-d h-sm blue" style="margin-bottom:22px">АДРЕСАЦИЯ<br>ТРАНСПОРТНОГО<br>УРОВНЯ</h2>
-      <div class="callout" style="margin-bottom:24px">
-        <div class="term">Порт</div>
-        <div class="def">Идентификатор приложения (протокола), которое обрабатывает текущий сегмент на устройстве отправителя и на устройстве получателя.</div>
-      </div>
-      <p class="body b-md ink" style="max-width:32ch">Порты — дополнительный компонент IP-адреса, значения от <b>0</b> до <b>65535</b>. Указываются в заголовке TCP/UDP как 16-битные числа. Формат: <b>192.168.1.19:80</b></p>
-    </div>
-    <table class="mtable">
-      <tr><th>Сервис</th><th>Порт</th></tr>
-      <tr><td>HTTP</td><td>80</td></tr>
-      <tr><td>HTTPS</td><td>443</td></tr>
-      <tr class="hot"><td>SSH</td><td>22</td></tr>
-      <tr><td>DNS</td><td>53</td></tr>
-      <tr><td>FTP (команды / данные)</td><td>21 / 20</td></tr>
-      <tr><td>SMTP</td><td>25</td></tr>
-      <tr><td>POP3</td><td>110</td></tr>
-      <tr><td>IMAP</td><td>143</td></tr>
-      <tr><td>TFTP</td><td>69</td></tr>
-      <tr><td>Telnet</td><td>23</td></tr>
-      <tr><td>DHCP (клиент / сервер)</td><td>68 / 67</td></tr>
-      <tr><td>NTP</td><td>123</td></tr>
-    </table>
+</div></div></div></section><section class="slide " data-label="Известные порты"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Порты и сокеты</div><h2>Наиболее известные порты</h2></header><div class="g2 ports"><div class="tw card" data-s="1"><table class="tbl"><thead><tr><th>Сервис</th><th>Порт</th></tr></thead><tbody><tr><th>HTTP</th><td class="mono">80</td></tr><tr><th>SSH</th><td class="mono">22</td></tr><tr><th>DNS</th><td class="mono">53</td></tr><tr><th>POP3</th><td class="mono">110</td></tr><tr><th>IMAP</th><td class="mono">143</td></tr><tr><th>FTP (команды)</th><td class="mono">21</td></tr><tr><th>FTP (передача)</th><td class="mono">20</td></tr></tbody></table></div><div class="tw card" data-s="2"><table class="tbl"><thead><tr><th>Сервис</th><th>Порт</th></tr></thead><tbody><tr><th>TFTP</th><td class="mono">69</td></tr><tr><th>Telnet</th><td class="mono">23</td></tr><tr><th>HTTPS</th><td class="mono">443</td></tr><tr><th>NTP</th><td class="mono">123</td></tr><tr><th>DHCP (клиент)</th><td class="mono">67</td></tr><tr><th>DHCP (сервер)</th><td class="mono">68</td></tr><tr><th>SMTP</th><td class="mono">25</td></tr></tbody></table></div></div></div></div></section><section class="slide " data-label="Сокеты"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Порты и сокеты</div><h2>Сокеты и принцип адресации</h2></header>
+<div class="two">
+  <p class="p lg"><b>Сокет</b> – это сочетания IP-адреса источника с номером порта источника и IP-адреса назначения с номером порта назначения. Такая связка «IP-адрес:Порт» позволяет однозначно определить конечную точку доставки сообщения, потому что оно будет адресовано не просто какому-то устройству, а конкретному приложению на данном устройстве.</p>
+  <div class="card dgcard"><svg class="dg" viewBox="0 0 760 300" role="img"><g data-s="1"><rect class="addr" x="10" y="120" width="260" height="92" rx="14"/><text class="addrk" x="140" y="154" text-anchor="middle">источник</text><text class="mono addrv" x="140" y="190" text-anchor="middle">IP-адрес:54824</text></g><g data-s="2"><rect class="addr" x="490" y="120" width="260" height="92" rx="14"/><text class="addrk" x="620" y="154" text-anchor="middle">назначение</text><text class="mono addrv" x="620" y="190" text-anchor="middle">IP-адрес:443</text></g><g class="arr c-ind" data-s="3" data-w="900"><path class="draw" pathLength="1" d="M270 166L478.0 166.0"/><polygon class="head" points="490.0,166.0 468.0,175.0 468.0,157.0"/></g><g data-s="4"><rect class="pairb" x="300" y="60" width="160" height="46" rx="12"/><text class="pairt" x="380" y="90" text-anchor="middle">сокет-пара</text></g></svg></div>
+</div></div></div></section><section class="slide " data-label="Группы портов"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Порты и сокеты</div><h2>Группы номеров портов</h2></header>
+<p class="p wide">Всего существует три группы портов: общеизвестные, зарегистрированные и динамические/частные.</p>
+<div class="g3">
+  <article class="card pg c-ind" data-s="1"><div class="mono rng">0 – 1023</div><h3>Известные порты</h3><p>Общеизвестные порты зарезервированы для определенных служб и приложений. Они используется, например, веб-службами (HTTP - порт <b class="mono">80</b>) / почтовыми клиентами (POP3 - порт <b class="mono">110</b>).</p></article>
+  <article class="card pg c-blue" data-s="2"><div class="mono rng">1024 – 49151</div><h3>Зарегистрированные порты</h3><p>Зарегистрированные порты регистрируется организацией IANA для каких-либо нестандартных служб, в основном, это службы, которыми пользуются не все пользователи, к примеру, RADIUS-сервер использует порт <b class="mono">1812</b> для аутентификации пользователей.</p></article>
+  <article class="card pg c-vio" data-s="3"><div class="mono rng">49152 – 65535</div><h3>Динамические/частные порты</h3><p>Динамические/частные порты присваиваются, когда пользователь производит инициализацию сеанса связи при подключении к определенному сервису.</p></article>
+</div>
+<p class="src mono" data-s="4">iana.org/assignments/service-names-port-numbers</p></div></div></section><section class="slide " data-label="Протокол TCP"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Протокол TCP</div><h2>Протокол TCP</h2></header>
+<p class="p wide">TCP - один из протоколов транспортного уровня. Его главное отличие - обеспечение <b>надежности</b> доставки данных.</p>
+<div class="g2">
+  <article class="card lst"><h3>Для осуществления гарантированной доставки протокол использует следующие функции:</h3><ol class="steps "><li data-s="1"><span class="badge">1</span><div>Отслеживание количества сегментов, отправленных на определенный узел;</div></li><li data-s="2"><span class="badge">2</span><div>Подтверждение получения данных;</div></li><li data-s="3"><span class="badge">3</span><div>Если получение данных не подтвердилось, инициирование повторной передачи сегментов.</div></li></ol></article>
+  <article class="card lst"><h3>Основные задачи протокола TCP:</h3><ol class="steps "><li data-s="4"><span class="badge">1</span><div>Доставка сегментов в одинаковом порядке;</div></li><li data-s="5"><span class="badge">2</span><div>Установление сеанса связи;</div></li><li data-s="6"><span class="badge">3</span><div>Регулирование потока передачи данных.</div></li></ol></article>
+</div></div></div></section><section class="slide " data-label="Заголовок TCP"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Протокол TCP</div><h2>Заголовок TCP-сегмента</h2></header>
+<p class="p wide">Поля заголовка по порядку, ширина строки – 32 бита. Наведите курсор на поле, чтобы увидеть его назначение.</p>
+<div class="card hdrcard"><div class="ruler mono"><span>0</span><span>8</span><span>16</span><span>24</span><span>31</span></div><div class="hdr"><div class="hrow" data-s="1"><div class="fld" tabindex="0" style="grid-column:span 16"><b>Порт источника</b><span class="mono">16 бит</span><span class="tip">Порт источника и порт назначения (по 16 бит) определяют порты отправителя и получателя.</span></div><div class="fld" tabindex="0" style="grid-column:span 16"><b>Порт назначения</b><span class="mono">16 бит</span><span class="tip">Порт источника и порт назначения (по 16 бит) определяют порты отправителя и получателя.</span></div></div><div class="hrow" data-s="2"><div class="fld" tabindex="0" style="grid-column:span 32"><b>Порядковый номер</b><span class="mono">32 бита</span><span class="tip">Порядковый номер (32 бита) в сегменте используется для контроля порядка сегментов.</span></div></div><div class="hrow" data-s="3"><div class="fld" tabindex="0" style="grid-column:span 32"><b>Номер подтверждения</b><span class="mono">32 бита</span><span class="tip">Номер подтверждения (32 бита) необходим для подтверждения успешного получения узлом определенного сегмента.</span></div></div><div class="hrow" data-s="4"><div class="fld" tabindex="0" style="grid-column:span 4"><b>Длина заг.</b><span class="mono">4 бита</span><span class="tip">Длина заголовка (смещение данных) (4 бита) – длина заголовка сегмента TCP в «словах», то есть в группах по 4 байта (32 бита).</span></div><div class="fld" tabindex="0" style="grid-column:span 6"><b>Резерв</b><span class="mono">6 бит</span><span class="tip">Зарезервировано (6 бит) – это биты, которые могут быть использованы в будущем.</span></div><div class="fld" tabindex="0" style="grid-column:span 6"><b>Флаги</b><span class="mono">6 бит</span><span class="tip">Управляющие биты (6 бит) содержат флаги, определяющие назначение и функции сегмента TCP.</span></div><div class="fld" tabindex="0" style="grid-column:span 16"><b>Размер окна</b><span class="mono">16 бит</span><span class="tip">Размер окна (16 бит) указывает количество байт данных, которые получатель может принять в данный момент.</span></div></div><div class="hrow" data-s="5"><div class="fld" tabindex="0" style="grid-column:span 16"><b>Контрольная сумма</b><span class="mono">16 бит</span><span class="tip">Контрольная сумма (16 бит) используется для проверки наличия ошибок в сегменте.</span></div><div class="fld" tabindex="0" style="grid-column:span 16"><b>Срочность</b><span class="mono">16 бит</span><span class="tip">Срочность (16 бит) определяет данные, которые должны быть переданы сразу.</span></div></div></div>
+<div class="hdata" data-s="5" style="--dl:250ms">Данные</div></div></div></div></section><section class="slide " data-label="Флаги 1"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Протокол TCP</div><h2>Флаги TCP: SYN, ACK, FIN</h2></header>
+<p class="p wide">Для управления сеансом связи в заголовке протокола TCP используется поле длиной <b class="mono">6</b> бит. Данные биты называются флагами.</p><div class="fstrip"><span class="fplate c-ind" data-p="1">SYN</span><span class="fplate c-blue" data-p="2">ACK</span><span class="fplate c-vio" data-p="3">FIN</span><span class="fplate c-cr" data-p="0">RST</span><span class="fplate c-navy" data-p="0">PSH</span><span class="fplate c-dim" data-p="0">URG</span></div><div class="g3"><article class="card fcard c-ind" data-s="1" data-w="900"><div class="ftag">SYN</div><p>SYN – флаг синхронизации порядковых номеров. Когда флаг SYN установлен, в поле «порядковый номер» передается изначальный номер последовательности (Initial Sequence Number, ISN). Первый байт данных будет передан в следующем пакете с номером последовательности, равным ISN+1.</p></article><article class="card fcard c-blue" data-s="2" data-w="900"><div class="ftag">ACK</div><p>ACK – флаг подтверждения. Данный флаг указывает на то, что в поле «номер подтверждения» указан следующий порядковый номер сегмента, который ожидается для получения на приемной стороне. Также, данный флаг подтверждает приём предыдущих сегментов.</p></article><article class="card fcard c-vio" data-s="3" data-w="900"><div class="ftag">FIN</div><p>FIN – флаг завершения сеанса связи. Если такой флаг установлен, это означает, что отправитель сигнализирует о завершении передачи данных и не планирует отправлять какие-либо дополнительные данные в рамках текущего соединения.</p></article></div></div></div></section><section class="slide " data-label="Флаги 2"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Протокол TCP</div><h2>Флаги TCP: RST, PSH, URG</h2></header><div class="fstrip"><span class="fplate c-ind" data-p="0">SYN</span><span class="fplate c-blue" data-p="0">ACK</span><span class="fplate c-vio" data-p="0">FIN</span><span class="fplate c-cr" data-p="1">RST</span><span class="fplate c-navy" data-p="2">PSH</span><span class="fplate c-dim" data-p="3">URG</span></div><div class="g3"><article class="card fcard c-cr" data-s="1" data-w="900"><div class="ftag">RST</div><p>RST – флаг сброса соединения. Установка этого флага означает немедленный разрыв соединения и игнорирование всех последующих входящих данных из этого соединения.</p></article><article class="card fcard c-navy" data-s="2" data-w="900"><div class="ftag">PSH</div><p>PSH – флаг функции push. Когда такой флаг установлен, это означает, что необходимо передать все данные из буфера памяти в обработку, даже если он не был заполнен. Протокол TCP использует буферизированную передачу данных как на отправке, так и на приеме. То есть, данные перед отправкой поступают в буфер, и при его заполнении отправляются по адресу. Такой метод позволяет снизить количество служебного трафика (заголовков) в сети.</p></article><article class="card fcard c-dim" data-s="3" data-w="900"><div class="ftag">URG</div><p>URG – флаг указателя важности. Установка данного флага означает, что данные в пакете необходимо обработать в приоритетном порядке.</p></article></div></div></div></section><section class="slide " data-label="Рукопожатие"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Установка соединения</div><h2>Установка TCP-соединения</h2></header>
+<div class="two"><ol class="steps "><li data-s="1"><span class="badge">1</span><div>Узел А, инициализирующий сессию для обмена данными «клиент-сервер», отправляет на узел Б запрос <b>SYN</b>;</div></li><li data-s="2"><span class="badge">2</span><div>Узел Б подтверждает запрос на инициализацию сессии для обмена данными «клиент-сервер», отправляет узлу А ответ <b>ACK</b> и запрос <b>SYN</b> «сервер-клиент»;</div></li><li data-s="3"><span class="badge">3</span><div>В конце узел А подтверждает запрос SYN «сервер-клиент» и отправляет <b>ACK</b> узлу Б.</div></li></ol>
+  <div class="card dgcard"><svg class="dg" viewBox="0 0 760 500" role="img"><g class="life"><line class="ll" x1="150" y1="74" x2="150" y2="486"/><rect class="node" x="55" y="16" width="190" height="58" rx="14"/><text class="nodet" x="150" y="53" text-anchor="middle">Узел А</text><line class="ll" x1="610" y1="74" x2="610" y2="486"/><rect class="node" x="515" y="16" width="190" height="58" rx="14"/><text class="nodet" x="610" y="53" text-anchor="middle">Узел Б</text></g><g class="arr c-ind" data-s="1" data-w="1000"><path class="draw" pathLength="1" d="M150 110L598.1 178.2"/><polygon class="head" points="610.0,180.0 586.9,185.6 589.6,167.8"/><text class="lbl " x="382.4" y="129.2" text-anchor="middle" transform="rotate(8.7 382.4 129.2)"><tspan class="b">SYN</tspan></text></g><g class="arr c-blue" data-s="2" data-w="1000"><path class="draw" pathLength="1" d="M610 210L161.9 278.2"/><polygon class="head" points="150.0,280.0 170.4,267.8 173.1,285.6"/><text class="lbl " x="377.6" y="229.2" text-anchor="middle" transform="rotate(351.3 377.6 229.2)"><tspan class="b">SYN + ACK</tspan></text></g><g class="arr c-ind" data-s="3" data-w="1000"><path class="draw" pathLength="1" d="M150 310L598.1 378.2"/><polygon class="head" points="610.0,380.0 586.9,385.6 589.6,367.8"/><text class="lbl " x="382.4" y="329.2" text-anchor="middle" transform="rotate(8.7 382.4 329.2)"><tspan class="b">ACK</tspan></text></g><g data-s="4" data-w="900"><rect class="okp" x="170.0" y="420" width="420" height="54" rx="14"/><text class="okpt" x="380" y="455" text-anchor="middle">TCP-соединение установлено</text></g></svg></div>
+</div></div></div></section><section class="slide " data-label="Рукопожатие: номера"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Установка соединения</div><h2>Установка TCP-соединения: Seq и Ack</h2></header>
+<div class="two"><ol class="steps sm"><li data-s="1"><span class="badge">1</span><div>Инициатор TCP-соединения (ПК1) отправляет первый TCP-сегмент с установленным флагом SYN. Начальный порядковый номер (<b class='mono'>a</b>) является случайно сгенерированным числом. Номер подтверждения равен <b class='mono'>0</b>, потому что ранее от ПК 2 не поступали сегменты.</div></li><li data-s="2"><span class="badge">2</span><div>После получения корректного TCP-сегмента с флагом SYN получатель (ПК2) отвечает TCP-сегментом с установленными флагами SYN и ACK. Начальный порядковый номер (<b class='mono'>b</b>) является случайно сгенерированным числом. Поскольку сегмент является ответом для ПК1, номер подтверждения равен <b class='mono'>a+1</b>.</div></li><li data-s="3"><span class="badge">3</span><div>После получения сегмента с флагами SYN и ACK ПК1 отвечает сегментом с флагом ACK, порядковый номер равен <b class='mono'>a+1</b>, а номер подтверждения – <b class='mono'>b+1</b>. После того, как ПК2 получает сегмент, устанавливается TCP-соединение.</div></li></ol>
+  <div class="card dgcard"><svg class="dg" viewBox="0 0 760 500" role="img"><g class="life"><line class="ll" x1="150" y1="74" x2="150" y2="486"/><rect class="node" x="55" y="16" width="190" height="58" rx="14"/><text class="nodet" x="150" y="53" text-anchor="middle">ПК1</text><line class="ll" x1="610" y1="74" x2="610" y2="486"/><rect class="node" x="515" y="16" width="190" height="58" rx="14"/><text class="nodet" x="610" y="53" text-anchor="middle">ПК2</text></g><g class="arr c-ind" data-s="1" data-w="1000"><path class="draw" pathLength="1" d="M150 110L598.1 178.2"/><polygon class="head" points="610.0,180.0 586.9,185.6 589.6,167.8"/><text class="lbl mono" x="382.4" y="129.2" text-anchor="middle" transform="rotate(8.7 382.4 129.2)"><tspan class="b">SYN</tspan>   Seq = a   Ack = 0</text></g><g class="arr c-blue" data-s="2" data-w="1000"><path class="draw" pathLength="1" d="M610 210L161.9 278.2"/><polygon class="head" points="150.0,280.0 170.4,267.8 173.1,285.6"/><text class="lbl mono" x="377.6" y="229.2" text-anchor="middle" transform="rotate(351.3 377.6 229.2)"><tspan class="b">SYN, ACK</tspan>   Seq = b   Ack = a+1</text></g><g class="arr c-ind" data-s="3" data-w="1000"><path class="draw" pathLength="1" d="M150 310L598.1 378.2"/><polygon class="head" points="610.0,380.0 586.9,385.6 589.6,367.8"/><text class="lbl mono" x="382.4" y="329.2" text-anchor="middle" transform="rotate(8.7 382.4 329.2)"><tspan class="b">ACK</tspan>   Seq = a+1   Ack = b+1</text></g><g data-s="4" data-w="900"><rect class="okp" x="170.0" y="420" width="420" height="54" rx="14"/><text class="okpt" x="380" y="455" text-anchor="middle">TCP-соединение установлено</text></g></svg></div>
+</div></div></div></section><section class="slide " data-label="Порядковые номера"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Установка соединения</div><h2>Передача данных: порядковые номера</h2></header>
+<div class="two">
+  <div><p class="p">Предположим, что ПК1 необходимо отправить сегменты данных на ПК2. Процесс передачи будет следующим:</p><ol class="steps sm"><li data-s="1"><span class="badge">1</span><div>ПК1 нумерует каждый байт, отправляемый через TCP-соединение. Предположим, что номер первого байта равен <b class='mono'>a+1</b>. Номер второго байта будет равен <b class='mono'>a+2</b>, третьего байта – <b class='mono'>a+3</b> и так далее.</div></li><li data-s="2"><span class="badge">2</span><div>ПК1 использует номер первого байта каждого сегмента данных в качестве порядкового номера и отправляет TCP-сегмент.</div></li><li data-s="3"><span class="badge">3</span><div>После получения сегмента ПК2 необходимо подтвердить его и запросить следующий: порядковый номер (<b class='mono'>a+1</b>) + длина полезной нагрузки = порядковый номер первого байта следующего сегмента (<b class='mono'>a+1+12</b>).</div></li><li data-s="4"><span class="badge">4</span><div>ПК1 обнаруживает, что номер подтверждения равен <b class='mono'>a+1+12</b>, что указывает на получение сегментов от <b class='mono'>a+1</b> до <b class='mono'>a+12</b>. Порядковый номер будущего сегмента должен быть <b class='mono'>a+1+12</b>.</div></li></ol>
+  <p class="p sm note2" data-s="5">Чтобы повысить эффективность отправки, отправитель может отправлять несколько сегментов данных одновременно, которые затем по очереди будет подтверждать получатель.</p></div>
+  <div class="card dgcard"><svg class="dg" viewBox="0 0 760 520" role="img"><g class="life"><line class="ll" x1="150" y1="74" x2="150" y2="506"/><rect class="node" x="55" y="16" width="190" height="58" rx="14"/><text class="nodet" x="150" y="53" text-anchor="middle">ПК1</text><line class="ll" x1="610" y1="74" x2="610" y2="506"/><rect class="node" x="515" y="16" width="190" height="58" rx="14"/><text class="nodet" x="610" y="53" text-anchor="middle">ПК2</text></g><defs><clipPath id="rc"><rect x="-64" y="-26" width="128" height="36"/></clipPath></defs><g data-s="1" data-w="700"><g class="mv lin" data-m="2" data-w="1700" style="--dx:460px;--md:1400ms"><g transform="translate(150 150)"><rect class="segb" x="-78" y="-62" width="156" height="92" rx="12"/><rect class="segh" x="-78" y="-62" width="156" height="26" rx="12"/><rect class="segh" x="-78" y="-46" width="156" height="10"/><text class="segl" x="0" y="-43" text-anchor="middle">байт</text><g clip-path="url(#rc)"><g class="roll" data-m="2"><text x="0" y="0" text-anchor="middle">a+1</text><text x="0" y="34" text-anchor="middle">a+2</text><text x="0" y="68" text-anchor="middle">a+3</text><text x="0" y="102" text-anchor="middle">a+4</text><text x="0" y="136" text-anchor="middle">a+5</text><text x="0" y="170" text-anchor="middle">a+6</text><text x="0" y="204" text-anchor="middle">a+7</text><text x="0" y="238" text-anchor="middle">a+8</text><text x="0" y="272" text-anchor="middle">a+9</text><text x="0" y="306" text-anchor="middle">a+10</text><text x="0" y="340" text-anchor="middle">a+11</text><text x="0" y="374" text-anchor="middle">a+12</text></g></g></g></g></g><g class="arr c-blue" data-s="3" data-w="1000"><path class="draw" pathLength="1" d="M610 250L161.9 318.2"/><polygon class="head" points="150.0,320.0 170.4,307.8 173.1,325.6"/><text class="lbl mono" x="377.6" y="269.2" text-anchor="middle" transform="rotate(351.3 377.6 269.2)"><tspan class="b">ACK</tspan>   Ack = a+1+12</text></g><g data-s="4"><g transform="translate(150 400)"><rect class="segb" x="-110" y="-34" width="220" height="68" rx="12"/><text class="mono segn" x="0" y="8" text-anchor="middle">Seq = a+1+12</text></g></g></svg></div>
+</div></div></div></section><section class="slide " data-label="Wireshark"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Установка соединения</div><h2>Установка TCP-соединения в Wireshark</h2></header><div class="g3"><article class="card wcard c-ind" data-s="1" data-w="900"><div class="whead"><span class="badge">1</span><b>Первый этап</b><span class="ftag sm">SYN</span></div><div class="kv"><span>Порт источника</span><b class="mono">54824</b></div><div class="kv"><span>Порт назначения</span><b class="mono">443</b></div><div class="kv"><span>Sequence Number</span><b class="mono">0</b></div><div class="kv"><span>Sequence Number (raw)</span><b class="mono">3638817700</b></div><div class="kv"><span>Next Sequence Number</span><b class="mono">1</b></div><div class="kv"><span>Acknowledgment number</span><b class="mono">0</b></div><div class="kv"><span>Флаги</span><b class="mono">SYN</b></div><div class="kv"><span>Window</span><b class="mono">64240</b></div><p class="note">Клиент отправляет запрос на сервер, используя в качестве порта источника частный порт 54824, а в роли порта назначения – общеизвестный порт 443 (HTTPS). Ноль в Sequence Number обозначает порядковый номер относительно начала сессии; raw – настоящий, «сырой» номер.</p></article><article class="card wcard c-blue" data-s="2" data-w="900"><div class="whead"><span class="badge">2</span><b>Второй этап</b><span class="ftag sm">SYN, ACK</span></div><div class="kv"><span>Порт источника</span><b class="mono">443</b></div><div class="kv"><span>Порт назначения</span><b class="mono">54824</b></div><div class="kv"><span>Sequence Number</span><b class="mono">0</b></div><div class="kv"><span>Sequence Number (raw)</span><b class="mono">1565342372</b></div><div class="kv"><span>Next Sequence Number</span><b class="mono">1</b></div><div class="kv"><span>Acknowledgment number</span><b class="mono">1</b></div><div class="kv"><span>Acknowledgment (raw)</span><b class="mono">3638817701</b></div><div class="kv"><span>Window</span><b class="mono">65160</b></div><p class="note">В ответе роли портов меняются местами. Ack указан 1 и 3638817701, потому что +1 к начальному номеру последовательности. Размер окна изменился – механизм «скользящего окна».</p></article><article class="card wcard c-ind" data-s="3" data-w="900"><div class="whead"><span class="badge">3</span><b>Третий этап</b><span class="ftag sm">ACK</span></div><div class="kv"><span>Порт источника</span><b class="mono">54824</b></div><div class="kv"><span>Порт назначения</span><b class="mono">443</b></div><div class="kv"><span>Sequence Number</span><b class="mono">1</b></div><div class="kv"><span>Sequence Number (raw)</span><b class="mono">3638817701</b></div><div class="kv"><span>Acknowledgment number</span><b class="mono">1</b></div><div class="kv"><span>Acknowledgment (raw)</span><b class="mono">1565342373</b></div><div class="kv"><span>Флаги</span><b class="mono">ACK</b></div><div class="kv"><span>Window</span><b class="mono">502</b></div><p class="note">Вновь порты поменялись местами, потому что это данные от клиента для сервера. Последовательность сменилась на единицу. Размер окна будет изменяться в зависимости от параметров сторон и загруженности сети.</p></article></div></div></div></section><section class="slide " data-label="Окно: принцип"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Надёжность TCP</div><h2>Подтверждение и размер окна</h2></header><ol class="steps cols"><li data-s="1"><span class="badge">1</span><div>При трехстороннем квитировании в TCP-соединении обе стороны уведомляют друг друга о максимальном количестве байтов (размере буфера), которые могут быть получены локальной стороной с помощью поля <b>Окно</b>.</div></li><li data-s="2"><span class="badge">2</span><div>После установления TCP-соединения отправитель отправляет данные указанного количества байтов на основе размера окна, заявленного получателем.</div></li><li data-s="3"><span class="badge">3</span><div>После получения данных получатель хранит данные в буфере и ожидает получения буферизированных данных приложением верхнего уровня. После получения данных приложением верхнего уровня освобождается соответствующее пространство в буфере.</div></li><li data-s="4"><span class="badge">4</span><div>Получатель сообщает текущий приемлемый размер данных (окна) в соответствии с его размером буфера.</div></li><li data-s="5"><span class="badge">5</span><div>Отправитель отправляет определенный объем данных в зависимости от текущего размера окна получателя.</div></li></ol></div></div></section><section class="slide " data-label="Окно: пример"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Надёжность TCP</div><h2>Размер окна: пример передачи</h2></header>
+<div class="two">
+  <p class="p lg">Пример передачи данных при TCP-соединении с размером окна, равным <b class="mono">3000</b> байт, который был согласован в процессе установления TCP-соединения. После передачи получателю <b class="mono">3000</b> байт, последний уведомляет отправителя об успешном приеме сообщением с флагом <b>ACK</b>, и отправитель начинает передавать следующий блок данных.</p>
+  <div class="card dgcard"><svg class="dg" viewBox="0 0 760 600" role="img"><g class="life"><line class="ll" x1="150" y1="74" x2="150" y2="586"/><rect class="node" x="55" y="16" width="190" height="58" rx="14"/><text class="nodet" x="150" y="53" text-anchor="middle">Узел А</text><line class="ll" x1="610" y1="74" x2="610" y2="586"/><rect class="node" x="515" y="16" width="190" height="58" rx="14"/><text class="nodet" x="610" y="53" text-anchor="middle">Узел Б</text></g><g data-s="1" data-w="700"><path class="brk" d="M112 100 H100 V236 H112"/><text class="brkt" x="84" y="168" text-anchor="middle" transform="rotate(-90 84 168)">окно 3000 байт</text></g><g class="arr c-ind" data-s="2" data-w="1000"><path class="draw" pathLength="1" d="M150 100L598.1 158.4"/><polygon class="head" points="610.0,160.0 587.0,166.1 589.3,148.2"/><text class="lbl mono" x="382.1" y="114.1" text-anchor="middle" transform="rotate(7.4 382.1 114.1)">1500 байт</text></g><g class="arr c-ind" data-s="3" data-w="1000"><path class="draw" pathLength="1" d="M150 176L598.1 234.4"/><polygon class="head" points="610.0,236.0 587.0,242.1 589.3,224.2"/><text class="lbl mono" x="382.1" y="190.1" text-anchor="middle" transform="rotate(7.4 382.1 190.1)">1500 байт</text></g><g data-s="4" data-w="1100"><line class="waitl" x1="150" y1="236" x2="150" y2="330"/><text class="waitt" x="170" y="292">ожидание подтверждения</text></g><g class="arr c-blue" data-s="5" data-w="1000"><path class="draw" pathLength="1" d="M610 262L161.9 328.2"/><polygon class="head" points="150.0,330.0 170.4,317.9 173.1,335.7"/><text class="lbl mono" x="377.7" y="280.2" text-anchor="middle" transform="rotate(351.6 377.7 280.2)"><tspan class="b">ACK</tspan>   3001</text></g><g class="arr c-ind" data-s="6" data-w="1000"><path class="draw" pathLength="1" d="M150 380L598.1 438.4"/><polygon class="head" points="610.0,440.0 587.0,446.1 589.3,428.2"/><text class="lbl mono" x="382.1" y="394.1" text-anchor="middle" transform="rotate(7.4 382.1 394.1)">1500 байт</text></g><g class="arr c-ind" data-s="6" data-w="1000"><path class="draw" pathLength="1" d="M150 456L598.1 514.4"/><polygon class="head" points="610.0,516.0 587.0,522.1 589.3,504.2"/><text class="lbl mono" x="382.1" y="470.1" text-anchor="middle" transform="rotate(7.4 382.1 470.1)">1500 байт</text></g></svg></div>
+</div></div></div></section><section class="slide " data-label="Потеря данных"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Надёжность TCP</div><h2>Потеря данных и повторная передача</h2></header>
+<div class="two">
+  <div>
+    <p class="p">В любой, даже хорошо организованной сети, обычно возникают потери данных. Чтобы справиться с этой проблемой, протокол TCP имеет механизм <b>повторной передачи</b> сегментов.</p>
+    <p class="p">При получении сегментов целевым узлом подтверждаются только те данные, которые поступили в непрерывной последовательности байт. Если после истечения таймаута узел-отправитель не получил подтверждение о доставке, он повторно отправляет сегменты, начиная с последнего полученного подтверждения (ACK).</p>
+    <p class="p callout" data-s="5">К примеру, были получены сегменты с порядковыми номерами от <b class="mono">1</b> до <b class="mono">3000</b> и от <b class="mono">6001</b> до <b class="mono">9000</b>, то номер ACK будет равен <b class="mono">3001</b>.</p>
   </div>
-</section>
-
-<!-- ===== 7. СОКЕТЫ И ПРИНЦИП АДРЕСАЦИИ ===== -->
-<section class="slide bg-white on-white">
-  <div class="tophint">8.1 · сокеты</div>
-  <div class="pad" style="top:70px">
-    <h2 class="h-d h-sm blue" style="margin-bottom:24px">СОКЕТЫ И ПРИНЦИП АДРЕСАЦИИ</h2>
-    <div class="callout" style="margin-bottom:32px;max-width:70ch">
-      <div class="term">Сокет</div>
-      <div class="def">Сочетание <b>IP-адреса источника</b> с номером порта источника и <b>IP-адреса назначения</b> с номером порта назначения. Позволяет однозначно определить конечную точку доставки — конкретное приложение на конкретном устройстве.</div>
-    </div>
-    <svg viewBox="0 0 1680 460" style="width:100%;height:420px">
-      <!-- Клиент -->
-      <rect class="rough" x="40" y="40" width="400" height="180" rx="20" fill="var(--sky)" stroke="var(--blue)" stroke-width="4"/>
-      <text x="240" y="80" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:26px" fill="var(--ink)">192.168.1.23</text>
-      <rect x="70" y="100" width="160" height="50" rx="10" fill="var(--sage)" stroke="var(--sage-d)" stroke-width="3"/>
-      <text x="150" y="132" text-anchor="middle" style="font-family:Fredoka;font-weight:600;font-size:20px" fill="#fff">HTTP</text>
-      <rect x="250" y="100" width="160" height="50" rx="10" fill="var(--card)" stroke="var(--blue)" stroke-width="3"/>
-      <text x="330" y="126" text-anchor="middle" style="font-family:Fredoka;font-weight:600;font-size:18px" fill="var(--ink)">Порт источника</text>
-      <text x="330" y="148" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:22px" fill="var(--blue)">51345</text>
-      <rect class="rough" x="40" y="260" width="400" height="140" rx="20" fill="var(--sky)" stroke="var(--blue)" stroke-width="4"/>
-      <rect x="70" y="290" width="160" height="50" rx="10" fill="var(--blue)" stroke="var(--blue-d)" stroke-width="3"/>
-      <text x="150" y="322" text-anchor="middle" style="font-family:Fredoka;font-weight:600;font-size:20px" fill="#fff">FTP</text>
-      <rect x="250" y="290" width="160" height="50" rx="10" fill="var(--card)" stroke="var(--blue)" stroke-width="3"/>
-      <text x="330" y="316" text-anchor="middle" style="font-family:Fredoka;font-weight:600;font-size:18px" fill="var(--ink)">Порт источника</text>
-      <text x="330" y="338" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:22px" fill="var(--blue)">49222</text>
-      <!-- Стрелки -->
-      <rect x="520" y="90" width="260" height="44" rx="10" fill="var(--peach)"/>
-      <text x="650" y="120" text-anchor="middle" style="font-family:Fredoka;font-weight:600;font-size:20px" fill="var(--ink)">192.168.1.23:51345</text>
-      <text x="870" y="120" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:28px" fill="var(--blue)">→</text>
-      <rect x="920" y="90" width="220" height="44" rx="10" fill="var(--blush)"/>
-      <text x="1030" y="120" text-anchor="middle" style="font-family:Fredoka;font-weight:600;font-size:20px" fill="var(--ink)">192.168.1.2:80</text>
-      <text x="650" y="70" text-anchor="middle" style="font-family:Caveat;font-weight:600;font-size:28px" fill="var(--blue)">HTTP-сокет</text>
-      <rect x="520" y="290" width="260" height="44" rx="10" fill="var(--peach)"/>
-      <text x="650" y="320" text-anchor="middle" style="font-family:Fredoka;font-weight:600;font-size:20px" fill="var(--ink)">192.168.1.23:49222</text>
-      <text x="870" y="320" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:28px" fill="var(--blue)">→</text>
-      <rect x="920" y="290" width="220" height="44" rx="10" fill="var(--blush)"/>
-      <text x="1030" y="320" text-anchor="middle" style="font-family:Fredoka;font-weight:600;font-size:20px" fill="var(--ink)">192.168.1.2:20</text>
-      <text x="650" y="270" text-anchor="middle" style="font-family:Caveat;font-weight:600;font-size:28px" fill="var(--blue)">FTP-сокет</text>
-      <!-- Сервер -->
-      <rect class="rough" x="1220" y="40" width="400" height="380" rx="20" fill="var(--card)" stroke="var(--sage)" stroke-width="4"/>
-      <text x="1420" y="80" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:26px" fill="var(--ink)">192.168.1.2</text>
-      <rect x="1260" y="100" width="150" height="50" rx="10" fill="var(--sage)" stroke="var(--sage-d)" stroke-width="3"/>
-      <text x="1335" y="132" text-anchor="middle" style="font-family:Fredoka;font-weight:600;font-size:20px" fill="#fff">HTTP</text>
-      <rect x="1430" y="100" width="150" height="50" rx="10" fill="var(--card)" stroke="var(--sage)" stroke-width="3"/>
-      <text x="1505" y="126" text-anchor="middle" style="font-family:Fredoka;font-weight:600;font-size:18px" fill="var(--ink)">Порт назнач.</text>
-      <text x="1505" y="148" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:22px" fill="var(--sage)">80</text>
-      <rect x="1260" y="290" width="150" height="50" rx="10" fill="var(--blue)" stroke="var(--blue-d)" stroke-width="3"/>
-      <text x="1335" y="322" text-anchor="middle" style="font-family:Fredoka;font-weight:600;font-size:20px" fill="#fff">FTP</text>
-      <rect x="1430" y="290" width="150" height="50" rx="10" fill="var(--card)" stroke="var(--sage)" stroke-width="3"/>
-      <text x="1505" y="316" text-anchor="middle" style="font-family:Fredoka;font-weight:600;font-size:18px" fill="var(--ink)">Порт назнач.</text>
-      <text x="1505" y="338" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:22px" fill="var(--sage)">20</text>
-    </svg>
+  <div class="card dgcard"><svg class="dg" viewBox="0 0 760 600" role="img"><g class="life"><line class="ll" x1="150" y1="74" x2="150" y2="586"/><rect class="node" x="55" y="16" width="190" height="58" rx="14"/><text class="nodet" x="150" y="53" text-anchor="middle">Отправитель</text><line class="ll" x1="610" y1="74" x2="610" y2="586"/><rect class="node" x="515" y="16" width="190" height="58" rx="14"/><text class="nodet" x="610" y="53" text-anchor="middle">Получатель</text></g><g class="arr c-ind" data-s="1" data-w="1000"><path class="draw" pathLength="1" d="M150 100L598.1 158.4"/><polygon class="head" points="610.0,160.0 587.0,166.1 589.3,148.2"/><text class="lbl mono" x="382.1" y="114.1" text-anchor="middle" transform="rotate(7.4 382.1 114.1)">1–3000</text></g><g class="arr c-ind" data-s="2" data-w="1000" data-k="4"><path class="draw" pathLength="1" d="M150 180L380.0 210.0"/><text class="lbl mono" x="267.1" y="179.1" text-anchor="middle" transform="rotate(7.4 267.1 179.1)">3001–6000</text></g><g class="arr c-ind" data-s="3" data-w="1000"><path class="draw" pathLength="1" d="M150 260L598.1 318.4"/><polygon class="head" points="610.0,320.0 587.0,326.1 589.3,308.2"/><text class="lbl mono" x="382.1" y="274.1" text-anchor="middle" transform="rotate(7.4 382.1 274.1)">6001–9000</text></g><g data-s="4" data-w="900"><path class="xmark" d="M366 196 l28 28 M394 196 l-28 28"/><text class="lostt" x="420" y="218">потерян</text></g><g class="arr c-blue" data-s="5" data-w="1000"><path class="draw" pathLength="1" d="M610 350L161.9 408.4"/><polygon class="head" points="150.0,410.0 170.7,398.2 173.0,416.1"/><text class="lbl mono" x="377.9" y="364.1" text-anchor="middle" transform="rotate(352.6 377.9 364.1)"><tspan class="b">ACK</tspan> = 3001</text></g><g class="arr c-ind" data-s="6" data-w="1000"><path class="draw" pathLength="1" d="M150 440L598.1 498.4"/><polygon class="head" points="610.0,500.0 587.0,506.1 589.3,488.2"/><text class="lbl mono" x="382.1" y="454.1" text-anchor="middle" transform="rotate(7.4 382.1 454.1)">повтор 3001–6000</text></g></svg></div>
+</div></div></div></section><section class="slide " data-label="Завершение сеанса"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Надёжность TCP</div><h2>Завершение TCP-сеанса</h2></header>
+<div class="two"><ol class="steps "><li data-s="1"><span class="badge">1</span><div>После завершения отправки данных, узел А отправляет сегмент с установленным в заголовке флагом <b>FIN</b> для прекращения сессии «клиент-сервер»;</div></li><li data-s="2"><span class="badge">2</span><div>Узел Б принимает запрос на завершение соединения и отправляет подтверждение <b>ACK</b> узлу А;</div></li><li data-s="3"><span class="badge">3</span><div>Узел Б отправляет сегмент с установленным в заголовке флагом <b>FIN</b> для прекращения сессии «сервер-клиент»;</div></li><li data-s="4"><span class="badge">4</span><div>Узел А, в свою очередь, отправляет ответ <b>ACK</b> для подтверждения получения FIN от узла Б.</div></li></ol>
+  <div class="card dgcard"><svg class="dg" viewBox="0 0 760 540" role="img"><g class="life" data-k="4" style="--kd:900ms"><line class="ll" x1="150" y1="74" x2="150" y2="526"/><rect class="node" x="55" y="16" width="190" height="58" rx="14"/><text class="nodet" x="150" y="53" text-anchor="middle">Узел А</text><line class="ll" x1="610" y1="74" x2="610" y2="526"/><rect class="node" x="515" y="16" width="190" height="58" rx="14"/><text class="nodet" x="610" y="53" text-anchor="middle">Узел Б</text></g><g class="arr c-vio" data-s="1" data-w="1000"><path class="draw" pathLength="1" d="M150 110L598.1 168.4"/><polygon class="head" points="610.0,170.0 587.0,176.1 589.3,158.2"/><text class="lbl " x="382.1" y="124.1" text-anchor="middle" transform="rotate(7.4 382.1 124.1)"><tspan class="b">FIN</tspan></text></g><g class="arr c-blue" data-s="2" data-w="1000"><path class="draw" pathLength="1" d="M610 200L161.9 258.4"/><polygon class="head" points="150.0,260.0 170.7,248.2 173.0,266.1"/><text class="lbl " x="377.9" y="214.1" text-anchor="middle" transform="rotate(352.6 377.9 214.1)"><tspan class="b">ACK</tspan></text></g><g class="arr c-vio" data-s="3" data-w="1000"><path class="draw" pathLength="1" d="M610 290L161.9 348.4"/><polygon class="head" points="150.0,350.0 170.7,338.2 173.0,356.1"/><text class="lbl " x="377.9" y="304.1" text-anchor="middle" transform="rotate(352.6 377.9 304.1)"><tspan class="b">FIN</tspan></text></g><g class="arr c-ind" data-s="4" data-w="1900"><path class="draw" pathLength="1" d="M150 380L598.1 438.4"/><polygon class="head" points="610.0,440.0 587.0,446.1 589.3,428.2"/><text class="lbl " x="382.1" y="394.1" text-anchor="middle" transform="rotate(7.4 382.1 394.1)"><tspan class="b">ACK</tspan></text></g></svg></div>
+</div></div></div></section><section class="slide " data-label="Завершение: детали"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Надёжность TCP</div><h2>Завершение TCP-сеанса: ПК1 и ПК2</h2></header><ol class="steps cols"><li data-s="1"><span class="badge">1</span><div>ПК1 отправляет TCP-сегмент с установленным флагом <b>FIN</b>. Сегмент не содержит данных.</div></li><li data-s="2"><span class="badge">2</span><div>После получения ПК1 сегмента TCP ПК2 отвечает сегментом TCP с установленным флагом <b>ACK</b>.</div></li><li data-s="3"><span class="badge">3</span><div>ПК2 проверяет необходимость отправки данных. Если необходимо, ПК2 отправляет данные, а затем TCP-сегмент с флагом <b>FIN</b> для закрытия соединения. Если нет, ПК2 напрямую отправляет TCP-сегмент с установленным флагом FIN.</div></li><li data-s="4"><span class="badge">4</span><div>После получения TCP-сегмента с установленным флагом FIN ПК1 отвечает сегментом с флагом <b>ACK</b>. Затем TCP-соединение разрывается в обоих направлениях.</div></li></ol></div></div></section><section class="slide " data-label="Управление потоком"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Надёжность TCP</div><h2>Установление TCP-соединения и управление потоком</h2></header>
+<div class="two">
+  <div>
+    <p class="p sm" data-s="1">Данные при передаче по протоколу TCP делятся на сегменты, которые при выборе различных путей маршрутизации могут быть доставлены на узел назначения в измененном порядке. Для того чтобы воссоздать исходный порядок сегментов, протокол TCP использует порядковые номера в заголовках каждого сегмента.</p>
+    <p class="p sm" data-s="2">При установлении сеанса связи задается начальный порядковый номер сеанса (<b>ISN</b>), представляющий собой случайное начальное значения счетчика байт, которые были переданы целевому узлу. При дальнейшей передаче сегментов указанное число увеличивается на определенное число байт, что позволяет контролировать передачу данных.</p>
+    <p class="p sm" data-s="3">Стоит обратить внимание, что ISN не является строго определенным числом, а задается случайно. Таким образом, можно предотвратить осуществление вредоносных атак.</p>
+    <p class="p sm" data-s="4">На узле назначения все полученные сегменты распределяются в правильном порядке и только после этого передаются на уровень приложений.</p>
   </div>
-</section>
-
-<!-- ===== 8. ГРУППЫ НОМЕРОВ ПОРТОВ ===== -->
-<section class="slide bg-white on-white">
-  <div class="tophint">8.1 · группы портов</div>
-  <div class="pad" style="display:flex;flex-direction:column;justify-content:center">
-    <h2 class="h-d h-sm blue" style="margin-bottom:36px">ГРУППЫ НОМЕРОВ ПОРТОВ</h2>
-    <div class="g3" style="align-items:start;gap:48px">
-      <div class="card" style="transform:rotate(-1deg)">
-        <span class="tag">Общеизвестные</span>
-        <p class="body b-md ink"><b>0 – 1023</b></p>
-        <p class="body b-sm ink" style="margin-top:10px">Зарезервированы для определённых служб: HTTP (80), SSH (22), DNS (53), HTTPS (443).</p>
-      </div>
-      <div class="card analogy" style="transform:rotate(.6deg)">
-        <span class="tag">Зарегистрированные</span>
-        <p class="body b-md ink"><b>1024 – 49151</b></p>
-        <p class="body b-sm ink" style="margin-top:10px">Зарегистрированы IANA для нестандартных служб: RADIUS (1812), Microsoft SQL (1433).</p>
-      </div>
-      <div class="card" style="transform:rotate(1deg)">
-        <span class="tag">Динамические / частные</span>
-        <p class="body b-md ink"><b>49152 – 65535</b></p>
-        <p class="body b-sm ink" style="margin-top:10px">Присваиваются клиенту автоматически при подключении к сервису.</p>
-      </div>
+  <div class="card dgcard"><svg class="dg" viewBox="0 0 760 330" role="img"><rect class="frame" x="40" y="70" width="680" height="220" rx="14"/><text class="framet" x="60" y="104">узел назначения</text><g data-s="1" style="--dl:120ms"><g class="mv" data-m="4" data-w="1200" style="--dx:210px;--md:900ms"><rect class="segb" x="90" y="140" width="160" height="96" rx="12"/><text class="srct" x="170" y="178" text-anchor="middle">сегмент 2</text><text class="mono segn" x="170" y="214" text-anchor="middle">№ 2</text></g></g><g data-s="1" style="--dl:240ms"><g class="mv" data-m="4" data-w="1200" style="--dx:210px;--md:900ms"><rect class="segb" x="300" y="140" width="160" height="96" rx="12"/><text class="srct" x="380" y="178" text-anchor="middle">сегмент 3</text><text class="mono segn" x="380" y="214" text-anchor="middle">№ 3</text></g></g><g data-s="1" style="--dl:0ms"><g class="mv" data-m="4" data-w="1200" style="--dx:-420px;--md:900ms"><rect class="segb" x="510" y="140" width="160" height="96" rx="12"/><text class="srct" x="590" y="178" text-anchor="middle">сегмент 1</text><text class="mono segn" x="590" y="214" text-anchor="middle">№ 1</text></g></g><g data-s="2"><rect class="pairb" x="540" y="18" width="180" height="42" rx="12"/><text class="pairt mono" x="630" y="46" text-anchor="middle">ISN</text></g></svg></div>
+</div></div></div></section><section class="slide " data-label="UDP: функции"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Протокол UDP</div><h2>Функции протокола UDP</h2></header>
+<p class="p wide">Протокол UDP так же, как и TCP, использует сегментацию данных, при этом не задействует процессы, отвечающие за уведомление об успешном получении сегмента, что позволяет значительно быстрее передавать данные. Пользуясь преимуществом в скорости и отсутствием подтверждения полученной информации, протокол UDP используется при передаче данных которые могут перенести кратковременные потери во время передачи, например, потоковой видео и звуковой информации, где потеря одной или нескольких датаграмм, т.е. с незначительными перебоями, может не повлиять на общую ситуацию в целом во время передачи.</p>
+<div class="card dgcard wide2"><svg class="dg c-ind" viewBox="0 0 1000 230" role="img"><rect class="node" x="10" y="90" width="150" height="58" rx="14"/><text class="nodet" x="85" y="127" text-anchor="middle">Узел А</text><rect class="node" x="840" y="90" width="150" height="58" rx="14"/><text class="nodet" x="915" y="127" text-anchor="middle">Узел Б</text><line class="track" x1="160" y1="170" x2="840" y2="170"/><g data-s="1"><g class="mv" data-m="2" data-w="1300" style="--dx:430px;--dl:360ms;--md:1000ms"><g class="dgm"><rect class="rseg" x="180" y="96" width="52" height="46" rx="8"/></g></g><g class="mv" data-m="2" data-w="1300" style="--dx:430px;--dl:270ms;--md:1000ms"><g class="dgm"><rect class="rseg" x="244" y="96" width="52" height="46" rx="8"/></g></g><g class="mv" data-m="2" data-w="1300" style="--dx:430px;--dl:180ms;--md:1000ms"><g class="dgm" data-k="3"><rect class="rseg" x="308" y="96" width="52" height="46" rx="8"/></g></g><g class="mv" data-m="2" data-w="1300" style="--dx:430px;--dl:90ms;--md:1000ms"><g class="dgm"><rect class="rseg" x="372" y="96" width="52" height="46" rx="8"/></g></g><g class="mv" data-m="2" data-w="1300" style="--dx:430px;--dl:0ms;--md:1000ms"><g class="dgm"><rect class="rseg" x="436" y="96" width="52" height="46" rx="8"/></g></g></g><text class="lostt" data-s="3" x="500" y="214" text-anchor="middle">потерянная датаграмма повторно не отправляется</text></svg></div></div></div></section><section class="slide " data-label="UDP: датаграммы"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Протокол UDP</div><h2>Основные характеристики протокола UDP</h2></header>
+<div class="two">
+  <div>
+    <p class="p">Основными характеристиками протокола UDP являются:</p><ul class="bul"><li data-s="1">Отсутствие установления сеанса связи;</li><li data-s="2">Отсутствие повторной отправки потерянных сегментов;</li><li data-s="3">Наличие высокоскоростного потока.</li></ul>
+    <p class="p" data-s="4"><b>Датаграмма</b> – блок информации, передающийся с помощью протокола UDP, без гарантированной доставки на узел назначения.</p>
+  </div>
+  <div class="vstack">
+    <p class="p" data-s="5">Части сообщения в UDP, передающиеся без предварительного установления канала и последующей гарантии передачи, называются датаграммами. У датаграммы есть заголовок, состоящий из <b class="mono">8</b> байт:</p>
+    <div class="card udph">
+      <div class="uf" data-s="6"><b>Порт источника</b><span class="mono">16 бит</span></div>
+      <div class="uf" data-s="6" style="--dl:100ms"><b>Порт назначения</b><span class="mono">16 бит</span></div>
+      <div class="uf" data-s="7"><b>Длина</b><span class="mono">16 бит</span></div>
+      <div class="uf" data-s="7" style="--dl:100ms"><b>Контрольная сумма</b><span class="mono">16 бит</span></div>
+      <div class="uf ud" data-s="8">Данные</div>
     </div>
   </div>
-</section>
-
-<!-- ===== 9. ПРОТОКОЛ TCP ===== -->
-<section class="slide bg-blue on-blue">
-  <svg class="doodle" style="right:-80px;bottom:-120px;width:600px;height:500px;opacity:.1" viewBox="0 0 600 500" preserveAspectRatio="none"><path d="M60,180 C40,80 160,20 300,30 C460,40 590,70 560,220 C540,340 590,470 420,470 C280,470 120,500 70,400 C30,320 80,270 60,180 Z" fill="var(--white)"/></svg>
-  <div class="pad" style="display:flex;flex-direction:column;justify-content:center">
-    <div class="tophint">8.2 · TCP</div>
-    <h2 class="h-d h-lg" style="margin-bottom:36px">ПРОТОКОЛ<br><span class="yl">TCP</span></h2>
-    <p class="body b-lg white" style="max-width:48ch;margin-bottom:36px;opacity:.95">TCP — один из протоколов транспортного уровня. Его главное отличие — обеспечение <b class="yellowt">надёжности</b> доставки данных.</p>
-    <div class="g2" style="max-width:70ch;gap:48px">
-      <div>
-        <div class="kick yellowt" style="margin-bottom:14px">Функции:</div>
-        <ul class="bullets b-md" style="gap:16px">
-          <li>Отслеживание сегментов, отправленных на узел</li>
-          <li>Подтверждение получения данных</li>
-          <li>Повторная передача при потере</li>
-        </ul>
-      </div>
-      <div>
-        <div class="kick yellowt" style="margin-bottom:14px">Задачи:</div>
-        <ul class="bullets b-md" style="gap:16px">
-          <li>Доставка сегментов в одинаковом порядке</li>
-          <li>Установление сеанса связи</li>
-          <li>Регулирование потока передачи данных</li>
-        </ul>
-      </div>
-    </div>
+</div></div></div></section><section class="slide " data-label="TCP и UDP"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Протокол UDP</div><h2>Сравнение функций протоколов TCP и UDP</h2></header><div class="tw card"><table class="tbl cmp"><thead><tr><th>Параметры</th><th>TCP</th><th>UDP</th></tr></thead><tbody><tr data-s="1"><th>Гарантия доставки</th><td>Является надежным протоколом транспортного уровня, гарантирует доставку сообщения до узла назначения</td><td>Не обеспечивает надежную доставку сообщений</td></tr><tr data-s="2"><th>Упорядоченная доставка</th><td>Есть. Для того чтобы воссоздать исходный порядок сегментов, протокол TCP использует порядковые номера в заголовках каждого сегмента</td><td>Нет. Протокол UDP не использует порядковые номера датаграмм, поэтому не восстанавливает их исходный порядок, а просто пересылает приложению</td></tr><tr data-s="3"><th>Установка соединения</th><td>Устанавливает соединение перед отправкой данных</td><td>Не устанавливает соединение</td></tr><tr data-s="4"><th>Повторная передача данных</th><td>Повторная передача сегментов в случае потери</td><td>Нет повторной передачи</td></tr><tr data-s="5"><th>Скорость передачи</th><td>Из-за дополнительных функций гарантии доставки имеет увеличенное время передачи данных</td><td>Имеет высокую скорость передачи данных</td></tr><tr data-s="6"><th>Сферы применения</th><td>Передача сообщений электронной почты, HTML-страниц, FTP, SMTP, DNS</td><td>TFTP, DHCP, VoIP, DNS</td></tr></tbody></table></div></div></div></section><section class="slide " data-label="Приложения UDP"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Протокол UDP</div><h2>Основные типы приложений, которые используют UDP</h2></header>
+<div class="g3">
+  <article class="card app" data-s="1"><div class="mono appn">TFTP</div><p>Приложения, которые могут самостоятельно гарантировать полную передачу данных. В таком случае, контроль правильности передачи данных осуществляется приложением 7-го уровня модели OSI, а не самим протоколом;</p></article>
+  <article class="card app" data-s="2"><div class="mono appn">DHCP</div><p>Приложения, осуществляющие только отправку запросов и получение ответов;</p></article>
+  <article class="card app" data-s="3"><div class="mono appn">VoIP</div><p>Приложения для передачи мультимедийного контента в режиме реального времени.</p></article>
+</div></div></div></section><section class="slide " data-label="Тренажёр: порты"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Тренажёры</div><h2>Тренажёр: номера портов</h2></header>
+<div class="two">
+  <div class="card trn" id="tp">
+    <div class="tq">Какой порт использует сервис <b class="mono" id="tp-s">HTTP</b>?</div>
+    <div class="trow"><input id="tp-in" class="mono" inputmode="numeric" autocomplete="off" aria-label="Номер порта"><button class="btn pri" id="tp-ok">Проверить</button><button class="btn" id="tp-nx">Другой сервис</button></div>
+    <div class="tres" id="tp-r" aria-live="polite"></div>
+    <div class="tscore mono" id="tp-sc">0 / 0</div>
   </div>
-</section>
-
-<!-- ===== 10. ЗАГОЛОВОК TCP-СЕГМЕНТА ===== -->
-<section class="slide bg-white on-white">
-  <div class="tophint">8.2 · заголовок TCP</div>
-  <div class="pad" style="top:70px">
-    <h2 class="h-d h-sm blue" style="margin-bottom:30px">ЗАГОЛОВОК TCP-СЕГМЕНТА</h2>
-    <svg viewBox="0 0 1600 680" style="width:100%;height:620px">
-      <rect x="200" y="20" width="600" height="80" rx="14" fill="var(--blue)" stroke="var(--blue-d)" stroke-width="3"/>
-      <text x="500" y="70" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:26px" fill="#fff">Порт источника (16 бит)</text>
-      <rect x="800" y="20" width="600" height="80" rx="14" fill="var(--sage)" stroke="var(--sage-d)" stroke-width="3"/>
-      <text x="1100" y="70" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:26px" fill="#fff">Порт назначения (16 бит)</text>
-      <rect x="200" y="120" width="1200" height="80" rx="14" fill="var(--sky)" stroke="var(--blue)" stroke-width="3"/>
-      <text x="800" y="170" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:26px" fill="var(--ink)">Порядковый номер (32 бита)</text>
-      <rect x="200" y="220" width="1200" height="80" rx="14" fill="var(--sky)" stroke="var(--blue)" stroke-width="3"/>
-      <text x="800" y="270" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:26px" fill="var(--ink)">Номер подтверждения (32 бита)</text>
-      <rect x="200" y="320" width="240" height="80" rx="14" fill="var(--peach)" stroke="var(--yellow)" stroke-width="3"/>
-      <text x="320" y="366" text-anchor="middle" style="font-family:Fredoka;font-weight:600;font-size:20px" fill="var(--ink)">Длина загол.</text>
-      <text x="320" y="390" text-anchor="middle" style="font-family:Nunito Sans;font-weight:700;font-size:16px" fill="var(--blue)">(4 бита)</text>
-      <rect x="440" y="320" width="220" height="80" rx="14" fill="var(--kraft)" stroke="var(--blue)" stroke-width="3"/>
-      <text x="550" y="366" text-anchor="middle" style="font-family:Fredoka;font-weight:600;font-size:20px" fill="var(--ink)">Зарезерв.</text>
-      <text x="550" y="390" text-anchor="middle" style="font-family:Nunito Sans;font-weight:700;font-size:16px" fill="var(--blue)">(6 бит)</text>
-      <rect x="660" y="320" width="240" height="80" rx="14" fill="var(--yellow)" stroke="var(--ink)" stroke-width="3"/>
-      <text x="780" y="366" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:22px" fill="var(--ink)">Флаги</text>
-      <text x="780" y="390" text-anchor="middle" style="font-family:Nunito Sans;font-weight:700;font-size:16px" fill="var(--blue)">(6 бит)</text>
-      <rect x="900" y="320" width="500" height="80" rx="14" fill="var(--blush)" stroke="var(--blue)" stroke-width="3"/>
-      <text x="1150" y="370" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:24px" fill="var(--ink)">Размер окна (16 бит)</text>
-      <rect x="200" y="420" width="600" height="80" rx="14" fill="var(--card)" stroke="var(--blue)" stroke-width="3"/>
-      <text x="500" y="470" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:24px" fill="var(--ink)">Контрольная сумма (16 бит)</text>
-      <rect x="800" y="420" width="600" height="80" rx="14" fill="var(--card)" stroke="var(--blue)" stroke-width="3"/>
-      <text x="1100" y="470" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:24px" fill="var(--ink)">Срочность (16 бит)</text>
-      <rect x="200" y="520" width="1200" height="70" rx="14" fill="var(--kraft)" stroke="var(--blue)" stroke-width="3"/>
-      <text x="800" y="565" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:24px" fill="var(--ink)">Опции (32 бита)</text>
-      <rect x="200" y="610" width="1200" height="60" rx="14" fill="var(--peach)" stroke="var(--yellow)" stroke-width="3"/>
-      <text x="800" y="648" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:24px" fill="var(--ink)">Данные</text>
-    </svg>
+  <div class="card trn">
+    <div class="tq">К какой группе относится порт <b class="mono" id="tg-p">443</b>?</div>
+    <div class="opts" id="tg-o"></div>
+    <div class="tres" id="tg-r" aria-live="polite"></div>
+    <button class="btn" id="tg-nx">Другой порт</button>
   </div>
-</section>
-
-<!-- ===== 11. ПОЛЕ УПРАВЛЯЮЩИХ БИТОВ (ФЛАГИ) ===== -->
-<section class="slide bg-white on-white">
-  <div class="tophint">8.2 · флаги TCP</div>
-  <div class="pad" style="top:70px">
-    <h2 class="h-d h-sm blue" style="margin-bottom:24px">ПОЛЕ УПРАВЛЯЮЩИХ БИТОВ</h2>
-    <p class="body b-md ink" style="max-width:56ch;margin-bottom:28px">Для управления сеансом связи в заголовке TCP используется поле длиной <b>6 бит</b>. Данные биты называются флагами.</p>
-    <div class="g2" style="gap:56px;align-items:start">
-      <table class="mtable">
-        <tr><th>Флаг</th><th>Назначение</th></tr>
-        <tr class="hot"><td><b>SYN</b></td><td>Синхронизация порядковых номеров</td></tr>
-        <tr class="hot"><td><b>ACK</b></td><td>Подтверждение получения</td></tr>
-        <tr class="hot"><td><b>FIN</b></td><td>Завершение сеанса связи</td></tr>
-        <tr><td><b>RST</b></td><td>Сброс соединения</td></tr>
-        <tr><td><b>PSH</b></td><td>Функция push (немедленная доставка)</td></tr>
-        <tr><td><b>URG</b></td><td>Указатель важности</td></tr>
-      </table>
-      <div>
-        <div class="card analogy" style="transform:rotate(1.2deg)">
-          <span class="tag">Wireshark-вид</span>
-          <p class="body b-sm ink" style="font-family:var(--fd);letter-spacing:.05em;line-height:1.7">
-            Flags: 0x002 (SYN)<br>
-            .... .... ..1. = Syn: Set<br>
-            .... .... ...0 = Fin: Not set<br>
-            .... ...0 .... = Ack: Not set
-          </p>
-        </div>
-      </div>
-    </div>
+</div></div></div></section><section class="slide " data-label="Тренажёр: Seq/Ack"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Тренажёры</div><h2>Тренажёр: порядковые номера</h2></header>
+<div class="two">
+  <div class="card trn">
+    <div class="tq" id="ts-q"></div>
+    <div class="trow"><input id="ts-in" class="mono" inputmode="numeric" autocomplete="off" aria-label="Ответ"><button class="btn pri" id="ts-ok">Проверить</button><button class="btn" id="ts-nx">Новая задача</button></div>
+    <div class="tres" id="ts-r" aria-live="polite"></div>
+    <div class="tscore mono" id="ts-sc">0 / 0</div>
   </div>
-</section>
-
-<!-- ===== 12. УСТАНОВКА TCP-СОЕДИНЕНИЯ (3-way handshake) ===== -->
-<section class="slide bg-blue on-blue">
-  <div class="tophint">8.2 · трёхэтапное рукопожатие</div>
-  <div class="pad" style="top:60px">
-    <h2 class="h-d h-sm" style="margin-bottom:18px">УСТАНОВКА TCP-<br>СОЕДИНЕНИЯ</h2>
-    <p class="body b-md" style="max-width:56ch;margin-bottom:20px;opacity:.92">Трёхэтапное рукопожатие (Three-Way Handshake)</p>
-    <svg viewBox="0 0 1600 620" style="width:100%;height:560px">
-      <!-- Узлы -->
-      <rect x="60" y="460" width="240" height="90" rx="18" fill="var(--sage)" stroke="var(--yellow)" stroke-width="4"/>
-      <text x="180" y="514" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:30px" fill="#fff">Узел А</text>
-      <rect x="1300" y="30" width="240" height="90" rx="18" fill="var(--sage)" stroke="var(--yellow)" stroke-width="4"/>
-      <text x="1420" y="84" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:30px" fill="#fff">Узел Б</text>
-      <!-- Линии времени -->
-      <line x1="180" y1="460" x2="180" y2="40" stroke="var(--yellow)" stroke-width="4" stroke-dasharray="12 8"/>
-      <line x1="1420" y1="120" x2="1420" y2="560" stroke="var(--yellow)" stroke-width="4" stroke-dasharray="12 8"/>
-      <!-- SYN -->
-      <line x1="200" y1="380" x2="1400" y2="280" stroke="var(--peach)" stroke-width="6"/>
-      <text x="800" y="310" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:32px" fill="var(--yellow)">1. SYN</text>
-      <text x="140" y="370" text-anchor="middle" style="font-family:Nunito Sans;font-weight:700;font-size:20px" fill="var(--peach)">Отправка SYN</text>
-      <!-- SYN, ACK -->
-      <line x1="1400" y1="340" x2="200" y2="240" stroke="var(--sky)" stroke-width="6"/>
-      <text x="800" y="270" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:32px" fill="var(--sky)">2. SYN + ACK</text>
-      <text x="1460" y="330" text-anchor="middle" style="font-family:Nunito Sans;font-weight:700;font-size:20px" fill="var(--sky)">SYN получен</text>
-      <!-- ACK -->
-      <line x1="200" y1="180" x2="1400" y2="180" stroke="var(--peach)" stroke-width="6"/>
-      <text x="800" y="164" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:32px" fill="var(--yellow)">3. ACK</text>
-      <text x="140" y="210" text-anchor="middle" style="font-family:Nunito Sans;font-weight:700;font-size:20px" fill="var(--peach)">Отправка ACK</text>
-      <text x="1460" y="210" text-anchor="middle" style="font-family:Nunito Sans;font-weight:700;font-size:22px" fill="var(--yellow)">Установлено!</text>
-    </svg>
+  <div class="card lst">
+    <h3>Правило из лекции</h3>
+    <p class="p sm">Порядковый номер + длина полезной нагрузки = порядковый номер первого байта следующего сегмента.</p>
+    <p class="p sm">В рукопожатии: ответ на SYN с номером <b class="mono">a</b> содержит номер подтверждения <b class="mono">a+1</b>; третий сегмент – порядковый номер <b class="mono">a+1</b> и номер подтверждения <b class="mono">b+1</b>.</p>
+    <p class="p sm">Подтверждаются только данные, поступившие в непрерывной последовательности байт.</p>
   </div>
-</section>
-
-<!-- ===== 13. НАДЁЖНОСТЬ TCP — ПОДТВЕРЖДЕНИЕ И РАЗМЕР ОКНА ===== -->
-<section class="slide bg-white on-white">
-  <div class="tophint">8.2 · размер окна и подтверждение</div>
-  <div class="pad" style="top:64px">
-    <h2 class="h-d h-sm blue" style="margin-bottom:18px">НАДЁЖНОСТЬ TCP:<br>ПОДТВЕРЖДЕНИЕ И ОКНО</h2>
-    <p class="body b-md ink" style="max-width:62ch;margin-bottom:18px">В заголовке TCP существует 16-битное поле для указания <b>размера окна</b> — объёма данных, который целевой узел может успешно принять и обработать.</p>
-    <svg viewBox="0 0 1680 520" style="width:100%;height:460px">
-      <!-- Узлы -->
-      <rect x="30" y="350" width="180" height="70" rx="16" fill="var(--sage)" stroke="var(--sage-d)" stroke-width="3"/>
-      <text x="120" y="394" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:24px" fill="#fff">Узел А</text>
-      <rect x="30" y="30" width="180" height="70" rx="16" fill="var(--blue)" stroke="var(--blue-d)" stroke-width="3"/>
-      <text x="120" y="74" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:24px" fill="#fff">Узел Б</text>
-      <!-- Линии -->
-      <line x1="120" y1="100" x2="120" y2="350" stroke="var(--blue)" stroke-width="3" stroke-dasharray="8 6"/>
-      <!-- Отправка 1-1500 -->
-      <line x1="140" y1="340" x2="300" y2="110" stroke="var(--sage)" stroke-width="4"/>
-      <text x="280" y="340" text-anchor="start" class="lab-s" fill="var(--sage)">1-1500</text>
-      <!-- Отправка 1501-3000 -->
-      <line x1="140" y1="320" x2="440" y2="110" stroke="var(--sage)" stroke-width="4"/>
-      <text x="420" y="330" text-anchor="start" class="lab-s" fill="var(--sage)">1501-3000</text>
-      <!-- ACK 3001 -->
-      <line x1="560" y1="110" x2="560" y2="300" stroke="var(--blue)" stroke-width="4"/>
-      <text x="580" y="220" text-anchor="start" style="font-family:Fredoka;font-weight:600;font-size:20px" fill="var(--blue)">ACK 3001</text>
-      <!-- Отправка 3001-4500 -->
-      <line x1="660" y1="290" x2="820" y2="110" stroke="var(--sage)" stroke-width="4"/>
-      <text x="700" y="290" text-anchor="start" class="lab-s" fill="var(--sage)">3001-4500</text>
-      <!-- Отправка 4501-6000 -->
-      <line x1="660" y1="270" x2="960" y2="110" stroke="var(--sage)" stroke-width="4"/>
-      <text x="840" y="260" text-anchor="start" class="lab-s" fill="var(--sage)">4501-6000</text>
-      <!-- ACK 6001 -->
-      <line x1="1060" y1="110" x2="1060" y2="260" stroke="var(--blue)" stroke-width="4"/>
-      <text x="1080" y="200" text-anchor="start" style="font-family:Fredoka;font-weight:600;font-size:20px" fill="var(--blue)">ACK 6001</text>
-      <!-- Размер окна -->
-      <rect x="1300" y="140" width="320" height="120" rx="18" fill="var(--peach)" stroke="var(--yellow)" stroke-width="4"/>
-      <text x="1460" y="190" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:26px" fill="var(--ink)">Размер окна</text>
-      <text x="1460" y="230" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:36px" fill="var(--blue)">= 3000 байт</text>
-    </svg>
-  </div>
-</section>
-
-<!-- ===== 14. ПОТЕРЯ ДАННЫХ И ПОВТОРНАЯ ПЕРЕДАЧА ===== -->
-<section class="slide bg-white on-white">
-  <div class="tophint">8.2 · повторная передача</div>
-  <div class="pad" style="top:64px">
-    <h2 class="h-d h-sm blue" style="margin-bottom:18px">ПОТЕРЯ ДАННЫХ И ПОВТОРНАЯ<br>ПЕРЕДАЧА</h2>
-    <p class="body b-md ink" style="max-width:64ch;margin-bottom:16px">Протокол TCP имеет механизм <b>повторной передачи</b> сегментов. Если после истечения таймаута узел-отправитель не получил подтверждение, он повторно отправляет сегменты, начиная с последнего подтверждённого (ACK).</p>
-    <svg viewBox="0 0 1680 420" style="width:100%;height:380px">
-      <rect x="30" y="280" width="180" height="60" rx="14" fill="var(--sage)" stroke="var(--sage-d)" stroke-width="3"/>
-      <text x="120" y="318" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:22px" fill="#fff">Узел А</text>
-      <rect x="30" y="20" width="180" height="60" rx="14" fill="var(--blue)" stroke="var(--blue-d)" stroke-width="3"/>
-      <text x="120" y="58" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:22px" fill="#fff">Узел Б</text>
-      <line x1="120" y1="80" x2="120" y2="280" stroke="var(--blue)" stroke-width="3" stroke-dasharray="8 6"/>
-      <!-- Отправка -->
-      <line x1="140" y1="270" x2="320" y2="90" stroke="var(--sage)" stroke-width="4"/>
-      <text x="250" y="270" class="lab-s" fill="var(--sage)">1-1500</text>
-      <line x1="140" y1="250" x2="460" y2="90" stroke="var(--sage)" stroke-width="4"/>
-      <text x="380" y="240" class="lab-s" fill="var(--sage)">1501-3000</text>
-      <!-- Потеря -->
-      <text x="620" y="170" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:28px" fill="var(--blush)">. . . . .</text>
-      <text x="620" y="210" text-anchor="middle" style="font-family:Caveat;font-weight:600;font-size:28px" fill="var(--blush)">потеря! таймаут</text>
-      <!-- Повтор -->
-      <text x="850" y="260" text-anchor="middle" style="font-family:Nunito Sans;font-weight:700;font-size:20px" fill="var(--blush)">Не подтверждено → повтор</text>
-      <line x1="900" y1="270" x2="1100" y2="90" stroke="var(--yellow)" stroke-width="5"/>
-      <text x="1020" y="270" class="lab-s" fill="var(--yellow)">1-1500</text>
-      <line x1="900" y1="250" x2="1240" y2="90" stroke="var(--yellow)" stroke-width="5"/>
-      <text x="1160" y="240" class="lab-s" fill="var(--yellow)">1501-3000</text>
-      <text x="1400" y="180" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:28px" fill="var(--sage)">ACK ✓</text>
-    </svg>
-  </div>
-</section>
-
-<!-- ===== 15. ЗАВЕРШЕНИЕ TCP-СЕАНСА ===== -->
-<section class="slide bg-blue on-blue">
-  <div class="tophint">8.2 · завершение сеанса</div>
-  <div class="pad" style="top:60px">
-    <h2 class="h-d h-sm" style="margin-bottom:18px">ЗАВЕРШЕНИЕ<br>TCP-СЕАНСА</h2>
-    <div class="g2" style="gap:56px;align-items:start">
-      <ol class="steps b-md" style="gap:20px;max-width:36ch">
-        <li>Узел А отправляет сегмент с флагом <b class="yellowt">FIN</b> для прекращения сессии «клиент-сервер»</li>
-        <li>Узел Б принимает запрос и отправляет подтверждение <b class="yellowt">ACK</b> узлу А</li>
-        <li>Узел Б отправляет сегмент с флагом <b class="yellowt">FIN</b> для прекращения сессии «сервер-клиент»</li>
-        <li>Узел А отправляет ответ <b class="yellowt">ACK</b> для подтверждения</li>
-      </ol>
-      <svg viewBox="0 0 600 540" style="width:100%;height:540px">
-        <rect x="20" y="380" width="160" height="70" rx="16" fill="var(--sage)" stroke="var(--yellow)" stroke-width="3"/>
-        <text x="100" y="424" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:24px" fill="#fff">Узел А</text>
-        <rect x="420" y="20" width="160" height="70" rx="16" fill="var(--sage)" stroke="var(--yellow)" stroke-width="3"/>
-        <text x="500" y="64" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:24px" fill="#fff">Узел Б</text>
-        <line x1="100" y1="90" x2="100" y2="380" stroke="var(--yellow)" stroke-width="3" stroke-dasharray="8 6"/>
-        <line x1="500" y1="90" x2="500" y2="500" stroke="var(--yellow)" stroke-width="3" stroke-dasharray="8 6"/>
-        <!-- FIN → -->
-        <line x1="110" y1="340" x2="490" y2="260" stroke="var(--blush)" stroke-width="5"/>
-        <text x="300" y="286" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:26px" fill="var(--blush)">FIN</text>
-        <!-- ← ACK -->
-        <line x1="490" y1="230" x2="110" y2="280" stroke="var(--sky)" stroke-width="5"/>
-        <text x="300" y="242" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:26px" fill="var(--sky)">ACK</text>
-        <!-- ← FIN -->
-        <line x1="490" y1="190" x2="110" y2="200" stroke="var(--blush)" stroke-width="5"/>
-        <text x="300" y="184" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:26px" fill="var(--blush)">FIN</text>
-        <!-- ACK → -->
-        <line x1="110" y1="150" x2="490" y2="150" stroke="var(--sky)" stroke-width="5"/>
-        <text x="300" y="140" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:26px" fill="var(--sky)">ACK</text>
-      </svg>
-    </div>
-  </div>
-</section>
-
-<!-- ===== 16. ISN И УПРАВЛЕНИЕ ПОТОКОМ ===== -->
-<section class="slide bg-white on-white">
-  <div class="tophint">8.2 · ISN и управление потоком</div>
-  <div class="pad" style="display:flex;flex-direction:column;justify-content:center">
-    <h2 class="h-d h-sm blue" style="margin-bottom:28px">ISN И УПРАВЛЕНИЕ ПОТОКОМ</h2>
-    <div class="g2" style="gap:56px;align-items:start">
-      <div>
-        <p class="body b-md ink" style="max-width:34ch;margin-bottom:20px">Данные при передаче по TCP делятся на сегменты, которые могут быть доставлены на узел назначения <b>в изменённом порядке</b>. Протокол TCP использует <b>порядковые номера</b> в заголовках каждого сегмента.</p>
-        <div class="callout" style="margin-bottom:20px">
-          <div class="term">ISN</div>
-          <div class="def">Initial Sequence Number — начальный порядковый номер сеанса. Представляет собой <b>случайное</b> число. ISN не является строго определённым — задаётся случайно, чтобы предотвратить вредоносные атаки.</div>
-        </div>
-      </div>
-      <div>
-        <p class="body b-md ink" style="max-width:34ch;margin-bottom:20px">На узле назначения все полученные сегменты распределяются в правильном порядке и только после этого передаются на уровень приложений.</p>
-        <div class="card analogy" style="transform:rotate(1deg)">
-          <span class="tag">Зачем случайный ISN?</span>
-          <p class="body b-sm ink">Если ISN был бы фиксированным (например, 0), злоумышленник мог бы предсказать порядковые номера и подделать сегменты. Случайный ISN защищает от инъекции пакетов.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===== 17. ПРОТОКОЛ UDP ===== -->
-<section class="slide bg-blue on-blue">
-  <svg class="doodle" style="left:-100px;bottom:-100px;width:600px;height:500px;opacity:.1" viewBox="0 0 600 500" preserveAspectRatio="none"><path d="M60,180 C40,80 160,20 300,30 C460,40 590,70 560,220 C540,340 590,470 420,470 C280,470 120,500 70,400 C30,320 80,270 60,180 Z" fill="var(--white)"/></svg>
-  <div class="pad" style="display:flex;flex-direction:column;justify-content:center">
-    <div class="tophint">8.3 · UDP</div>
-    <h2 class="h-d h-lg" style="margin-bottom:36px">ПРОТОКОЛ<br><span class="yl">UDP</span></h2>
-    <p class="body b-lg white" style="max-width:52ch;margin-bottom:36px;opacity:.95">Протокол UDP так же, как и TCP, использует сегментацию данных, при этом <b class="yellowt">не задействует</b> процессы подтверждения — что позволяет значительно быстрее передавать данные.</p>
-    <ul class="bullets b-lg" style="gap:22px;max-width:48ch">
-      <li>Отсутствие установления сеанса связи</li>
-      <li>Отсутствие повторной отправки потерянных сегментов</li>
-      <li>Наличие высокоскоростного потока</li>
-    </ul>
-  </div>
-</section>
-
-<!-- ===== 18. UDP-ДАТАГРАММЫ (ЗАГОЛОВОК) ===== -->
-<section class="slide bg-white on-white">
-  <div class="tophint">8.3 · заголовок UDP</div>
-  <div class="pad" style="top:70px">
-    <h2 class="h-d h-sm blue" style="margin-bottom:22px">UDP-ДАТАГРАММЫ</h2>
-    <p class="body b-md ink" style="max-width:62ch;margin-bottom:28px"><b>Датаграмма</b> — блок информации, передающийся с помощью протокола UDP, без гарантированной доставки. Заголовок UDP содержит всего <b>8 байт</b>.</p>
-    <svg viewBox="0 0 1400 420" style="width:100%;height:380px">
-      <rect x="100" y="40" width="560" height="120" rx="18" fill="var(--blue)" stroke="var(--blue-d)" stroke-width="4"/>
-      <text x="380" y="110" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:32px" fill="#fff">Порт источника (16 бит)</text>
-      <rect x="660" y="40" width="560" height="120" rx="18" fill="var(--sage)" stroke="var(--sage-d)" stroke-width="4"/>
-      <text x="940" y="110" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:32px" fill="#fff">Порт назначения (16 бит)</text>
-      <rect x="100" y="180" width="560" height="120" rx="18" fill="var(--sky)" stroke="var(--blue)" stroke-width="4"/>
-      <text x="380" y="250" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:32px" fill="var(--ink)">Длина (16 бит)</text>
-      <rect x="660" y="180" width="560" height="120" rx="18" fill="var(--peach)" stroke="var(--yellow)" stroke-width="4"/>
-      <text x="940" y="250" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:32px" fill="var(--ink)">Контр. сумма (16 бит)</text>
-      <rect x="100" y="320" width="1120" height="80" rx="18" fill="var(--card)" stroke="var(--blue)" stroke-width="4"/>
-      <text x="660" y="370" text-anchor="middle" style="font-family:Fredoka;font-weight:700;font-size:32px" fill="var(--ink)">Данные</text>
-    </svg>
-  </div>
-</section>
-
-<!-- ===== 19. СРАВНЕНИЕ TCP VS UDP ===== -->
-<section class="slide bg-white on-white">
-  <div class="tophint">8.4 · сравнение TCP и UDP</div>
-  <div class="pad" style="top:64px">
-    <h2 class="h-d h-sm blue" style="margin-bottom:26px">СРАВНЕНИЕ TCP И UDP</h2>
-    <table class="mtable" style="font-size:24px">
-      <tr><th style="width:26%">Параметр</th><th style="width:37%">TCP</th><th style="width:37%">UDP</th></tr>
-      <tr><td><b>Гарантия доставки</b></td><td>Надёжный, гарантирует доставку</td><td>Не обеспечивает надёжную доставку</td></tr>
-      <tr><td><b>Упорядоченная доставка</b></td><td>Есть — использует порядковые номера</td><td>Нет — просто пересылает приложению</td></tr>
-      <tr><td><b>Установка соединения</b></td><td>Устанавливает соединение (3-way handshake)</td><td>Не устанавливает соединение</td></tr>
-      <tr><td><b>Повторная передача</b></td><td>Повторная передача при потере</td><td>Нет повторной передачи</td></tr>
-      <tr><td><b>Скорость передачи</b></td><td>Увеличенное время передачи (накладные расходы)</td><td>Высокая скорость передачи</td></tr>
-      <tr class="hot"><td><b>Сферы применения</b></td><td>Email, HTML-страницы, DNS</td><td>TFTP, DHCP, VoIP, DNS</td></tr>
-    </table>
-  </div>
-</section>
-
-<!-- ===== 20. ТИПЫ ПРИЛОЖЕНИЙ UDP ===== -->
-<section class="slide bg-white on-white">
-  <div class="tophint">8.3 · приложения UDP</div>
-  <div class="pad" style="display:flex;flex-direction:column;justify-content:center">
-    <h2 class="h-d h-sm blue" style="margin-bottom:36px">ТИПЫ ПРИЛОЖЕНИЙ,<br>ИСПОЛЬЗУЮЩИЕ UDP</h2>
-    <div class="g3" style="align-items:start;gap:48px">
-      <div class="card" style="transform:rotate(-1.2deg)">
-        <span class="tag">Свои гарантии</span>
-        <p class="body b-md ink">Приложения, которые могут самостоятельно гарантировать полную передачу данных, например <b>TFTP</b>. Контроль — на уровне приложения (L7), а не протокола.</p>
-      </div>
-      <div class="card analogy" style="transform:rotate(.8deg)">
-        <span class="tag">Запрос-ответ</span>
-        <p class="body b-md ink">Приложения, осуществляющие только отправку запросов и получение ответов, например <b>DHCP</b>.</p>
-      </div>
-      <div class="card" style="transform:rotate(1.2deg)">
-        <span class="tag">Реальное время</span>
-        <p class="body b-md ink">Приложения для передачи мультимедийного контента в режиме реального времени, например <b>VoIP</b>.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===== 21. СЛОВАРЬ ТЕРМИНОВ ===== -->
-<section class="slide bg-white on-white">
-  <div class="tophint">итог · словарь</div>
-  <div class="pad" style="display:flex;flex-direction:column;justify-content:center">
-    <h2 class="h-d h-sm blue" style="margin-bottom:36px">СЛОВАРЬ ТЕРМИНОВ</h2>
-    <div class="g2" style="gap:48px;align-items:start">
-      <div class="callout" style="margin-bottom:24px">
-        <div class="term">Порт</div>
-        <div class="def">Идентификатор приложения (протокола), которое обрабатывает текущий сегмент на устройстве отправителя и на устройстве получателя.</div>
-      </div>
-      <div class="callout" style="margin-bottom:24px">
-        <div class="term">Сокет</div>
-        <div class="def">Сочетание IP-адреса источника с номером порта источника и IP-адреса назначения с номером порта назначения. Позволяет однозначно определить конечную точку доставки.</div>
-      </div>
-    </div>
-    <div class="g2" style="gap:48px;align-items:start;margin-top:16px">
-      <div class="callout">
-        <div class="term">ISN</div>
-        <div class="def">Initial Sequence Number — случайный начальный порядковый номер TCP-сеанса. Защищает от подделки пакетов.</div>
-      </div>
-      <div class="callout">
-        <div class="term">Датаграмма</div>
-        <div class="def">Блок информации, передающийся с помощью протокола UDP, без гарантированной доставки на узел назначения.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===== 22. ВОПРОСИКИ ===== -->
-<section class="slide bg-white on-white">
-  <div class="tophint">проверь себя</div>
-  <svg class="doodle" style="right:100px;top:100px;width:120px;transform:rotate(14deg)" viewBox="0 0 100 100"><use href="#spark" fill="var(--yellow)"/></svg>
-  <div class="pad" style="top:80px">
-    <h2 class="h-d h-sm blue" style="margin-bottom:30px">ВОПРОСИКИ</h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-      <div class="qa" onclick="this.classList.toggle('open')">
-        <div class="q">Какие два основных протокола работают на транспортном уровне?</div>
-        <div class="a"><b>TCP</b> (надёжная доставка с установлением соединения) и <b>UDP</b> (быстрая доставка без гарантий).</div>
-      </div>
-      <div class="qa" onclick="this.classList.toggle('open')">
-        <div class="q">Что такое порт и в каком диапазоне он находится?</div>
-        <div class="a">Порт — идентификатор приложения, 16-битное число от <b>0 до 65535</b>.</div>
-      </div>
-      <div class="qa" onclick="this.classList.toggle('open')">
-        <div class="q">Из каких шагов состоит установка TCP-соединения?</div>
-        <div class="a">Трёхэтапное рукопожатие: <b>1) SYN</b> → <b>2) SYN+ACK</b> → <b>3) ACK</b>.</div>
-      </div>
-      <div class="qa" onclick="this.classList.toggle('open')">
-        <div class="q">Чем отличается размер заголовка TCP от UDP?</div>
-        <div class="a">Заголовок TCP — <b>20+ байт</b> (порты, seq, ack, флаги, окно, опции). Заголовок UDP — всего <b>8 байт</b> (порты, длина, контрольная сумма).</div>
-      </div>
-      <div class="qa" onclick="this.classList.toggle('open')">
-        <div class="q">Какие флаги TCP вы знаете?</div>
-        <div class="a"><b>SYN</b> (синхронизация), <b>ACK</b> (подтверждение), <b>FIN</b> (завершение), <b>RST</b> (сброс), <b>PSH</b> (push), <b>URG</b> (срочность).</div>
-      </div>
-      <div class="qa" onclick="this.classList.toggle('open')">
-        <div class="q">Какие приложения используют UDP и почему?</div>
-        <div class="a"><b>TFTP</b> (свои гарантии на L7), <b>DHCP</b> (запрос-ответ), <b>VoIP</b> (реальное время). UDP быстрее, т.к. не тратит время на установку соединения и подтверждения.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===== 23. ФИНАЛ ===== -->
-<section class="slide bg-blue on-blue">
-  <svg class="doodle" style="right:-160px;bottom:-160px;width:780px;height:640px;opacity:.12" viewBox="0 0 600 500" preserveAspectRatio="none"><path d="M60,180 C40,80 160,20 300,30 C460,40 590,70 560,220 C540,340 590,470 420,470 C280,470 120,500 70,400 C30,320 80,270 60,180 Z" fill="var(--white)"/></svg>
-  <svg class="doodle" style="left:120px;top:150px;width:150px;transform:rotate(-12deg)" viewBox="0 0 100 100"><use href="#spark" fill="var(--yellow)"/></svg>
-  <svg class="doodle" style="right:200px;top:260px;width:120px;transform:rotate(14deg)" viewBox="0 0 100 100"><path d="M50 2 L60 40 L98 50 L60 60 L50 98 L40 60 L2 50 L40 40 Z" fill="none" stroke="var(--yellow)" stroke-width="6" stroke-linejoin="round"/></svg>
-  <div class="pad" style="display:flex;flex-direction:column;justify-content:center">
-    <div class="kick yellowt" style="margin-bottom:20px">итог главы 8</div>
-    <h2 class="h-d h-lg">TCP — <span class="yl">НАДЁЖНО</span><br>UDP — <span class="yl">БЫСТРО</span></h2>
-    <p class="body b-lg white" style="margin-top:34px;opacity:.92;max-width:46ch">Транспортный уровень обеспечивает доставку данных конкретному приложению через порты и сокеты. TCP гарантирует порядок и целостность. UDP жертвует гарантиями ради скорости.</p>
-    <div class="kick white" style="margin-top:56px">Ананко · Качур &nbsp;—&nbsp; VK · TG</div>
-  </div>
-</section>
-
-</div></div>
-<div class="hintnav">← → · пробел · F — весь экран</div>
-<script>
+</div></div></div></section><section class="slide " data-label="Проверь себя"><div class="sc"><div class="wrap"><header class="sh"><div class=kick>Итог</div><h2>Проверь себя</h2></header>
+<div class="card quiz" id="quiz">
+  <div class="qtop"><span class="mono" id="qz-n">1 / 8</span><span class="mono" id="qz-sc">верно: 0</span></div>
+  <div class="tq" id="qz-q"></div>
+  <div class="opts col" id="qz-o"></div>
+  <div class="tres" id="qz-e" aria-live="polite"></div>
+  <div class="trow"><button class="btn" id="qz-pv">Предыдущий</button><button class="btn pri" id="qz-nx">Следующий вопрос</button></div>
+</div></div></div></section></main><nav id="nav" aria-label="Навигация по слайдам"><button id="b-prev" type="button" aria-label="Назад"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><span id="ind" aria-live="polite"></span><button id="b-next" type="button" aria-label="Вперёд"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button><span class="nsep"></span><span class="seg"><button id="m-steps" type="button" title="Клавиша A">По этапам</button><button id="m-all" type="button" title="Клавиша A">Целиком</button></span><button id="b-play" type="button" title="Клавиша R"><svg viewBox="0 0 24 24"><path d="M7 5l11 7-11 7z"/></svg><span class="lbl2">Проиграть</span></button><span class="seg"><button type="button" data-speed="0.5">0.5×</button><button type="button" data-speed="1">1×</button><button type="button" data-speed="2">2×</button></span><button id="b-ov" type="button" title="Esc"><svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg><span class="lbl2">Содержание</span></button></nav><div id="ov" hidden><h2>Содержание</h2><div class="ovg"></div></div><script>
 (function(){
-  var deck=document.getElementById('deck');
-  var slides=[].slice.call(document.querySelectorAll('.slide'));
-  var n=slides.length, i=0, curRaf=null;
-  slides.forEach(function(s,k){ var c=document.createElement('div'); c.className='counter'; c.textContent=(k+1)+' / '+n; s.appendChild(c); });
-  var DW=1920,DH=1080;
-  function fit(){ var W=window.innerWidth,H=window.innerHeight; if(!(W>0&&H>0))return; DW=1920;DH=1080; if(W/H>16/9)DW=Math.round(1080*W/H); else DH=Math.round(1920*H/W); deck.style.width=DW+'px'; deck.style.height=DH+'px'; deck.style.transform='scale('+(W/DW)+')'; }
-  function fitSlide(sl){
-    if(!sl)return; var pad=sl.querySelector('.pad'); if(!pad)return;
-    pad.style.transform='none';
-    var dr=deck.getBoundingClientRect(), sc=dr.width/DW; if(!(sc>0))return;
-    var CT=1e9,CB=-1e9,CL=1e9,CR=-1e9, any=false;
-    [].forEach.call(pad.children,function(c){
-      var r=c.getBoundingClientRect(); if(r.width===0&&r.height===0)return; any=true;
-      var t=(r.top-dr.top)/sc,b=(r.bottom-dr.top)/sc,l=(r.left-dr.left)/sc,rr=(r.right-dr.left)/sc;
-      if(t<CT)CT=t; if(b>CB)CB=b; if(l<CL)CL=l; if(rr>CR)CR=rr;
-    });
-    if(!any)return;
-    var availB=DH-20, availR=DW-20;
-    if(CB<=availB && CR<=availR)return;
-    var sh=Math.min((availB-CT)/(CB-CT),(availR-CL)/(CR-CL),1);
-    if(sh<0.999){ pad.style.transformOrigin=CL+'px '+CT+'px'; pad.style.transform='scale('+sh.toFixed(4)+')'; }
-  }
-  function stopAnim(){ if(curRaf){cancelAnimationFrame(curRaf);curRaf=null;} }
-  function show(k){ i=(k+n)%n; stopAnim(); slides.forEach(function(s,j){s.classList.toggle('on',j===i)}); fitSlide(slides[i]); }
-  function relayout(){ fit(); fitSlide(slides[i]); }
-  window.addEventListener('resize',relayout); window.addEventListener('load',relayout);
-  document.addEventListener('fullscreenchange',relayout);
-  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(relayout);
-  if(window.ResizeObserver){new ResizeObserver(relayout).observe(document.documentElement);}
-  addEventListener('keydown',function(e){
-    var t=e.target.tagName; if(t==='INPUT'||t==='BUTTON'){ if(e.key===' ')return; }
-    if(['ArrowRight',' ','PageDown'].indexOf(e.key)>=0){e.preventDefault();show(i+1);}
-    else if(['ArrowLeft','PageUp'].indexOf(e.key)>=0){e.preventDefault();show(i-1);}
-    else if(e.key==='Home')show(0); else if(e.key==='End')show(n-1);
-    else if(e.key==='f'||e.key==='F'){ if(!document.fullscreenElement)document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
+'use strict';
+var $=function(s,r){return (r||document).querySelector(s)}, $$=function(s,r){return [].slice.call((r||document).querySelectorAll(s))};
+var slides=$$('.slide'), N=slides.length, cur=0, step=0, mode='steps', speed=1, timer=null, playing=false, paused=false;
+var RM=window.matchMedia('(prefers-reduced-motion: reduce)');
+var root=document.documentElement;
+slides.forEach(function(s){
+  var els=$$('[data-s],[data-m],[data-k],[data-p]',s), mx=0;
+  els.forEach(function(e){['s','m','k','p'].forEach(function(a){var v=+e.dataset[a]||0; if(v>mx)mx=v;});});
+  s._els=els; s._max=mx;
+});
+function waitFor(sl,k){
+  var w=0;
+  sl._els.forEach(function(e){ if(+e.dataset.s===k||+e.dataset.m===k||+e.dataset.k===k){ w=Math.max(w,+e.dataset.w||650); } });
+  return w||650;
+}
+function setStep(k,instant){
+  var sl=slides[cur]; step=Math.max(0,Math.min(sl._max,k));
+  if(instant) sl.classList.add('ni');
+  sl._els.forEach(function(e){
+    var d=e.dataset;
+    if(d.s) e.classList.toggle('in',+d.s<=step);
+    if(d.m) e.classList.toggle('go',+d.m<=step);
+    if(d.k) e.classList.toggle('kl',+d.k<=step);
+    if(d.p!==undefined && !instant){ e.classList.remove('pulse'); if(+d.p===step && step>0){ void e.getBoundingClientRect(); e.classList.add('pulse'); } }
   });
-  var x0=null;
-  addEventListener('touchstart',function(e){x0=e.touches[0].clientX},{passive:true});
-  addEventListener('touchend',function(e){ if(x0===null)return; var dx=e.changedTouches[0].clientX-x0; if(Math.abs(dx)>60)show(i+(dx<0?1:-1)); x0=null; });
+  if(instant){ void sl.offsetWidth; sl.classList.remove('ni'); }
+  ui();
+}
+function stopPlay(){ clearTimeout(timer); timer=null; playing=false; paused=false; ui(); }
+function schedule(ms){ clearTimeout(timer); timer=setTimeout(tick, ms/speed); }
+function tick(){
+  var sl=slides[cur];
+  if(step>=sl._max){ playing=false; paused=false; ui(); return; }
+  setStep(step+1,false);
+  schedule(waitFor(sl,step));
+}
+function play(){
+  stopPlay();
+  if(RM.matches){ setStep(slides[cur]._max,true); return; }
+  if(!slides[cur]._max) return;
+  setStep(0,true); playing=true; ui(); schedule(350);
+}
+function togglePause(){
+  if(!playing) return false;
+  if(paused){ paused=false; schedule(250); } else { paused=true; clearTimeout(timer); }
+  ui(); return true;
+}
+function go(i,atEnd){
+  i=Math.max(0,Math.min(N-1,i));
+  stopPlay();
+  slides.forEach(function(s){s.classList.remove('on')}); cur=i; slides[cur].classList.add('on');
+  var sc=$('.sc',slides[cur]); if(sc) sc.scrollTop=0;
+  var full=RM.matches||atEnd;
+  setStep(full?slides[cur]._max:0,true);
+  try{ history.replaceState(null,'','#'+(cur+1)); }catch(e){}
+  if(mode==='all' && !RM.matches && !atEnd) play();
+}
+function next(){
+  if(mode==='steps' && step<slides[cur]._max){ stopPlay(); setStep(step+1,false); return; }
+  if(cur<N-1) go(cur+1);
+}
+function prev(){
+  if(mode==='steps' && step>0){ stopPlay(); setStep(step-1,true); return; }
+  if(cur>0) go(cur-1,mode==='steps');
+}
+function setMode(m){ mode=m; stopPlay(); ui(); if(mode==='all') play(); }
+function setSpeed(v){ speed=v; root.style.setProperty('--sp',v); ui(); }
+/* ---- UI ---- */
+var ind=$('#ind'), bPlay=$('#b-play');
+function ui(){
+  var mx=slides[cur]._max;
+  ind.innerHTML='слайд '+(cur+1)+' / '+N+(mx?'<span class="st">шаг '+step+' / '+mx+'</span>':'');
+  $('#prog i').style.width=((cur+1)/N*100)+'%';
+  $('#m-steps').setAttribute('aria-pressed',mode==='steps');
+  $('#m-all').setAttribute('aria-pressed',mode==='all');
+  $$('[data-speed]').forEach(function(b){ b.setAttribute('aria-pressed', +b.dataset.speed===speed); });
+  bPlay.querySelector('.lbl2').textContent = playing&&!paused ? 'Пауза' : 'Проиграть';
+}
+$('#b-prev').onclick=prev; $('#b-next').onclick=next;
+$('#m-steps').onclick=function(){setMode('steps')}; $('#m-all').onclick=function(){setMode('all')};
+bPlay.onclick=function(){ if(!togglePause()) play(); };
+$$('[data-speed]').forEach(function(b){ b.onclick=function(){ setSpeed(+b.dataset.speed); }; });
+/* overview */
+var ov=$('#ov'), ovg=$('.ovg',ov);
+slides.forEach(function(s,k){
+  var b=document.createElement('button'); b.className='ovi'; b.type='button';
+  b.innerHTML='<span class="mono">'+(k+1)+'</span><span></span>'; b.lastChild.textContent=s.dataset.label;
+  b.onclick=function(){ closeOv(); go(k); }; ovg.appendChild(b);
+});
+function openOv(){ ov.hidden=false; $$('.ovi',ov).forEach(function(b,k){b.classList.toggle('cur',k===cur)}); var c=$('.ovi.cur',ov); if(c)c.focus(); }
+function closeOv(){ ov.hidden=true; }
+$('#b-ov').onclick=openOv;
+/* keys */
+var dbuf='', dtm=null;
+document.addEventListener('keydown',function(e){
+  var t=e.target, tag=t.tagName;
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  if(tag==='INPUT'||tag==='TEXTAREA'){ if(e.key==='Escape') t.blur(); return; }
+  if(e.key==='Escape'){ e.preventDefault(); ov.hidden?openOv():closeOv(); return; }
+  if(!ov.hidden) return;
+  var isBtn=tag==='BUTTON';
+  switch(e.key){
+    case 'ArrowRight': case 'PageDown': e.preventDefault(); next(); return;
+    case 'ArrowLeft': case 'PageUp': e.preventDefault(); prev(); return;
+    case ' ': if(isBtn) return; e.preventDefault();
+      if(mode==='all'){ if(!togglePause()){ if(step>=slides[cur]._max) next(); else play(); } } else next(); return;
+    case 'Home': e.preventDefault(); go(0); return;
+    case 'End': e.preventDefault(); go(N-1); return;
+  }
+  var k=e.key.toLowerCase();
+  if(k==='a'||k==='ф'){ setMode(mode==='steps'?'all':'steps'); return; }
+  if(k==='r'||k==='к'){ play(); return; }
+  if(/^[0-9]$/.test(e.key)){
+    dbuf+=e.key; clearTimeout(dtm);
+    dtm=setTimeout(function(){ var n=parseInt(dbuf,10); dbuf=''; if(n>=1&&n<=N) go(n-1); },550);
+  }
+});
+/* wheel */
+var lastWheel=0;
+window.addEventListener('wheel',function(e){
+  if(!ov.hidden) return;
+  var sc=$('.sc',slides[cur]); if(!sc) return;
+  var dy=e.deltaY; if(Math.abs(dy)<4) return;
+  if(dy>0 && sc.scrollTop+sc.clientHeight<sc.scrollHeight-2) return;
+  if(dy<0 && sc.scrollTop>0) return;
+  var now=Date.now(); if(now-lastWheel<420){ lastWheel=now; return; } lastWheel=now;
+  if(dy>0){ if(cur<N-1) go(cur+1); } else { if(cur>0) go(cur-1,true); }
+},{passive:true});
+/* swipe */
+var tx=0, ty=0, tt=0;
+window.addEventListener('touchstart',function(e){ var p=e.changedTouches[0]; tx=p.clientX; ty=p.clientY; tt=Date.now(); },{passive:true});
+window.addEventListener('touchend',function(e){
+  var p=e.changedTouches[0], dx=p.clientX-tx, dy=p.clientY-ty;
+  if(Date.now()-tt>700||Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.4) return;
+  if(e.target.closest&&e.target.closest('input,.tw')) return;
+  dx<0?next():prev();
+},{passive:true});
 
-  fit(); show(0);
+/* ---- trainers ---- */
+var PORTS=[["HTTP", 80], ["SSH", 22], ["DNS", 53], ["POP3", 110], ["IMAP", 143], ["FTP (команды)", 21], ["FTP (передача)", 20], ["TFTP", 69], ["Telnet", 23], ["HTTPS", 443], ["NTP", 123], ["DHCP (клиент)", 67], ["DHCP (сервер)", 68], ["SMTP", 25]];
+function rnd(n){ return Math.floor(Math.random()*n); }
+(function(){
+  var cur=null, tot=0, ok=0, answered=false, inp=$('#tp-in'), res=$('#tp-r');
+  function nx(){ var p; do{ p=PORTS[rnd(PORTS.length)]; }while(cur&&p[0]===cur[0]); cur=p; answered=false; $('#tp-s').textContent=p[0]; inp.value=''; res.textContent=''; res.className='tres'; }
+  function chk(){
+    var v=inp.value.trim(); if(!/^\d{1,5}$/.test(v)){ res.textContent='Введите номер порта числом.'; res.className='tres no'; return; }
+    if(!answered){ tot++; if(+v===cur[1]) ok++; answered=true; }
+    if(+v===cur[1]){ res.textContent='Верно: '+cur[0]+' использует порт '+cur[1]+'.'; res.className='tres ok'; }
+    else { res.textContent='Неверно. '+cur[0]+' использует порт '+cur[1]+'.'; res.className='tres no'; }
+    $('#tp-sc').textContent=ok+' / '+tot;
+  }
+  $('#tp-ok').onclick=chk; $('#tp-nx').onclick=nx;
+  inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); answered?nx():chk(); } });
+  nx();
 })();
-</script>
-</content>
-</invoke>
+(function(){
+  var G=[['Известные',0,1023],['Зарегистрированные',1024,49151],['Динамические/частные',49152,65535]];
+  var pool=[80,443,22,53,110,25,1812,3389,8080,5060,49152,54824,60000,65535,1023,1024,49151];
+  var p=0;
+  function nx(){ var q; do{ q=pool[rnd(pool.length)]; }while(q===p); p=q; $('#tg-p').textContent=p; $('#tg-r').textContent=''; $('#tg-r').className='tres'; render(); }
+  function render(){
+    var o=$('#tg-o'); o.innerHTML='';
+    G.forEach(function(g){
+      var b=document.createElement('button'); b.type='button'; b.className='opt'; b.textContent=g[0]+' ('+g[1]+' – '+g[2]+')';
+      b.onclick=function(){
+        var right=G.filter(function(x){return p>=x[1]&&p<=x[2]})[0];
+        $$('.opt',o).forEach(function(x,i){ if(G[i]===right) x.classList.add('ok'); });
+        if(g!==right){ b.classList.add('no'); $('#tg-r').textContent='Неверно. Порт '+p+' лежит в диапазоне '+right[1]+' – '+right[2]+'.'; $('#tg-r').className='tres no'; }
+        else { $('#tg-r').textContent='Верно.'; $('#tg-r').className='tres ok'; }
+      };
+      o.appendChild(b);
+    });
+  }
+  $('#tg-nx').onclick=nx; nx();
+})();
+(function(){
+  var ans=0, expl='', tot=0, ok=0, answered=false, inp=$('#ts-in'), res=$('#ts-r');
+  function nx(){
+    var t=rnd(3), s=1000+rnd(9000), L=[12,100,500,1460][rnd(4)], b=1000+rnd(9000);
+    if(t===0){ $('#ts-q').innerHTML='Сегмент имеет порядковый номер <b class="mono">'+s+'</b> и полезную нагрузку <b class="mono">'+L+'</b> байт. Какой номер подтверждения пришлёт получатель?'; ans=s+L; expl=s+' + '+L+' = '+ans; }
+    else if(t===1){ $('#ts-q').innerHTML='ПК1 отправил SYN с порядковым номером <b class="mono">'+s+'</b>. Какой номер подтверждения будет в ответе SYN, ACK от ПК2?'; ans=s+1; expl='номер подтверждения равен a+1 = '+ans; }
+    else { $('#ts-q').innerHTML='ПК1 отправил SYN с номером <b class="mono">'+s+'</b>, ПК2 ответил SYN, ACK с номером <b class="mono">'+b+'</b>. Какой номер подтверждения будет в третьем сегменте ACK?'; ans=b+1; expl='номер подтверждения равен b+1 = '+ans; }
+    inp.value=''; res.textContent=''; res.className='tres'; answered=false;
+  }
+  function chk(){
+    var v=inp.value.trim(); if(!/^\d+$/.test(v)){ res.textContent='Введите ответ числом.'; res.className='tres no'; return; }
+    if(!answered){ tot++; if(+v===ans) ok++; answered=true; }
+    res.textContent=(+v===ans?'Верно: ':'Неверно: ')+expl+'.'; res.className='tres '+(+v===ans?'ok':'no');
+    $('#ts-sc').textContent=ok+' / '+tot;
+  }
+  $('#ts-ok').onclick=chk; $('#ts-nx').onclick=nx;
+  inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); answered?nx():chk(); } });
+  nx();
+})();
+(function(){
+  var Q=[{"q": "В каком диапазоне лежат значения портов?", "o": ["0 – 1023", "0 – 65535", "1024 – 49151", "0 – 1460"], "a": 1, "e": "Порты представляют собой значения в диапазоне от 0 до 65535 и состоят из 16-битных чисел. 0 – 1023 – только известные порты."}, {"q": "На сколько фрагментов будет разделён файл размером 300 килобайт?", "o": ["300", "1460", "206", "4"], "a": 2, "e": "Данные разбиваются на сегменты размером не более 1460 байт, поэтому файл 300 КБ делится на 206 фрагментов."}, {"q": "Какой флаг установлен в первом сегменте трёхэтапного рукопожатия?", "o": ["ACK", "FIN", "SYN", "PSH"], "a": 2, "e": "Узел А, инициализирующий сессию, отправляет на узел Б запрос SYN. ACK появляется во втором и третьем сегментах."}, {"q": "ПК1 отправил SYN с порядковым номером a. Чему равен номер подтверждения в ответе ПК2?", "o": ["0", "a", "a+1", "b+1"], "a": 2, "e": "Поскольку сегмент является ответом для ПК1, номер подтверждения равен a+1. b+1 – это номер подтверждения в третьем сегменте."}, {"q": "Получены сегменты с номерами от 1 до 3000 и от 6001 до 9000. Каким будет номер ACK?", "o": ["9001", "3001", "6001", "3000"], "a": 1, "e": "Подтверждаются только данные, поступившие в непрерывной последовательности байт. Байты 3001–6000 не пришли, поэтому ACK = 3001."}, {"q": "Сколько байт занимает заголовок UDP-датаграммы?", "o": ["8 байт", "20 байт", "16 байт", "32 байта"], "a": 0, "e": "Заголовок датаграммы состоит из 8 байт: порт источника, порт назначения, длина и контрольная сумма – по 16 бит."}, {"q": "К какой группе относятся порты 49152 – 65535?", "o": ["Известные", "Зарегистрированные", "Динамические/частные", "Зарезервированные"], "a": 2, "e": "Динамические/частные порты присваиваются, когда пользователь производит инициализацию сеанса связи при подключении к определенному сервису."}, {"q": "Какой флаг означает немедленный разрыв соединения?", "o": ["FIN", "RST", "URG", "SYN"], "a": 1, "e": "RST – флаг сброса соединения. FIN тоже завершает сеанс, но штатно: отправитель сообщает, что больше не будет передавать данные."}], i=0, got=Q.map(function(){return -1});
+  function render(){
+    var q=Q[i]; $('#qz-n').textContent=(i+1)+' / '+Q.length; $('#qz-q').textContent=q.q;
+    var o=$('#qz-o'); o.innerHTML=''; var e=$('#qz-e'); e.textContent=''; e.className='tres';
+    q.o.forEach(function(t,k){
+      var b=document.createElement('button'); b.type='button'; b.className='opt'; b.textContent=t;
+      b.onclick=function(){ if(got[i]<0) got[i]=k; show(); };
+      o.appendChild(b);
+    });
+    if(got[i]>=0) show();
+    $('#qz-sc').textContent='верно: '+got.filter(function(g,k){return g===Q[k].a}).length;
+    $('#qz-pv').disabled=i===0; $('#qz-nx').textContent=i===Q.length-1?'Начать заново':'Следующий вопрос';
+  }
+  function show(){
+    var q=Q[i], bs=$$('.opt',$('#qz-o'));
+    bs[q.a].classList.add('ok'); if(got[i]!==q.a) bs[got[i]].classList.add('no');
+    var e=$('#qz-e'); e.textContent=(got[i]===q.a?'Верно. ':'Неверно. ')+q.e; e.className='tres '+(got[i]===q.a?'ok':'no');
+    $('#qz-sc').textContent='верно: '+got.filter(function(g,k){return g===Q[k].a}).length;
+  }
+  $('#qz-nx').onclick=function(){ if(i===Q.length-1){ got=Q.map(function(){return -1}); i=0; } else i++; render(); };
+  $('#qz-pv').onclick=function(){ if(i>0){ i--; render(); } };
+  render();
+})();
+
+var h=parseInt((location.hash||'').slice(1),10);
+slides[0].classList.add('on');
+go(h>=1&&h<=N?h-1:0);
+RM.addEventListener&&RM.addEventListener('change',function(){ go(cur,true); });
+})();
+</script></body></html>
