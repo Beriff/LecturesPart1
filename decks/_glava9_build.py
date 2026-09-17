@@ -161,20 +161,24 @@ MTU_SC = scene("mtu", 6, {
 }, {1: 1400, 2: 900, 3: 1100, 4: 1100, 5: 1100, 6: 900})
 
 # ---------------------------------------------------------------- 5. TTL
-tt = '<line class="lnk" x1="70" y1="230" x2="1030" y2="230"/>'
-tt += pcsym(70, 230, "PC") + pcsym(270, 230, "Коммутатор", 110, "sw") + rt(490, 230, 124, "R1") + rt(720, 230, 124, "R2") + pcsym(950, 230, "Узел назначения", 58, "srv")
-tt += pkt("tp", "TTL=128", "pk-m", 130, 40, "", None)
-tt += cap("tcap", 550, 60)
-TTLSVG = svg("0 0 1100 320", tt)
-TTL_SC = scene("ttl", 8, {
-    "tp": {"p": {0: (70, 150), 2: (270, 150), 4: (490, 150), 6: (720, 150), 8: (950, 150)}, "o": {0: 0, 1: 1},
-           },
-    "tp-t": {"t": {0: "TTL=128", 5: "TTL=127", 7: "TTL=126"}, "c": {0: "pkt", 5: "pkt hit", 6: "pkt", 7: "pkt hit", 8: "pkt"}},
-    "tcap": {"t": {1: "Пакет отправлен с TTL=128", 2: "Коммутатор не снижает TTL – он работает на канальном уровне",
-                   3: "Коммутатор не снижает TTL – он работает на канальном уровне", 4: "Маршрутизатор R1 обрабатывает пакет",
-                   5: "R1 уменьшает TTL на 1", 6: "Маршрутизатор R2 обрабатывает пакет", 7: "R2 уменьшает TTL на 1",
-                   8: "Узел назначения формирует эхо-ответ с оставшимся TTL"}},
-}, {1: 900, 2: 1200, 3: 400, 4: 1200, 5: 900, 6: 1200, 7: 900, 8: 1300})
+tt = '<line class="lnk" x1="60" y1="230" x2="960" y2="230"/>'
+tt += pcsym(60, 230, "PC") + pcsym(225, 230, "Коммутатор", 110, "sw") + rt(400, 230, 120, "R1")
+tt += ('<g><ellipse cx="580" cy="232" rx="70" ry="38" fill="rgba(255,255,255,.85)"/><ellipse cx="555" cy="210" rx="36" ry="30" fill="rgba(255,255,255,.85)"/>'
+       '<ellipse cx="605" cy="214" rx="30" ry="24" fill="rgba(255,255,255,.85)"/><text x="580" y="240" text-anchor="middle" class="cloudt">…</text></g>')
+tt += rt(760, 230, 120, "R2") + pcsym(960, 230, "8.8.8.8", 58, "srv")
+tt += pkt("tp", "TTL=128", "pk-p", 130, 40, 'style="--md:900ms"', None)
+tt += pkt("tr", "ответ TTL=104", "pk-m", 190, 40, 'style="--md:2600ms"', None)
+tt += cap("tcap", 520, 60)
+TTLSVG = svg("0 0 1060 320", tt)
+TTL_SC = scene("ttl", 10, {
+    "tp": {"p": {0: (60, 150), 2: (225, 150), 3: (400, 150), 5: (580, 150), 7: (760, 150), 9: (960, 150)}, "o": {0: 0, 1: 1, 10: 0}},
+    "tp-t": {"t": {0: "TTL=128", 4: "TTL=127", 6: "TTL=105", 8: "TTL=104"}, "c": {0: "pkt", 4: "pkt hit", 5: "pkt", 6: "pkt hit", 7: "pkt", 8: "pkt hit", 9: "pkt"}},
+    "tr": {"p": {0: (960, 150), 10: (110, 150)}, "o": {0: 0, 10: 1}},
+    "tcap": {"t": {1: "ping 8.8.8.8: пакет отправлен с TTL=128", 2: "Коммутатор не уменьшает TTL – он работает на канальном уровне",
+                   3: "Маршрутизатор обрабатывает пакет", 4: "Маршрутизатор уменьшает TTL на 1: 127", 5: "Пакет проходит через другие маршрутизаторы сети",
+                   6: "…каждый уменьшает TTL на 1", 7: "Последний маршрутизатор на пути", 8: "Уменьшает TTL на 1: 104",
+                   9: "8.8.8.8 формирует эхо-ответ с оставшимся значением TTL=104", 10: "Пришёл ответ TTL=104: пакет сделал 128 – 104 = 24 прыжка"}},
+}, {1: 900, 2: 1100, 3: 1000, 4: 900, 5: 1000, 6: 900, 7: 1000, 8: 900, 9: 1300, 10: 2800})
 
 te = '<line class="lnk" x1="90" y1="220" x2="1010" y2="220"/>'
 te += pcsym(90, 220, "Отправитель") + rt(400, 220, 124, "R1") + rt(700, 220, 124, "R2") + pcsym(1010, 220, "Назначение", 58, "srv")
@@ -305,18 +309,15 @@ REV = [
     ("PCA", 252, "AA-AA-AA-AA-AA-AA", "AA-BB-CC-11-22-33", 0, None, "PC-A получил ответ – весь процесс повторился в обратном порядке"),
 ]
 
-def path_scene():
-    seq = FWD + REV
+def path_scene(name, seq, rev):
     n = len(seq) - 1
     els = {"pp": {"p": {}}, "ppt": {"t": {}, "c": {}}, "sip": {"t": {}}, "dip": {"t": {}}, "ttl": {"t": {}},
            "smac": {"t": {}}, "dmac": {"t": {}}, "pcap": {"t": {}}}
-    for k in range(5): els[f"pn{k}"] = {"c": {}}
     for r, rows in ROUTES.items():
         for i in range(len(rows)): els[f"h{r}{i}"] = {"o": {0: 0}}
     waits = {}
     prev = None
     for k, (pos, ttl, sm, dm, pan, hit, capt) in enumerate(seq):
-        rev = k > len(FWD) - 1
         els["pp"]["p"][k] = (X[pos], PY)
         els["ppt"]["t"][k] = f"TTL {ttl}"
         els["ppt"]["c"][k] = "pkt sm hit" if prev and prev[1] != ttl else "pkt sm"
@@ -324,16 +325,30 @@ def path_scene():
         els["dip"]["t"][k] = "192.168.1.2" if rev else "192.168.3.2"
         els["ttl"]["t"][k] = str(ttl); els["smac"]["t"][k] = sm; els["dmac"]["t"][k] = dm
         els["pcap"]["t"][k] = capt
-        for p in range(5): els[f"pn{p}"]["c"][k] = "on" if p == pan else ""
         for r, rows in ROUTES.items():
             for i in range(len(rows)):
                 els[f"h{r}{i}"]["o"][k] = 1 if hit == f"{r}{i}" else 0
         moved = prev is not None and prev[0] != pos
-        waits[k] = 1700 if moved else 1300
+        waits[k] = 1800 if moved else 1500
         prev = seq[k]
-    return scene("path", n, els, waits), len(FWD)
+    return scene(name, n, els, waits)
 
-PATH_SC, REV_START = path_scene()
+def path_slide(label, title, text, name, seq, rev=False):
+    sc = path_scene(name, seq, rev)
+    slide(label, "Передача данных", title, f"""
+<div class="pathwrap" {sc}>
+  <div class="card dgcard pathsvg">{PATH_SVG}</div>
+  <div class="pbar">
+    <div class="vstack">
+      <div class="card pcap"><p data-id="pcap"></p></div>
+      <div class="card pkp">
+        <div class="pkg"><span class="pkh">IP-пакет</span><div class="kv"><span>SrcIP</span><b class="mono" data-id="sip"></b></div><div class="kv"><span>DstIP</span><b class="mono" data-id="dip"></b></div><div class="kv"><span>TTL</span><b class="mono cM" data-id="ttl"></b></div></div>
+        <div class="pkg"><span class="pkh">Кадр Ethernet</span><div class="kv"><span>Src MAC</span><b class="mono cP" data-id="smac"></b></div><div class="kv"><span>Dst MAC</span><b class="mono cP" data-id="dmac"></b></div></div>
+      </div>
+    </div>
+    <div class="card ptext">{text}</div>
+  </div>
+</div>""", "tight")
 
 PANELS = [
     ("PC-A", "Логика оконечного устройства: я не знаю, как доставить пакет в другую сеть, поэтому я поручаю это сделать шлюзу по умолчанию."),
@@ -447,6 +462,21 @@ QUIZ = [
     {"q": "Что меняется в пакете PC-A – PC-B при прохождении R1, R2, R3?", "o": ["IP-адрес назначения", "IP-адрес источника", "TTL; а MAC-адреса меняются в кадре на каждом участке", "Ничего не меняется"], "a": 2,
      "e": "Адреса внутри пакета не меняются. TTL уменьшается 255, 254, 253, 252, MAC-адреса кадра задаются заново на каждом участке."},
 ]
+
+def qa(items):
+    return '<div class="qas">' + "".join(
+        f'<article class="card qa" data-s="{i+1}"><div class="qq"><span class="badge">{i+1}</span><b>{q}</b></div>'
+        f'<button class="btn qa-b" type="button">Показать ответ</button><p class="qa-a" hidden>{a}</p></article>'
+        for i, (q, a) in enumerate(items)) + '</div>'
+
+DUMP4 = ('<div class="card term mono dump"><div class="dimt">Internet Protocol Version 4</div><div>Version: 4</div><div>Header Length: 20 bytes (5)</div>'
+         '<div>DSCP: CS0, ECN: Not-ECT</div><div>Total Length: 1480</div><div>Identification: 0xd06a (53354)</div><div>Flags: 0x40, Don’t fragment</div>'
+         '<div>Fragment Offset: 0</div><div>Time to Live: 64</div><div>Protocol: TCP (6)</div><div>Header Checksum: 0xc0c0</div>'
+         '<div>Source Address: 10.25.200.60</div><div>Destination Address: 3.164.206.11</div></div>')
+DUMP6 = ('<div class="card term mono dump"><div class="dimt">Internet Protocol Version 6</div>'
+         '<div>Version: 6</div><div>Traffic Class: 0x00</div><div>Flow Label: 0xf476c</div><div>Payload Length: 20</div>'
+         '<div>Next Header: TCP (6)</div><div>Hop Limit: 116</div><div>Source Address: 2603:1026:c0d:101f::2</div>'
+         '<div>Destination Address: 2a01:620:c12a:a500:953:6c6e:487:5201</div></div>')
 
 # ---------------------------------------------------------------- slides
 S = []
@@ -568,13 +598,21 @@ slide("IPv4 в Wireshark", "Протокол IPv4", "Заголовок IPv4 в 
     ("Source / Destination", "10.25.200.60 / 3.164.206.11", "IP-адреса отправителя и получателя"),
 ]))
 
+slide("Вопросы: IPv4", "Протокол IPv4", "Заголовок IPv4 в Wireshark: вопросы", '<div class="two quizrow">' + qa([
+    ("Откуда и куда передается данный пакет?", "С адреса 10.25.200.60 на адрес 3.164.206.11 (Source Address и Destination Address)."),
+    ("Какова длина заголовка? Есть ли в нем опции?", "20 байт: IHL = 5, значит опций нет – заголовок оканчивается после адреса назначения."),
+    ("Разрешена ли фрагментация этого пакета?", "Нет: Flags 0x40 – флаг Don’t Fragment (DF) равен 1."),
+    ("Каков размер инкапсулированного сегмента?", "Total Length минус длина заголовка: 1480 – 20 = 1460 байт."),
+    ("К какому протоколу относится полезная нагрузка?", "TCP: поле Protocol равно 6."),
+]) + DUMP4 + '</div>')
+
 slide("TTL", "Поле TTL", "Поле TTL (Time To Live)", """
 <div class="two">
   <div>
     <p class="p sm"><b>Время жизни (TTL)</b> – поле в заголовке IP-пакета длиной 8 бит, которое определяет максимальное количество прыжков (hop-лимит), которые пакет может совершить по сети перед тем, как будет отброшен. Каждый маршрутизатор или другое устройство уровня L3 и выше уменьшают значение TTL на 1. Поле TTL позволяет избежать образования «петель маршрутизации».</p>
     <p class="p sm">Коммутатор не снижает значение TTL, так как работает на канальном уровне, а не на сетевом.</p>
-    <div class="card term mono" data-s="9"><div>$ ping 8.8.8.8</div><div>64 bytes from 8.8.8.8: icmp_seq=1 <b class="cM">ttl=104</b></div></div>
-    <p class="p sm" data-s="9">TTL=104 означает, что пакет совершил <b class="mono">128 – 104 = 24</b> «прыжка». Исходное значение можно узнать командой <span class="mono">ping 127.0.0.1</span>.</p>
+    <div class="card term mono"><div>$ ping 8.8.8.8</div><div>64 bytes from 8.8.8.8: icmp_seq=1 <b class="cM">ttl=104</b></div></div>
+    <p class="p sm">TTL=104 означает, что пакет совершил <b class="mono">128 – 104 = 24</b> «прыжка». Исходное значение можно узнать командой <span class="mono">ping 127.0.0.1</span>.</p>
   </div>""" + scbox(TTLSVG, TTL_SC).replace('data-scene="ttl"', 'data-scene="ttl"') + "</div>")
 
 slide("Time Exceeded", "Поле TTL", "Когда время жизни заканчивается", """
@@ -593,13 +631,16 @@ slide("Заголовок IPv6", "Протокол IPv6", "Заголовок п
     <p class="p sm" data-s="2">Поля Fragment Offset и «флагов» DF и MF нет, потому что для них предусмотрен дополнительный заголовок.</p>
   </div>""" + cmp46() + "</div>")
 
-slide("Поля IPv6", "Протокол IPv6", "Поля заголовка IPv6", fcards([
-    ("Version", "c-sky", "4-битное поле, в котором указывается версия протокола."),
+slide("Поля IPv6: 1", "Протокол IPv6", "Version, Traffic Class, Flow Label", fcards([
+    ("Version", "c-sky", "Версия. 4-битное поле, в котором указывается версия протокола."),
     ("Traffic Class", "c-sky", "Класс трафика. Определяет приоритет трафика, так же как и в IPv4."),
-    ("Flow Label", "c-lilac", "Метка потока: идентификатор сессии TCP либо потока сегментов UDP одного медиа-потока. Получатель быстро определяет протокол L4, а L4 быстро «собирает» пакеты в нужные потоки."),
+    ("Flow Label", "c-lilac", "Метка потока. Как и в IPv4, это идентификатор сессии TCP либо потока сегментов UDP, представляющих один медиа-поток. Благодаря этой метке устройство-получатель быстро определяет, какому из протоколов уровня L4 предназначается данный пакет, а протокол L4 быстро «собирает» пакеты в нужные потоки или сессии."),
+], cols="g3"))
+
+slide("Поля IPv6: 2", "Протокол IPv6", "Payload Length, Next Header, Hop Limit", fcards([
     ("Payload Length", "c-lilac", "Длина (размер) полезной нагрузки в октетах."),
-    ("Next Header", "c-sky", "Номер протокола L4 (как Protocol в IPv4) – заголовок единственный; номер заголовка-расширения – присутствуют дополнительные заголовки."),
-    ("Hop Limit", "c-mint", "Лимит переходов, 8 бит, максимум 255. Каждый маршрутизатор уменьшает его на 1; промежуточный маршрутизатор, получивший HL = 0, информирует отправителя и отбрасывает пакет."),
+    ("Next Header", "c-sky", "В отличие от пакета IPv4, пакет IPv6 может содержать несколько заголовков: один основной и несколько заголовков-расширений. Если в поле указывается номер протокола уровня L4 (аналогично полю Protocol IPv4), то данный заголовок является единственным. Если указывается номер заголовка-расширения, присутствуют дополнительные заголовки."),
+    ("Hop Limit", "c-mint", "Лимит переходов. Поле из 8 бит с максимальным значением 255. Каждый следующий маршрутизатор уменьшает его значение на 1, а получивший пакет с HL = 0 промежуточный маршрутизатор информирует отправителя о достижении лимита переходов и отбрасывает пакет. Маршрутизатор назначения, получивший пакет с HL = 0, обрабатывает его как любой действительный пакет."),
 ], cols="g3"))
 
 slide("Заголовки расширения", "Протокол IPv6", "Заголовки расширения", """
@@ -616,47 +657,76 @@ slide("IPv6 в Wireshark", "Протокол IPv6", "Заголовок IPv6 в 
     ("Destination Address", "2a01:620:c12a:a500:953:6c6e:487:5201", "Адрес получателя"),
 ]))
 
+slide("Вопросы: IPv6", "Протокол IPv6", "Заголовок IPv6 в Wireshark: вопросы", '<div class="two quizrow">' + qa([
+    ("Откуда и куда передается данный пакет?", "С адреса 2603:1026:c0d:101f::2 на адрес 2a01:620:c12a:a500:953:6c6e:487:5201."),
+    ("Каков размер полезной нагрузки?", "20 октетов (Payload Length: 20)."),
+    ("Данный пакет перехвачен на маршрутизаторе-отправителе, получателе или на промежуточном маршрутизаторе?", "Не на отправителе: Hop Limit = 116 – значение уже уменьшалось маршрутизаторами на пути (максимум 255)."),
+    ("К какому протоколу относится данный пакет?", "К TCP: Next Header: TCP (6) – указан протокол L4, заголовков-расширений нет."),
+]) + DUMP6 + '</div>')
+
 slide("Передача между сетями", "Передача данных", "Сетевой уровень в процессе передачи данных", """
 <p class="p wide">Именно на сетевом уровне осуществляется адресация, которая обеспечивает передачу пакета между различными сетями. Пакет нужно передать из сети <b class="mono">192.168.1.0/24</b> в сеть <b class="mono">192.168.3.0/24</b>. Маршрутизатор, в отличие от коммутатора, не пересылает широковещательные кадры на все порты: широковещательные домены разделены.</p>
 <div class="card dgcard wide2">""" + TOPO_BUILD + "</div>")
 
-slide("Шлюз и ARP", "Передача данных", "Шлюз по умолчанию и ARP", """
+slide("Шлюз по умолчанию", "Передача данных", "Шлюз по умолчанию", """
 <div class="two">
   <div>
-    <p class="p sm">Логика у оконечного устройства: <b>я не знаю, как доставить пакет в другую сеть, поэтому я поручаю это сделать шлюзу по умолчанию.</b></p>
-    <p class="p sm"><b>Шлюз по умолчанию</b> – это сетевое устройство или интерфейс сетевого уровня, через который осуществляется отправка трафика из сети отправителя в другую сеть, в т.ч. сеть Интернет.</p>
-    <p class="p sm">Компьютер PC-A отправит ARP-запрос на IP-адрес шлюза по умолчанию <span class="mono">192.168.1.1</span>, узнав таким образом его MAC-адрес, сформирует кадр и отправит его в среду.</p>
-  </div>""" + scbox(ARP, ARP_SC) + "</div>")
-
-slide("Таблица маршрутизации", "Передача данных", "Таблица маршрутизации", """
-<div class="two">
-  <div>
-    <p class="p sm">Шлюз по умолчанию (R1) получает кадр, распаковывает из него пакет и смотрит на поле Destination IP Address. Для этого у маршрутизатора имеется <b>таблица маршрутизации</b>: все сети, которые «знает» маршрутизатор, и адреса соседей, через которых можно переслать пакет в нужную сеть.</p>
-    <p class="p sm" data-s="1"><b>Маршрут</b> – это сочетание IP-адреса сети и IP-адреса соседа, через которого можно переслать пакет в эту сеть.</p>
+    <p class="p">Теперь вспомним, как компьютер принимает решение об отправке ARP-запроса, если IP-адрес назначения не принадлежит его собственной сети.</p>
+    <p class="p callout">Логика у оконечного устройства следующая: <b>я не знаю, как доставить пакет в другую сеть, поэтому я поручаю это сделать шлюзу по умолчанию.</b></p>
+    <p class="p"><b>Шлюз по умолчанию</b> – это сетевое устройство или интерфейс сетевого уровня, через который осуществляется отправка трафика из сети отправителя в другую сеть, в т.ч. сеть Интернет.</p>
   </div>
-  <div class="vstack">
-    <div class="card term mono" data-s="2"><div class="dimt">R1# show ip route</div>
-      <div data-s="3"><b class="cC">C</b> 192.168.1.0/24 E1</div><div data-s="3"><b class="cC">C</b> 10.10.0.0/30 E2</div>
-      <div data-s="4" data-p="4" class="rowp"><b class="cS">S</b> 192.168.3.0/24 via 10.10.0.2</div></div>
-    <div class="g2">
-      <article class="card fc c-mint" data-s="3"><div class="ftag mono">C</div><p>Подключенные (connected) – сети на интерфейсах маршрутизатора, вносятся автоматически.</p></article>
-      <article class="card fc c-sky" data-s="4"><div class="ftag mono">S</div><p>Статические (static) – маршруты, введенные администратором вручную.</p></article>
-    </div>
+  <div class="card gw">
+    <div class="gwr" data-s="1"><span>Мой адрес PC-A</span><b class="mono">192.168.1.2/24</b><span class="mono cM">сеть 192.168.1.0</span></div>
+    <div class="gwr" data-s="2"><span>DstIP</span><b class="mono cP">192.168.3.2</b><span class="mono cP">сеть 192.168.3.0</span></div>
+    <div class="gwr big" data-s="3"><b>192.168.3.0 ≠ 192.168.1.0</b><span>сеть назначения чужая</span></div>
+    <div class="gwr big ok" data-s="4"><b>Поручаю шлюзу по умолчанию</b><span class="mono">192.168.1.1 (R1, интерфейс E1)</span></div>
+    <div class="gwr" data-s="5"><span>MAC шлюза</span><b class="mono">ARP-запрос на 192.168.1.1</b></div>
   </div>
 </div>""")
 
-slide("Путь пакета", "Передача данных", "Путь пакета PC-A – PC-B", f"""
-<div class="pathwrap" {PATH_SC}>
-  <div class="card dgcard pathsvg">{PATH_SVG}</div>
-  <div class="pbar">
-    <div class="card pkp">
-      <div class="pkg"><span class="pkh">IP-пакет</span><div class="kv"><span>SrcIP</span><b class="mono" data-id="sip">192.168.1.2</b></div><div class="kv"><span>DstIP</span><b class="mono" data-id="dip">192.168.3.2</b></div><div class="kv"><span>TTL</span><b class="mono cM" data-id="ttl">255</b></div></div>
-      <div class="pkg"><span class="pkh">Кадр Ethernet</span><div class="kv"><span>Src MAC</span><b class="mono cP" data-id="smac">—</b></div><div class="kv"><span>Dst MAC</span><b class="mono cP" data-id="dmac">—</b></div></div>
-    </div>
-    <div class="card pcap"><p data-id="pcap"></p><button class="btn pri" type="button" id="b-reply">Ответ PC-B</button></div>
+slide("ARP и маршрутизатор", "Передача данных", "ARP-запрос к шлюзу", """
+<div class="two">
+  <div>
+    <p class="p sm">В нашем случае: компьютер PC-A отправит ARP-запрос на IP-адрес шлюза по умолчанию <span class="mono">192.168.1.1</span>, узнав таким образом его MAC-адрес, сформирует кадр и отправит его в среду.</p>
+    <p class="p sm">Шлюз по умолчанию (на схеме это маршрутизатор R1) получает кадр, распаковывает из него пакет и смотрит на поле Destination IP Address, определяя, как быть дальше.</p>
+    <p class="p sm">Для того чтобы отправить пакет дальше, у маршрутизатора имеется <b>таблица маршрутизации</b>, в которой содержатся все сети, которые «знает» маршрутизатор, а также адреса соседей, через которых можно переслать пакет в нужную сеть.</p>
+  </div>""" + scbox(ARP, ARP_SC) + "</div>")
+
+slide("Таблица маршрутизации", "Передача данных", "Маршрут и таблица маршрутизации", """
+<div class="two">
+  <div>
+    <p class="p sm"><b>Маршрут</b> – это сочетание IP-адреса сети и IP-адреса соседа, через которого можно переслать пакет в эту сеть.</p>
+    <p class="p sm" data-s="1">В таблицу маршрутизации автоматически вносятся сети, которые установлены на интерфейсах маршрутизатора, они называются <b>подключенными</b> и обозначаются латинской буквой <b>C</b> (от англ. connected).</p>
+    <p class="p sm" data-s="2">Маршруты, которые введены администратором вручную, называются <b>статическими</b> и обозначаются латинской буквой <b>S</b> (от англ. static).</p>
+    <p class="p sm" data-s="3">Маршрутизатору R1 известны три сети: две из них находятся непосредственно за интерфейсами Е1 (192.168.1.0/24) и Е2 (10.10.0.0/30), а третья – по адресу соседа 10.10.0.2.</p>
   </div>
-  <div class="panels">""" + "".join(f'<article class="card pnl" data-id="pn{i}"><b>{t}</b><p>{p}</p></article>' for i, (t, p) in enumerate(PANELS)) + """</div>
-</div>""", "tight")
+  <div class="card term mono big"><div class="dimt">R1# show ip route</div>
+    <div data-s="1" data-p="1" class="rowp"><b class="cC">C</b> 192.168.1.0/24 E1</div><div data-s="1" data-p="1" class="rowp"><b class="cC">C</b> 10.10.0.0/30 E2</div>
+    <div data-s="2" data-p="2" class="rowp"><b class="cS">S</b> 192.168.3.0/24 via 10.10.0.2</div></div>
+</div>""")
+
+path_slide("R1 формирует кадр", "R1: кадр до маршрутизатора R2", """
+<p class="p sm">Перед R1 возникает вопрос о том, как получить два MAC-адреса, чтобы сформировать кадр. Проделав операцию побитовая «И», R1 определяет, что интерфейс Е2 принадлежит той же сети, что и сосед (10.10.0.1 и 10.10.0.2 принадлежат сети 10.10.0.0/30). Значит, MAC-адрес отправителя – MAC интерфейса E2 <span class="mono">AA-BB-BB-BB-BB-BB</span>.</p>
+<p class="p sm">MAC-адрес получателя определяется ARP-запросом: <span class="mono">AA-CC-CC-CC-CC-CC</span>. Адреса внутри пакета не меняются в процессе передачи. Однако поле TTL изменяется: R1 уменьшает значение на единицу, так что оно теперь равно <b class="mono">254</b>, а не 255.</p>""", "p26", FWD[1:4])
+
+path_slide("R2 получает кадр", "R2: получение кадра", """
+<p class="p">Маршрутизатор R2, получив кадр на интерфейсе <b>Т1</b>, отбрасывает заголовок уровня 2 (L2), читает заголовок пакета и сверяет адрес в поле Destination IP Address (IP-адрес назначения) с данными в его таблице маршрутизации.</p>""", "p27", FWD[3:5])
+
+path_slide("R2 пересылает", "R2: пересылка к R3", """
+<p class="p sm">Сеть назначения известна маршрутизатору через соседа с IP-адресом <span class="mono">10.10.1.2</span>. Один из собственных интерфейсов R2 (<b>T2</b>) находится в той же сети, что и нужный сосед, поэтому маршрутизатор может начать формирование кадра. MAC-адрес соседа берется из таблицы ARP-соответствий или ARP-запросом.</p>
+<p class="p sm">Перед отправкой значение TTL уменьшается с 254 до <b class="mono">253</b>, а также пересчитывается контрольная сумма пакета (речь идет о протоколе IPv4).</p>""", "p28", FWD[4:6])
+
+path_slide("R3 получает кадр", "R3: получение кадра", """
+<p class="p">Маршрутизатор R3 получает кадр на интерфейсе <b>G1</b>, декапсулирует, смотрит поле DstIP и тут же сравнивает его значение с собственной таблицей маршрутизации, чтобы обнаружить, что нужная сеть известна ему как подключенная за его собственным интерфейсом <b>G2</b>.</p>""", "p29", FWD[5:7])
+
+path_slide("R3 доставляет", "R3: доставка получателю PC-B", """
+<p class="p">R3 выясняет MAC-адрес конечного получателя PC-B путем просмотра таблицы ARP-соответствий или отправки ARP-запроса, формирует Ethernet-кадр и отправляет его непосредственно получателю с интерфейса G2, уменьшив TTL в заголовке IP-пакета на единицу – теперь это значение составляет <b class="mono">252</b>.</p>""", "p30", FWD[6:9])
+
+path_slide("Обратный путь", "Ответ PC-B: обратный путь", """
+<p class="p">В случае, если компьютер PC-B отправит ответ компьютеру PC-A, весь процесс повторится в обратном порядке: IP-адреса источника и назначения меняются местами, на каждом участке формируется новый кадр, а TTL уменьшается каждым маршрутизатором.</p>""", "p31", REV, True)
+
+path_slide("Путь пакета целиком", "Путь пакета PC-A – PC-B целиком", """
+<p class="p">Итог: адреса внутри пакета не меняются в процессе передачи. На каждом участке меняются MAC-адреса кадра, а каждый маршрутизатор уменьшает TTL на 1 и пересчитывает контрольную сумму.</p>""", "pall", FWD)
 
 slide("Тренажёр: TTL", "Тренажёры", "Тренажёр: TTL и прыжки", """
 <div class="two">
@@ -803,6 +873,7 @@ svg [data-s]{transform:none}
 .dg .pkt.hit{fill:#1d1760;animation:tf calc(700ms / var(--sp)) var(--ez) 1}
 @keyframes tf{0%{opacity:.2}100%{opacity:1}}
 .dg .pks2{fill:#1d1760;font-size:15px;font-family:var(--mono)}
+.dg .cloudt{fill:#4b4fd8;font-size:34px;font-weight:800}
 .dg .flg{fill:var(--ink);font-family:var(--mono);font-size:15px;font-weight:700}
 .xm{stroke:var(--pink);stroke-width:6;stroke-linecap:round;fill:none}
 .dg .lost{fill:var(--pink);font-weight:700;font-size:19px}
@@ -879,6 +950,15 @@ svg [data-s]{transform:none}
 .pnl{padding:.6rem .8rem;opacity:.5;transition:opacity .28s var(--ez),background .28s var(--ez),border-color .28s}
 .pnl b{font-size:.95rem}.pnl p{font-size:.82rem;line-height:1.35;color:var(--dim);margin-top:.2rem}
 .pnl.on{opacity:1;background:rgba(255,255,255,.24);border-color:var(--mint)}
+.ptext{padding:1rem 1.2rem}.ptext .p{max-width:none}
+.gw{padding:1.2rem;display:flex;flex-direction:column;gap:.7rem}
+.gwr{display:flex;flex-wrap:wrap;gap:.4rem 1rem;align-items:baseline;justify-content:space-between;padding:.7rem 1rem;border-radius:12px;background:rgba(255,255,255,.1);font-size:1.1rem}
+.gwr span{color:var(--dim)}.gwr.big{font-size:1.3rem;border:1.5px solid var(--pink)}.gwr.ok{border-color:var(--mint)}
+.term.big{font-size:1.35rem}
+.qas{display:flex;flex-direction:column;gap:.7rem}
+.qa{padding:.9rem 1.1rem;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between}
+.qq{display:flex;gap:.8rem;align-items:center;flex:1 1 26rem;font-size:1.08rem}
+.qa-a{flex:1 1 100%;color:var(--mint);font-size:1.05rem;line-height:1.45}
 /* trainers */
 .lst{padding:1.3rem 1.5rem}
 .trn,.quiz{padding:1.4rem 1.5rem}
@@ -961,7 +1041,7 @@ slides.forEach(function(s){
   s._els=els; s._max=mx;
 });
 function applyScene(sc,k,instant){
-  var sp=sc._sp;
+  var sp=sc._sp; k=Math.min(k,sp.n);
   Object.keys(sp.e).forEach(function(id){
     var el=sc._map[id], t=sp.e[id]; if(!el) return;
     if(t.p){ el.style.transform='translate('+t.p[k][0]+'px,'+t.p[k][1]+'px)'; }
@@ -972,10 +1052,10 @@ function applyScene(sc,k,instant){
   });
 }
 function waitFor(sl,k){
-  if(sl._scene) return sl._scene._sp.w[k]||1100;
+  if(sl._scene && k<=sl._scene._sp.n) return sl._scene._sp.w[k]||1100;
   var w=0;
   sl._els.forEach(function(e){ if(+e.dataset.s===k||+e.dataset.k===k){ w=Math.max(w,+e.dataset.w||0); } });
-  return w||700;
+  return w||300;
 }
 function setStep(k,instant){
   var sl=slides[cur]; step=Math.max(0,Math.min(sl._max,k));
@@ -1016,36 +1096,23 @@ function go(i,atEnd){
   stopPlay();
   slides.forEach(function(s){s.classList.remove('on')}); cur=i; slides[cur].classList.add('on');
   var sc=$('.sc',slides[cur]); if(sc) sc.scrollTop=0;
-  setStep((RM.matches||atEnd)?slides[cur]._max:0,true);
+  setStep(slides[cur]._max,true);
   try{ history.replaceState(null,'','#'+(cur+1)); }catch(e){}
-  if(mode==='all' && !RM.matches && !atEnd) play();
+  if(!RM.matches) play();
 }
-function next(){
-  if(step<slides[cur]._max){ stopPlay(); setStep(step+1,false); return; }
-  if(cur<N-1) go(cur+1);
-}
-function prev(){
-  if(step>0){ stopPlay(); setStep(step-1,true); return; }
-  if(cur>0) go(cur-1,true);
-}
-function setMode(m){ mode=m; stopPlay(); ui(); if(mode==='all') play(); }
-function setSpeed(v){ speed=v; root.style.setProperty('--sp',v); ui(); }
+function next(){ if(cur<N-1) go(cur+1); }
+function prev(){ if(cur>0) go(cur-1); }
 var ind=$('#ind'), bPlay=$('#b-play');
 function ui(){
   var mx=slides[cur]._max;
-  ind.innerHTML=(cur+1)+' / '+N+(mx?'<span class="st">шаг '+step+'/'+mx+'</span>':'');
+  ind.textContent=(cur+1)+' / '+N;
   $('#prog i').style.width=((cur+1)/N*100)+'%';
-  $('#m-steps').setAttribute('aria-pressed',mode==='steps');
-  $('#m-all').setAttribute('aria-pressed',mode==='all');
-  $$('[data-speed]').forEach(function(b){ b.setAttribute('aria-pressed', +b.dataset.speed===speed); });
-  bPlay.querySelector('.lbl2').textContent = playing&&!paused ? 'Пауза' : 'Прогон';
+  bPlay.disabled=!mx;
 }
-$('#b-sprev').onclick=function(){ if(cur>0) go(cur-1); }; $('#b-snext').onclick=function(){ if(cur<N-1) go(cur+1); };
 $('#b-prev').onclick=prev; $('#b-next').onclick=next;
-$('#m-steps').onclick=function(){setMode('steps')}; $('#m-all').onclick=function(){setMode('all')};
-bPlay.onclick=function(){ if(!togglePause()) play(); };
-$$('[data-speed]').forEach(function(b){ b.onclick=function(){ setSpeed(+b.dataset.speed); }; });
-var br=$('#b-reply'); if(br) br.onclick=function(){ play(__REV__); };
+bPlay.onclick=function(){ play(); };
+document.addEventListener('click',function(e){ var b=e.target.closest&&e.target.closest('.qa-b'); if(!b) return;
+  var a=b.nextElementSibling; a.hidden=!a.hidden; b.textContent=a.hidden?'Показать ответ':'Скрыть ответ'; });
 var ov=$('#ov'), ovg=$('.ovg',ov);
 slides.forEach(function(s,k){
   var b=document.createElement('button'); b.className='ovi'; b.type='button';
@@ -1063,17 +1130,13 @@ document.addEventListener('keydown',function(e){
   if(e.key==='Escape'){ e.preventDefault(); ov.hidden?openOv():closeOv(); return; }
   if(!ov.hidden) return;
   switch(e.key){
-    case 'ArrowRight': e.preventDefault(); next(); return;
-    case 'ArrowLeft': e.preventDefault(); prev(); return;
-    case 'ArrowDown': case 'PageDown': e.preventDefault(); if(cur<N-1) go(cur+1); return;
-    case 'ArrowUp': case 'PageUp': e.preventDefault(); if(cur>0) go(cur-1); return;
-    case ' ': if(tag==='BUTTON') return; e.preventDefault();
-      if(playing){ togglePause(); } else next(); return;
+    case 'ArrowRight': case 'ArrowDown': case 'PageDown': e.preventDefault(); next(); return;
+    case 'ArrowLeft': case 'ArrowUp': case 'PageUp': e.preventDefault(); prev(); return;
+    case ' ': if(tag==='BUTTON') return; e.preventDefault(); next(); return;
     case 'Home': e.preventDefault(); go(0); return;
     case 'End': e.preventDefault(); go(N-1); return;
   }
   var k=e.key.toLowerCase();
-  if(k==='a'||k==='ф'){ setMode(mode==='steps'?'all':'steps'); return; }
   if(k==='r'||k==='к'){ play(); return; }
   if(/^[0-9]$/.test(e.key)){
     dbuf+=e.key; clearTimeout(dtm);
@@ -1217,15 +1280,11 @@ def render():
         out.append(f'<section class="slide {cls}" data-label="{label}"><div class="sc"><div class="wrap">{head}{body}</div></div></section>')
     out.append('</main>')
     out.append('<nav id="nav" aria-label="Навигация по слайдам">'
-               f'<button id="b-sprev" type="button" aria-label="Предыдущий слайд" title="Клавиша вверх">{ICON_LL}</button>'
-               f'<button id="b-prev" type="button" aria-label="Шаг назад" title="Клавиша влево">{ICON_L}</button>'
+               f'<button id="b-prev" type="button" aria-label="Предыдущий слайд">{ICON_L}</button>'
                '<span id="ind" aria-live="polite"></span>'
-               f'<button id="b-next" type="button" aria-label="Шаг вперёд" title="Клавиша вправо">{ICON_R}</button>'
-               f'<button id="b-snext" type="button" aria-label="Следующий слайд" title="Клавиша вниз">{ICON_RR}</button>'
+               f'<button id="b-next" type="button" aria-label="Следующий слайд">{ICON_R}</button>'
                '<span class="nsep"></span>'
-               '<span class="seg"><button id="m-steps" type="button" title="Клавиша A">По этапам</button><button id="m-all" type="button" title="Клавиша A">Целиком</button></span>'
-               '<button id="b-play" type="button" title="Клавиша R"><svg viewBox="0 0 24 24"><path d="M7 5l11 7-11 7z"/></svg><span class="lbl2">Прогон</span></button>'
-               '<span class="seg"><button type="button" data-speed="0.5">0.5×</button><button type="button" data-speed="1">1×</button><button type="button" data-speed="2">2×</button></span>'
+               '<button id="b-play" type="button" title="Клавиша R"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.5-5.8M4 4v5h5"/></svg><span class="lbl2">Повторить анимацию</span></button>'
                '<button id="b-ov" type="button" title="Esc"><svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg><span class="lbl2">Меню</span></button>'
                '</nav>')
     out.append('<div id="ov" hidden><h2>Содержание</h2><div class="ovg"></div></div>')
@@ -1233,7 +1292,7 @@ def render():
             .replace("__QUIZ__", json.dumps(QUIZ, ensure_ascii=False))
             .replace("__ROUTES__", json.dumps(ROUTES, ensure_ascii=False))
             .replace("__FIELDS__", json.dumps(FIELDS, ensure_ascii=False))
-            .replace("__REV__", str(REV_START)))
+            )
     out.append('<script>' + js + '</script></body></html>')
     OUT.write_text("".join(out), encoding="utf-8")
     print(len(S), "slides", OUT.stat().st_size, "bytes")
