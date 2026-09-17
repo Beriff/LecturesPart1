@@ -289,56 +289,89 @@ def server(x, y, label):
     return (f'<g transform="translate({x} {y})"><rect class="apb" x="-26" y="-42" width="52" height="84" rx="8"/>'
             f'<path class="apw" d="M-14 -22h28M-14 -8h28"/></g><text class="nl" x="{x}" y="{y+62}" text-anchor="middle">{label}</text>')
 
-def wifi_scene(name, devices, hops, flags, addrs, caps):
+DEVS = {
+    "phone": ("Смартфон", "192.168.1.10", "AA-11-11-11-11-11"),
+    "AP": ("AP", "192.168.1.2", "AA-22-22-22-22-22"),
+    "SW1": ("SW1", "192.168.1.3", "AA-33-33-33-33-33"),
+    "R1": ("R1", "192.168.1.1", "AA-44-44-44-44-44"),
+    "Server": ("Server", "10.0.0.10", "AA-55-55-55-55-55"),
+    "AP1": ("AP1", "10.0.0.2", "AA-66-66-66-66-66"),
+    "AP2": ("AP2", "10.0.0.3", "AA-77-77-77-77-77"),
+    "PC1": ("PC1", "10.0.0.20", "AA-88-88-88-88-88"),
+}
+
+def devtag(key, x, y, below=True):
+    name, ip, mac = DEVS[key]
+    yy = y + 78 if below else y - 92
+    return (f'<g class="an halo" data-id="h_{key}"><rect class="halob" x="{x-92}" y="{y-58}" width="184" height="{186 if below else 190}" rx="14" transform="translate(0 {0 if below else -60})"/></g>'
+            f'<text class="adr" x="{x}" y="{yy}" text-anchor="middle">IP {ip}</text>'
+            f'<text class="adr mac" x="{x}" y="{yy+18}" text-anchor="middle">MAC {mac}</text>')
+
+def wifi_scene(name, devices, tags, hops, flags, addrs, caps, travel):
+    """addrs: [(dev_key, role, how)]; travel: [text per hop]"""
     b = ""
     for (x1, y1), (x2, y2), kind in hops:
         b += f'<line class="{"wl" if kind == "r" else "cl"}" x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}"/>'
+    b += "".join(devtag(k, x, y, bl) for k, x, y, bl in tags)
     b += devices
     b += '<g class="an" data-id="env" style="--md:1000ms"><rect class="envb" x="-24" y="-16" width="48" height="32" rx="4"/><path class="envl" d="M-24 -16l24 18 24-18"/></g>'
-    na = len(addrs)
-    fw = 118 if na == 4 else 150
-    x0 = (900 - (2 * 58 + na * fw + (na + 1) * 6)) / 2
-    tbl = ""
-    x = x0
-    for i, f in enumerate(("To DS", "From DS")):
-        tbl += (f'<rect class="fcell" x="{x}" y="360" width="58" height="36" rx="6"/><text class="fct" x="{x+29}" y="384" text-anchor="middle">{f.replace(" ", "")}</text>'
-                f'<rect class="fval an" data-id="fv{i}" x="{x}" y="402" width="58" height="36" rx="6"/><text class="fvt" x="{x+29}" y="427" text-anchor="middle" data-id="ft{i}"></text>')
+    na = len(addrs); fw = 150 if na == 4 else 190
+    x = (900 - (2 * 58 + na * fw + (na + 1) * 6)) / 2
+    Y0 = 400
+    for i, f in enumerate(("ToDS", "FromDS")):
+        b += (f'<rect class="fcell" x="{x}" y="{Y0}" width="58" height="34" rx="6"/><text class="fct" x="{x+29}" y="{Y0+22}" text-anchor="middle">{f}</text>'
+              f'<rect class="fval an" data-id="fv{i}" x="{x}" y="{Y0+40}" width="58" height="52" rx="6"/><text class="fvt" x="{x+29}" y="{Y0+74}" text-anchor="middle" data-id="ft{i}"></text>')
         x += 64
-    for i, (short, role) in enumerate(addrs):
-        tbl += (f'<rect class="acell a{i}" x="{x}" y="360" width="{fw}" height="36" rx="6"/><text class="fct" x="{x+fw/2}" y="384" text-anchor="middle">MAC-адрес {i+1}</text>'
-                f'<rect class="aval an" data-id="av{i}" x="{x}" y="402" width="{fw}" height="52" rx="6"/>'
-                f'<text class="avt" x="{x+fw/2}" y="424" text-anchor="middle" data-id="at{i}"></text><text class="avr" x="{x+fw/2}" y="445" text-anchor="middle" data-id="ar{i}"></text>')
+    for i, (key, role, how) in enumerate(addrs):
+        b += (f'<rect class="acell" x="{x}" y="{Y0}" width="{fw}" height="34" rx="6"/><text class="fct" x="{x+fw/2}" y="{Y0+22}" text-anchor="middle">MAC-адрес {i+1}</text>'
+              f'<rect class="aval an" data-id="av{i}" x="{x}" y="{Y0+40}" width="{fw}" height="52" rx="6"/>'
+              f'<text class="avt mono" x="{x+fw/2}" y="{Y0+62}" text-anchor="middle" data-id="at{i}"></text><text class="avr" x="{x+fw/2}" y="{Y0+82}" text-anchor="middle" data-id="ar{i}"></text>')
         x += fw + 6
-    b += tbl + cap("wcap", 450, 30)
+    b += '<rect class="howb" x="20" y="508" width="860" height="56" rx="12"/>' + cap("wcap", 450, 543, "how")
     route = [h[0] for h in hops] + [hops[-1][1]]
     n = 2 + na + len(hops)
     els = {"env": {"p": {0: route[0]}, "o": {0: 0}}, "wcap": {"t": {}}}
+    for k, *_ in tags: els[f"h_{k}"] = {"o": {0: 0}}
     for i in range(2):
         els[f"ft{i}"] = {"t": {0: "", 1: str(flags[i])}}; els[f"fv{i}"] = {"c": {0: "", 1: "on"}}
-    for i, (short, role) in enumerate(addrs):
-        els[f"at{i}"] = {"t": {0: "", 2 + i: short}}; els[f"ar{i}"] = {"t": {0: "", 2 + i: role}}; els[f"av{i}"] = {"c": {0: "", 2 + i: "on"}}
+    els["wcap"]["t"][1] = caps
+    for i, (key, role, how) in enumerate(addrs):
+        st = 2 + i
+        els[f"at{i}"] = {"t": {0: "", st: DEVS[key][2]}}; els[f"ar{i}"] = {"t": {0: "", st: role}}; els[f"av{i}"] = {"c": {0: "", st: "on"}}
+        els[f"h_{key}"]["o"][st] = 1; els[f"h_{key}"]["o"][st + 1] = 0
+        els["wcap"]["t"][st] = f"Адрес {i+1} = {DEVS[key][0]} ({DEVS[key][2]}): {how}"
     k = 2 + na
     els["env"]["o"][k] = 1
     for j in range(len(hops)):
         els["env"]["p"][k + j + 1] = route[j + 1]
-    for i, c in enumerate(caps): els["wcap"]["t"][i + 1] = c
-    return svg("0 0 900 470", b), scene(name, n, els, {i: 1300 for i in range(n + 1)})
+        els["wcap"]["t"][k + j + 1] = travel[j]
+    return svg("0 0 900 580", b), scene(name, n, els, {i: 1800 for i in range(n + 1)})
 
 TODS_DEV = phone(90, 150) + ap(280, 250, "AP") + sw(560, 250, "SW1") + router(790, 120, "R1")
-TODS, TODS_SC = wifi_scene("tods", TODS_DEV, [((90, 150), (280, 250), "r"), ((280, 250), (560, 250), "c"), ((560, 250), (790, 120), "c")],
-    (1, 0), [("MAC AP", "Receiver Address"), ("MAC смартфона", "Source / Transmitter"), ("MAC R1", "Destination Address")],
-    ["To DS = 1, From DS = 0: от устройства к системе распределения", "Адрес 1: точка доступа как приёмник", "Адрес 2: смартфон как источник и передатчик",
-     "Адрес 3: маршрутизатор R1 как адрес назначения", "Кадр уходит к точке доступа", "…через коммутатор SW1", "…к маршрутизатору R1"])
+TODS, TODS_SC = wifi_scene("tods", TODS_DEV, [("phone", 90, 150, False), ("AP", 280, 250, True), ("SW1", 560, 250, True), ("R1", 790, 120, False)],
+    [((90, 150), (280, 250), "r"), ((280, 250), (560, 250), "c"), ((560, 250), (790, 120), "c")], (1, 0),
+    [("AP", "Receiver Address", "приёмник – точка доступа, к которой подключён смартфон"),
+     ("phone", "Source / Transmitter", "смартфон и создал кадр, и передаёт его в эфир"),
+     ("R1", "Destination Address", "назначение – R1, шлюз во внешнюю сеть")],
+    "To DS = 1, From DS = 0: кадр идёт от устройства к системе распределения",
+    ["Смартфон передаёт кадр по радио на AP", "AP пересылает кадр через систему распределения на SW1", "SW1 доставляет кадр маршрутизатору R1"])
 FROMDS_DEV = phone(90, 150) + ap(280, 250, "AP") + sw(560, 250, "SW1") + router(790, 120, "R1")
-FROMDS, FROMDS_SC = wifi_scene("fromds", FROMDS_DEV, [((790, 120), (560, 250), "c"), ((560, 250), (280, 250), "c"), ((280, 250), (90, 150), "r")],
-    (0, 1), [("MAC смартфона", "Destination / Receiver"), ("MAC AP", "Transmitter Address"), ("MAC R1", "Source Address")],
-    ["To DS = 0, From DS = 1: от системы распределения к устройству", "Адрес 1: смартфон как получатель и приёмник", "Адрес 2: точка доступа как передатчик",
-     "Адрес 3: маршрутизатор как адрес источника", "Кадр идёт от R1", "…через SW1 к точке доступа", "…по радио к смартфону"])
+FROMDS, FROMDS_SC = wifi_scene("fromds", FROMDS_DEV, [("phone", 90, 150, False), ("AP", 280, 250, True), ("SW1", 560, 250, True), ("R1", 790, 120, False)],
+    [((790, 120), (560, 250), "c"), ((560, 250), (280, 250), "c"), ((280, 250), (90, 150), "r")], (0, 1),
+    [("phone", "Destination / Receiver", "смартфон – и получатель, и приёмник радиосигнала"),
+     ("AP", "Transmitter Address", "передатчик в эфир – точка доступа"),
+     ("R1", "Source Address", "источник кадра – маршрутизатор R1")],
+    "To DS = 0, From DS = 1: кадр идёт от системы распределения к устройству",
+    ["R1 отправляет кадр в сторону SW1", "SW1 передаёт кадр точке доступа", "AP передаёт кадр по радио смартфону"])
 BR_DEV = server(90, 200, "Server") + ap(340, 200, "AP1") + ap(590, 200, "AP2") + pc(820, 215, "PC1")
-BRIDGE, BRIDGE_SC = wifi_scene("bridge", BR_DEV, [((90, 200), (340, 200), "c"), ((340, 200), (590, 200), "r"), ((590, 200), (820, 200), "c")],
-    (1, 1), [("MAC AP2", "Receiver"), ("MAC AP1", "Transmitter"), ("MAC PC1", "Destination"), ("MAC Server", "Source")],
-    ["To DS = 1, From DS = 1: точки доступа в режиме моста", "Адрес 1: точка доступа получателя как приёмник", "Адрес 2: точка доступа отправителя как передатчик",
-     "Адрес 3: компьютер-получатель", "Адрес 4: сервер-отправитель", "Кадр идёт от сервера к AP1", "AP1 передаёт по радио на AP2", "AP2 доставляет кадр PC1"])
+BRIDGE, BRIDGE_SC = wifi_scene("bridge", BR_DEV, [("Server", 90, 200, True), ("AP1", 340, 200, True), ("AP2", 590, 200, True), ("PC1", 820, 200, True)],
+    [((90, 200), (340, 200), "c"), ((340, 200), (590, 200), "r"), ((590, 200), (820, 200), "c")], (1, 1),
+    [("AP2", "Receiver", "приёмник по радио – точка доступа получателя"),
+     ("AP1", "Transmitter", "передатчик по радио – точка доступа отправителя"),
+     ("PC1", "Destination", "конечный получатель – компьютер PC1"),
+     ("Server", "Source", "отправитель кадра – сервер")],
+    "To DS = 1, From DS = 1: точки доступа в режиме моста, задействованы 4 адреса",
+    ["Сервер отправляет кадр на AP1", "AP1 передаёт кадр по радио на AP2", "AP2 доставляет кадр компьютеру PC1"])
 
 # ---- wireless bridge principle (36)
 bw = ('<circle class="zone o" cx="250" cy="200" r="170"/><circle class="zone v" cx="650" cy="200" r="170"/>'
@@ -818,7 +851,10 @@ g.hot .bx{fill:#fff1e8;stroke:var(--orange);stroke-width:3}
 .fval,.aval{fill:#fff;stroke:var(--line);stroke-width:2;transition:fill .28s,stroke .28s}
 .fval.on,.aval.on{fill:#fff1e8;stroke:var(--orange)}
 .dg .fvt{font-family:var(--mono);font-weight:900;font-size:20px}
-.dg .avt{font-size:14px;font-weight:800}.dg .avr{font-size:12px;fill:var(--dim)}
+.dg .avt{font-size:13px;font-weight:800;font-family:var(--mono)}.dg .avr{font-size:12px;fill:var(--dim)}
+.halob{fill:rgba(242,96,12,.1);stroke:var(--orange);stroke-width:3}
+.dg .adr{font-family:var(--mono);font-size:13px;font-weight:700}.dg .adr.mac{fill:var(--violet)}
+.howb{fill:var(--ink)}.dg .how{fill:#fff;font-size:17px;font-weight:700}
 .zone{stroke-width:2;stroke-dasharray:8 6}.zone.o{fill:rgba(242,96,12,.06);stroke:var(--orange)}.zone.v{fill:rgba(111,82,168,.06);stroke:var(--violet)}
 /* title & cats */
 .tslide .sc{padding-left:clamp(16px,10vw,220px)}
