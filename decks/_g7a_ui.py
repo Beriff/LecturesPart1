@@ -22,8 +22,26 @@ def _screen(txt):
         return '<path class="scri" d="M-28 -28h56v8h-56z M-28 -16h24v20h-24z M2 -16h26 M2 -8h20 M2 0h26"/>'
     return f'<text class="scrx" x="0" y="-6" text-anchor="middle">{esc(txt)}</text>'
 
+import json as _json, pathlib as _pl
+REPO = _json.loads((_pl.Path(__file__).parent / "_g7a_svgrepo.json").read_text(encoding="utf-8"))
+REPO_MAP = {"server": ("server", 1.0), "srv": ("server", 1.0), "dns": ("s2u", 1.0), "router": ("router", 1.05), "switch": ("switch", 1.15),
+            "pc": ("pc", 1.0), "monitor": ("pc", 1.0), "fw": ("fw", 1.0), "cloud": ("cloud", 1.25), "db": ("db", 1.0)}
+def sprite():
+    return '<svg width="0" height="0" style="position:absolute" aria-hidden="true">' + ''.join(f'<symbol id="rp-{k}" viewBox="{vb}" overflow="visible">{b}</symbol>' for k, (vb, b) in REPO.items()) + '</svg>'
+# CC0: Servers Isometric Icons, SVG Repo (svgrepo.com/collection/servers-isometric-icons)
+
 def dev(kind, scr="", cls=""):
     k = kind
+    if k in REPO_MAP:
+        name, sc = REPO_MAP[k]
+        vb, body = REPO[name]
+        size = 116 * sc
+        lab = ""
+        if k == "dns":
+            lab = '<text class="dvl2" x="0" y="50" text-anchor="middle">DNS</text>'
+        if k == "cloud" and scr:
+            lab = f'<text class="cldt" x="0" y="8" text-anchor="middle">{esc(scr)}</text>'
+        return (f'<g class="dv rp {cls}"><use href="#rp-{name}" x="{-size / 2:.1f}" y="{-size / 2:.1f}" width="{size:.1f}" height="{size:.1f}"/>{lab}</g>')
     if k in ("server", "dns", "srv"):
         lab = '<text class="dvl" x="-6" y="44" text-anchor="middle">DNS</text>' if k == "dns" else ""
         body = ('<path class="dvt" d="M-26 -46L-8 -54H32L14 -46Z"/><path class="dvf" d="M-26 -46H14V50H-26Z"/><path class="dvs" d="M14 -46L32 -54V42L14 50Z"/>'

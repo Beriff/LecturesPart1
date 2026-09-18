@@ -923,7 +923,7 @@ ICON_R = '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>'
 def render():
     osw = "data:font/woff;base64," + base64.b64encode(OSW.read_bytes()).decode()
     out = ['<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
-           '<title>Глава 7. Уровень приложений</title><style>' + (CSS + CSS2 + CSS3).replace("__OSW__", osw).replace("__BGI__", BGI) + '</style></head><body>' + DECO + '<div id="prog"><i></i></div><main>']
+           '<title>Глава 7. Уровень приложений</title><style>' + (CSS + CSS2 + CSS3).replace("__OSW__", osw).replace("__BGI__", BGI) + '</style></head><body>' + __import__('_g7a_ui').sprite() + DECO + '<div id="prog"><i></i></div><main>']
     for k, (label, t1, t2, body, cls, sub) in enumerate(S, start=1):
         sb = f'<div class="sub">{sub}</div>' if sub else ""
         head = "" if not t1 else f'<header class="sh"><span class="snum">{k:02d}</span><div><h2>{t1}<span class="o2">{t2}</span></h2>{sb}</div></header>'

@@ -1,4 +1,9 @@
 CSS3 = r"""
+.dv.rp{filter:drop-shadow(0 0 10px rgba(46,230,200,.35))}
+.nd.hot .dv.rp{filter:drop-shadow(0 0 18px rgba(126,245,226,.95))}.nd.bad .dv.rp{filter:drop-shadow(0 0 16px rgba(255,92,110,1)) hue-rotate(160deg)}
+.dv.rp.red{filter:drop-shadow(0 0 10px rgba(255,92,110,.8)) hue-rotate(170deg)}.dv.rp.blue{filter:drop-shadow(0 0 10px rgba(74,168,255,.7)) hue-rotate(40deg)}
+.dvl2{font-family:var(--hf);font-size:16px;fill:#fff;paint-order:stroke;stroke:#03120f;stroke-width:4px}
+
 html{font-size:clamp(12px,min(.86vw,1.56vh),26px)}
 .ih h2 .o2:not(.in){font-size:.74em;line-height:1}
 .ih.big h2 .o2:not(.in){font-size:.56em}
