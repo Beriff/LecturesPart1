@@ -15,7 +15,7 @@ def enc(im, fmt="WEBP", q=58):
     b = io.BytesIO(); im.save(b, fmt, quality=q, method=6)
     return "data:image/webp;base64," + base64.b64encode(b.getvalue()).decode()
 
-def img64(name, w=1000, q=45):
+def img64(name, w=1920, q=82):
     im = Image.open(io.BytesIO(_z.read("ppt/media/" + name))).convert("RGB"); im.thumbnail((w, w))
     return enc(im, q=q)
 
@@ -766,6 +766,8 @@ h3{font-size:1rem;font-weight:900;margin-bottom:.6rem;line-height:1.25;text-tran
 .dgc{padding:1rem 1.2rem}
 .dg{display:block;width:100%;height:auto;max-height:62vh;overflow:visible}
 .ph{padding:.5rem;margin:0}.ph img{display:block;width:100%;height:auto;max-height:62vh;object-fit:contain}
+.ph img{cursor:zoom-in}
+#lb{position:fixed;inset:0;z-index:80;background:rgba(3,11,28,.96);display:grid;place-items:center;padding:12px;cursor:zoom-out}#lb[hidden]{display:none}#lb img{max-width:100%;max-height:100%;object-fit:contain}
 .ph figcaption{font-size:.82rem;color:var(--dim);padding:.45rem .3rem 0}
 .wrap>.ph{margin-top:.6rem}.wrap>.ph img{max-height:60vh}
 .badge{flex:none;display:inline-grid;place-items:center;min-width:2.3em;height:1.8em;padding:0 .35em;color:#031026;font-weight:900;font-family:var(--mono);font-size:.82em;clip-path:var(--cut6)}
@@ -961,11 +963,14 @@ slides.forEach(function(s,k){ var b=document.createElement('button'); b.classNam
   b.onclick=function(){ ov.hidden=true; go(k); }; ovg.appendChild(b); });
 function openOv(){ ov.hidden=false; $$('.ovi',ov).forEach(function(b,k){b.classList.toggle('cur',k===cur)}); var c=$('.ovi.cur',ov); if(c)c.focus(); }
 $('#b-ov').onclick=openOv;
+var lb=$('#lb'); $$('.ph img').forEach(function(im){ im.addEventListener('click',function(){ $('img',lb).src=im.src; $('img',lb).alt=im.alt; lb.hidden=false; }); });
+lb.onclick=function(){ lb.hidden=true; };
 var dbuf='', dtm=null;
 document.addEventListener('keydown',function(e){
   var t=e.target, tag=t.tagName;
   if(e.ctrlKey||e.metaKey||e.altKey) return;
   if(tag==='INPUT'){ if(e.key==='Escape') t.blur(); if(t.type==='range'&&(e.key==='ArrowLeft'||e.key==='ArrowRight'||e.key==='ArrowUp'||e.key==='ArrowDown')) return; if(t.type!=='range') return; }
+  if(!lb.hidden){ if(e.key==='Escape'||e.key===' '||e.key==='Enter'){ e.preventDefault(); lb.hidden=true; } return; }
   if(e.key==='Escape'){ e.preventDefault(); ov.hidden?openOv():(ov.hidden=true); return; }
   if(!ov.hidden) return;
   switch(e.key){
@@ -1103,7 +1108,7 @@ def render():
                f'<button id="b-next" type="button" aria-label="Следующий слайд">{ICON_R}</button><span class="nsep"></span>'
                '<button id="b-play" type="button" title="Клавиша R"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.5-5.8M4 4v5h5"/></svg><span class="lbl2">Повторить анимацию</span></button>'
                '<button id="b-ov" type="button" title="Esc"><svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg><span class="lbl2">Меню</span></button></nav>'
-               '<div id="ov" hidden><h2>Содержание</h2><div class="ovg"></div></div>')
+               '<div id="lb" hidden role="dialog" aria-label="Фото во весь экран"><img alt=""></div><div id="ov" hidden><h2>Содержание</h2><div class="ovg"></div></div>')
     js = (JS.replace("__SCENES__", json.dumps(SCENES, ensure_ascii=False, separators=(",", ":")))
             .replace("__QUIZ__", json.dumps(QUIZ, ensure_ascii=False))
             .replace("__T568B__", json.dumps(T568B, ensure_ascii=False)).replace("__T568A__", json.dumps(T568A, ensure_ascii=False))
