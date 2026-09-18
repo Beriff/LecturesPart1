@@ -10,7 +10,7 @@ CSS = r"""
   --cut:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px);
   --cut6:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);
   --hex:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);
-  --ez:cubic-bezier(.22,.7,.3,1);--bgi:url(__BGI__);color-scheme:dark}
+  --ez:cubic-bezier(.22,.7,.3,1);--bgi:none;color-scheme:dark}
 *{box-sizing:border-box;margin:0;padding:0;border-radius:0}
 [hidden]{display:none!important}
 html{font-size:clamp(14px,min(1.02vw,1.86vh),28px)}

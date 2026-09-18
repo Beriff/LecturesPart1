@@ -2,7 +2,7 @@
 # Сборка decks/glava7-application.html — Глава 7. Уровень приложений (по 7.pptx)
 import json, pathlib, io, base64
 from PIL import Image
-from _g7a_lib import SCENES, scene, esc, icon, hexicon, svgicon, hexnode, flow, seq, arrow, COLS
+from _g7a_lib import SCENES, scene, esc, icon, hexicon, svgicon, hexnode, flow, seq, arrow, COLS, IC
 from _g7a_style import CSS, DECO, JS
 
 HERE = pathlib.Path(__file__).parent
@@ -923,7 +923,7 @@ ICON_R = '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>'
 def render():
     osw = "data:font/woff;base64," + base64.b64encode(OSW.read_bytes()).decode()
     out = ['<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
-           '<title>Глава 7. Уровень приложений</title><style>' + CSS.replace("__OSW__", osw).replace("__BGI__", BGI) + '</style></head><body>' + DECO + '<div id="prog"><i></i></div><main>']
+           '<title>Глава 7. Уровень приложений</title><style>' + (CSS + CSS2 + CSS3).replace("__OSW__", osw).replace("__BGI__", BGI) + '</style></head><body>' + DECO + '<div id="prog"><i></i></div><main>']
     for k, (label, t1, t2, body, cls, sub) in enumerate(S, start=1):
         sb = f'<div class="sub">{sub}</div>' if sub else ""
         head = "" if not t1 else f'<header class="sh"><span class="snum">{k:02d}</span><div><h2>{t1}<span class="o2">{t2}</span></h2>{sb}</div></header>'
@@ -939,5 +939,994 @@ def render():
     out.append('<script>' + js + '</script></body></html>')
     OUT.write_text("".join(out), encoding="utf-8")
     print(len(S), "slides", OUT.stat().st_size, "bytes")
+
+# ================================================================ SLIDES — повторяют инфографики 7.pptx
+from _g7a_css3 import CSS3
+from _g7a_ui import (dev, devsvg, devbox, ih, info, qt, pnl, pcd, tile, lrow, steps, bul, irow, G, code, kv, chip, ftile, globe_deco, CSS2)
+
+def art(ic, tag="", cls=""):
+    t = f'<span class="tag">{tag}</span>' if tag else ""
+    return f'<div class="art {cls}"><svg class="bigic" viewBox="0 0 24 24" aria-hidden="true"><path d="{IC[ic]}"/></svg>{t}</div>'
+
+def mline(d, col, cls=""):
+    return f'<div class="mline {d} c-{col} {cls}"></div>'
+
+def srow(i, title, text, label, d, col, s, w=1300):
+    return (f'<div class="srow" data-s="{s}" data-w="{w}"><span class="hn">{i}</span><div class="st"><b>{title}</b><span>{text}</span></div>'
+            f'<div class="ar c-{col}">{label}{mline(d, col)}</div></div>')
+
+def adr(pairs):
+    return "<div>" + "".join(f"<span>{k}</span><b>{v}</b>" for k, v in pairs) + "</div>"
+
+def msgrow(name, ic, d, col, note, left, right, s, w=1500):
+    return (f'<div class="msg" data-s="{s}" data-w="{w}"><div class="mh">{hexicon(ic, "hx sm")}{name}<small>{note}</small></div>{mline(d, col)}'
+            f'<div class="addr">{adr(left)}{adr(right)}</div></div>')
+
+S.clear()
+
+# 1 ---------------------------------------------------------------- титул
+TITLE_ART = ('<div class="tart" aria-hidden="true">' + globe_deco("tglobe") +
+             "".join(f'<div class="tic t{i}">{hexicon(ic, "hx lg")}</div>' for i, ic in enumerate(["mail", "folder", "globe", "dns", "lock", "clock"])) +
+             f'<div class="tlap">{devsvg("laptop", "globe", "16rem")}</div></div>')
+slide("Титул", "", "", f"""
+<div class="title">{TITLE_ART}
+  <div class="kick"><span class="nb">07</span>Глава 7</div>
+  <h1>Уровень<br><span class="o2">приложений</span></h1>
+  <p class="ihs">HTTP · DNS · DHCP · FTP · почта · NTP</p>
+  <p class="lead">Как работают сервисы, которыми мы пользуемся каждый день: от ввода адреса в браузере до получения письма и синхронизации часов</p>
+  <p class="authors">Ананко Софья Михайловна<br>Качур Анна Юрьевна</p>
+</div>""", "tslide")
+
+# 2 ---------------------------------------------------------------- цель
+slide("Цель лекции", "", "", ih("Цель", "лекции", "что разберём в главе 7", inline=True, big=True) +
+      G("repeat(3,minmax(0,1fr))", *[pnl("", f'<div class="goal">{hexicon(ic, "hx lg")}<span class="nb">{i+1:02d}</span></div><h3 class="uh">{t}</h3><p class="p sm">{d}</p>', "", 1)
+                                     for i, (ic, t, d) in enumerate([("layers", "Функции", "Функции уровня приложений"),
+                                                                     ("globe", "Протоколы", "Протоколы уровня приложений"),
+                                                                     ("link", "Взаимодействие", "Взаимодействие с нижестоящими протоколами модели OSI")])]) +
+      '<div class="mt">' + qt("Уровень приложений — самый верхний уровень модели OSI: здесь работают сервисы, с которыми сталкивается пользователь.") + '</div>')
+
+# 3 ---------------------------------------------------------------- OSI и TCP/IP + популярные протоколы (s03)
+POP7 = [("globe", "HTTP", "Hyper Text Transfer Protocol", "Протокол передачи гипертекста"), ("dns", "DNS", "Domain Name Service", "Служба доменных имен"),
+        ("gear", "DHCP", "Dynamic Host Configuration Protocol", "Протокол динамической конфигурации узла"), ("folder", "FTP", "File Transfer Protocol", "Протокол передачи файлов"),
+        ("mail", "SMTP", "Simple Mail Transfer Protocol", "Простой протокол электронной почты"), ("mail", "POP", "Post Office Protocol", "Протокол получения электронной почты"),
+        ("mail", "IMAP", "Internet Message Access Protocol", "Протокол доступа к сообщениям Интернет")]
+poprows = "".join(f'<div class="prow" data-s="{6}" style="--dl:{i*80}ms">{hexicon(ic, "hx")}<div><b>{n}</b><span>{f}</span></div><em>{d}</em></div>' for i, (ic, n, f, d) in enumerate(POP7))
+poprows += f'<div class="prow" data-s="6" style="--dl:600ms">{hexicon("more" if False else "layers", "hx")}<div><b>И многие другие…</b></div><em></em></div>'
+slide("OSI и TCP/IP", "", "", G("minmax(0,1.25fr) minmax(0,1fr)",
+    '<div>' + ih("Уровень", "приложений", "модели OSI и TCP/IP",
+                 "Уровень приложений, уровень представления и сеансовый уровень модели OSI соответствуют одному уровню приложений модели TCP/IP.", inline=True) +
+    OSI_SC + '<div class="mt">' + qt("Протоколы уровня приложений нужны для обмена данными между приложениями конечных пользователей. <span class='hl'>Это самый верхний уровень в модели OSI.</span>", 1, "layers") + '</div></div>',
+    '<div class="relbox">' + globe_deco("gdeco g-tr") + pnl("Популярные протоколы", '<div class="pns sp">уровня приложений</div><div class="lst">' + poprows + '</div>', "", 0) +
+    '<p class="p sm mt">Более подробно каждый из протоколов будет рассмотрен в данной главе.</p></div>', cls="as"))
+
+# 4 ---------------------------------------------------------------- протоколы 01–06 (s04)
+REQRESP = ('<svg class="mini" viewBox="0 0 520 220" aria-hidden="true">'
+           f'<g transform="translate(80 120) scale(1.05)">{dev("laptop", "page")}</g><g transform="translate(440 120) scale(1.05)">{dev("laptop", "page")}</g>'
+           f'<g transform="translate(260 46) scale(1.25)">{dev("cloud")}</g><text x="260" y="44" text-anchor="middle" style="font-family:var(--hf);font-size:13px">ПРОТОКОЛЫ</text><text x="260" y="60" text-anchor="middle" style="font-family:var(--hf);font-size:13px">УРОВНЯ ПРИЛОЖЕНИЙ</text>'
+           '<text x="80" y="42" text-anchor="middle" style="font-family:var(--hf)">КЛИЕНТ</text><text x="80" y="200" text-anchor="middle" class="ml2" fill="#8fb8b0">(отправитель)</text>'
+           '<text x="440" y="42" text-anchor="middle" style="font-family:var(--hf)">СЕРВЕР</text><text x="440" y="200" text-anchor="middle" class="ml2" fill="#8fb8b0">(получатель)</text>'
+           + arrow("rr1", 150, 118, 368, 118, "teal") + arrow("rr2", 368, 150, 150, 150, "teal") +
+           '<text x="260" y="108" text-anchor="middle" style="font-family:var(--hf)">ЗАПРОС</text><text x="260" y="172" text-anchor="middle" style="font-family:var(--hf)">ОТВЕТ</text></svg>')
+REQRESP_SC = scene("rr", 2, {"rr1": {"c": {0: "", 1: "on"}}, "rr2": {"c": {0: "", 2: "on"}}}, {1: 1100, 2: 1100})
+ARTS = {0: art("globe", "WWW"), 1: art("lock", "https://"), 2: '<div class="art col"><span class="chip">eltex-co.ru</span><span class="arrd"></span><span class="chip">62.109.1.166</span></div>',
+        3: '<div class="art">' + devsvg("router", "", "6.5rem") + '<div class="mini-list">IP-адрес<br>Маска подсети<br>Шлюз<br>DNS-сервер</div></div>',
+        4: '<div class="art">' + devsvg("server", "", "3rem") + art("file") + devsvg("server", "", "3rem") + '</div>', 5: art("shield", "SFTP")}
+slide("Протоколы 01–06", "", "", G("minmax(0,1fr) minmax(0,1fr)",
+    ih("Протоколы", "уровня приложений", "обмен данными между приложениями",
+       "Во время сеанса связи протоколами уровня приложений пользуется как отправляющая, так и принимающая сторона. Для успешного обмена информацией между двумя приложениями необходима совместимость протоколов."),
+    f'<div class="card dgc flow" {REQRESP_SC}>{REQRESP}<p class="p sm" style="text-align:center;margin:0">Оба устройства используют одинаковые протоколы для обмена данными.</p></div>', cls="ac") +
+    G("repeat(3,minmax(0,1fr))", *[pcd(i + 1, P16[i][0], P16[i][1], P16[i][2], ARTS[i], 1, i * 90) for i in range(6)]) +
+    '<div class="mt">' + qt("Протоколы уровня приложений обеспечивают обмен данными между приложениями конечных пользователей.") + '</div>')
+
+# 5 ---------------------------------------------------------------- протоколы 07–16 (s05)
+ARTS2 = {6: art("mail"), 7: art("mail"), 8: art("mail", "3"), 9: art("mail"), 10: art("folder"), 11: art("video"), 12: art("gear"), 13: art("term"), 14: art("lock", ">_"), 15: art("desk")}
+slide("Протоколы 07–16", "", "", G("minmax(0,1.1fr) minmax(0,1fr)",
+    ih("Протоколы", "уровня приложений", "связь людей и данных"),
+    info("Протоколы уровня приложений позволяют приложениям конечных пользователей обмениваться данными по сети. Во время сеанса связи ими пользуются как отправляющая, так и принимающая сторона.", "globe"), cls="ac") +
+    G("repeat(4,minmax(0,1fr))", *[pcd(i + 1, P16[i][0], P16[i][1], P16[i][2], ARTS2[i], 1, (i - 6) * 70, "sm") for i in range(6, 16)],
+      '<div style="grid-column:span 2;display:flex;flex-direction:column;gap:.7rem">' + qt("Совместимость протоколов — необходимое условие успешного обмена данными между приложениями.") +
+      irow([("mail", "Почта"), ("folder", "Файлы"), ("video", "Мультимедиа"), ("gear", "Управление"), ("term", "Удалённый доступ")]) + '</div>'))
+
+# 6 ---------------------------------------------------------------- уровень представления (s06)
+def osi_stack(hi, s=1):
+    return '<div class="stack3d">' + "".join(f'<div class="slab{" hi" if 7 - i == hi else " dim"}" data-s="{s}" style="--dl:{i*70}ms"><span class="sn">{7 - i}</span>{t} уровень</div>'
+                                            for i, t in enumerate(["Прикладной", "Представления", "Сеансовый", "Транспортный", "Сетевой", "Канальный", "Физический"])) + '</div>'
+FMT = [("JPEG", "Стандарт цифрового сжатия неподвижных изображений.", "img", "JPG"), ("PNG", "Формат файлов для растровых графических приложений.", "img", "PNG"),
+       ("GIF", "Формат обмена графическими данными.", "img", "GIF"), ("MPEG", "Стандарт сжатия движущихся видеоизображений.", "video", "MPEG"),
+       ("ASCII", "Таблица кодировки, в которой распространенным печатным и непечатным символам сопоставлены числовые коды.", "file", "ASCII"),
+       ("TLS/SSL", "Криптографические протоколы, обеспечивающие безопасную связь.", "shield", "TLS/SSL")]
+slide("Уровень представления", "", "", G("minmax(0,.9fr) minmax(0,.8fr) minmax(0,1.3fr)",
+    ih("Уровень", "представления", "модель OSI", "Преобразование. Защита. Сжатие. Данные в понятном виде."),
+    osi_stack(6),
+    pnl("Основные функции", G("1fr 1fr", lrow("file", "Форматирование данных", "Данные с уровня приложений — в удобный для сети формат и обратно."),
+                              lrow("file", "Кодирование", "Перевод из кодировки ASCII в понятный для человека текст."),
+                              lrow("layers", "Сжатие данных", "Сокращение объема передаваемой информации."),
+                              lrow("lock", "Шифрование и дешифрование", "Защита передаваемых по сети данных.")), "", 1), cls="ac") +
+    '<h3 class="uh mt">Популярные стандарты и форматы <span class="dimp">уровня представления</span></h3>' +
+    G("repeat(3,minmax(0,1fr))", *[pcd(i + 1, n, "", d, art(ic, t), 2, i * 80, "sm") for i, (n, d, ic, t) in enumerate(FMT)]) +
+    G("minmax(0,1fr) minmax(0,1fr)", irow([("img", "Изображения"), ("video", "Видео"), ("file", "Текст"), ("lock", "Безопасность")], 3),
+      qt("Удобные данные — надёжные соединения для цифрового мира. Уровень представления делает данные доступными, эффективными и безопасными.", 3), style="margin-top:.8rem"))
+
+# 7 ---------------------------------------------------------------- сеансовый уровень (s07)
+SESS_ART = ('<svg class="mini" viewBox="0 0 520 230" aria-hidden="true">'
+            f'<g transform="translate(90 140) scale(1.3)">{dev("laptop", "page")}</g><g transform="translate(440 130) scale(1.3)">{dev("monitor", "page")}</g>'
+            + arrow("se1", 170, 118, 360, 118, "teal", curve=40) + arrow("se2", 360, 160, 170, 160, "teal", curve=-40) +
+            '<text x="265" y="146" text-anchor="middle" style="font-family:var(--hf);font-size:24px;fill:#7ef5e2">СЕАНС</text></svg>')
+SESS_SC = scene("sesl", 2, {"se1": {"c": {0: "", 1: "on"}}, "se2": {"c": {0: "", 2: "on"}}}, {1: 900, 2: 900})
+slide("Сеансовый уровень", "", "", ih("Сеансовый", "уровень", "установление и поддержание сеанса связи", inline=True, big=True) +
+      G("minmax(0,.7fr) minmax(0,1.6fr)", osi_stack(5),
+        '<div>' + G("minmax(0,1fr) minmax(0,1fr)",
+                    '<div><h3 class="uh">Что делает?</h3><p class="p">Сеансовый уровень служит для установления, поддержания, завершения сеанса связи, а также обмена информацией между двумя приложениями конечных пользователей.</p></div>',
+                    f'<div {SESS_SC}>{SESS_ART}</div>', cls="ac") +
+        '<h3 class="uh">Основные протоколы</h3>' +
+        G("repeat(4,minmax(0,1fr))", tile("hand", "H.245", "Протокол согласования параметров соединения", "", 2), tile("shield", "L2TP", "Туннельный протокол для поддержания виртуальных частных сетей", "", 2, 90),
+          tile("user", "PAP", "Протокол простой проверки подлинности", "", 2, 180), tile("link", "PPTP", "Туннельный протокол типа «точка-точка»", "", 2, 270)) +
+        '<div class="mt">' + qt("Сеансовый уровень обеспечивает диалог между приложениями — от начала сеанса до его завершения.", 3) + '</div></div>', cls="ac"))
+
+# 8 ---------------------------------------------------------------- этапы сеанса (s16)
+STG = [("1", "Инициация сеанса", "blue", "Запрос на соединение (SYN)", "r", "Один из участников отправляет запрос на установление соединения другому участнику."),
+       ("2", "Согласование", "grn", "Обмен параметрами", "b", "Между участниками происходит обмен данными для согласования условий сеанса."),
+       ("3", "Установление соединения", "vio", "Соединение установлено", "c", "После согласования условий соединение считается установленным. Обе стороны готовы к передаче данных."),
+       ("4", "Передача данных", "amb", "Данные / подтверждения (ACK)", "b", "В течение сеанса происходит обмен информацией. Каждая часть данных подтверждается на приёмной стороне."),
+       ("5", "Завершение сеанса", "red", "Запрос на завершение (FIN / ACK)", "b", "Один из участников инициирует завершение сеанса, и после получения подтверждения соединение разрывается.")]
+def stgcard(n, t, col, lab, mode, d, i):
+    ar = mline("r", col) if mode == "r" else (mline("r", col) + mline("l", col) if mode == "b" else f'<div class="okc c-{col}">{hexicon("check", "hx sm")}</div>')
+    return (f'<div class="card pn stg" data-s="{i+1}" data-w="1300"><div class="pnh"><span class="nb nb-{col}">{n}</span><h3>{t}</h3></div>'
+            f'<div class="stgd">{devsvg("laptop", "", "3.6rem")}<div class="stga c-{col}"><small>{lab}</small>{ar}</div>{devsvg("server", "", "2.8rem")}</div>'
+            f'<div class="stgl"><span>Клиент</span><span>Сервер</span></div><p class="p sm">{d}</p></div>')
+slide("Сеанс связи", "", "", G("minmax(0,1.5fr) minmax(0,1fr)",
+    ih("Этапы установки", "сеанса связи", "", "<b class='hl'>Сеанс связи</b> — установленное взаимодействие между устройствами, позволяющее передавать и принимать информацию. Информация пересылается по частям, приём каждой части и всего сообщения подтверждается."),
+    qt("Сеанс связи обеспечивает надёжную доставку данных — полностью и в правильном порядке.", 0), cls="ac") +
+    G("repeat(5,minmax(0,1fr))", *[stgcard(*x, i) for i, x in enumerate(STG)]) +
+    G("minmax(0,1fr) minmax(0,1.1fr) minmax(0,.9fr)",
+      pnl("Гарантии сеанса связи", G("repeat(3,minmax(0,1fr))", tile("shield", "Полная доставка", "Все части сообщения будут доставлены", "plain", 6),
+                                     tile("book", "Правильный порядок", "Данные поступают в нужной последовательности", "plain", 6), tile("check", "Подтверждение", "Каждая часть подтверждается приёмной стороной", "plain", 6)), "", 6),
+      pnl("Пример: этапы на диаграмме обмена", SESS, "", 6),
+      '<div style="display:flex;flex-direction:column;gap:.8rem">' + pnl("Где используется?", G("1fr 1fr", tile("globe", "Веб-сайты", "HTTP/HTTPS", "plain", 6), tile("mail", "Почта", "SMTP", "plain", 6),
+                                                                                                    tile("folder", "Файлы", "FTP", "plain", 6), tile("video", "Видео", "потоковое", "plain", 6)), "", 6) +
+      qt("Установка сеанса связи — основа надёжного обмена данными в сетях.", 6) + '</div>', style="margin-top:.8rem"))
+
+# 9 ---------------------------------------------------------------- FTP два соединения (s08)
+slide("FTP: два соединения", "", "", G("minmax(0,.7fr) minmax(0,1.8fr)",
+    '<div>' + ih("FTP", "протокол передачи файлов", big=True) + info("<b>FTP (File Transfer Protocol)</b> — протокол для передачи файлов между клиентом и сервером по модели клиент/сервер.") + '</div>',
+    FTP2, cls="ac") +
+    G("repeat(3,minmax(0,1fr))",
+      pnl("FTP-клиент", bul(["Запущенное на узле приложение для получения данных с сервера и отправки данных на сервер.", "Устанавливает TCP-соединения с FTP-сервером."]), "", 1, ic="user"),
+      pnl("Особенности", bul(["Для работы FTP необходимо два соединения: для команд и ответов — TCP-соединение, для передачи файлов — TCP-соединение.",
+                              "Соединение для данных создаётся для каждого сеанса передачи и автоматически закрывается после её завершения."]), "", 1, ic="gear"),
+      pnl("FTP-сервер", bul(["На сервере должна быть запущена FTP-служба в виде приложения.", "Обрабатывает команды клиента и обеспечивает передачу файлов."]), "", 1, ic="server")))
+
+# 10 ---------------------------------------------------------------- ASCII / бинарный (s09)
+FILES_UP = "".join(f'<div class="fly up" data-s="2" style="--dl:{i*250}ms">{ftile(t)}</div>' for i, t in enumerate(["TXT", "LOG", "CFG"]))
+FILES_DN = "".join(f'<div class="fly dn" data-s="3" style="--dl:{i*250}ms">{ftile(t, "blue")}</div>' for i, t in enumerate(["EXE", "BIN", "PNG"]))
+slide("FTP: ASCII и бинарный", "", "", G("minmax(0,.8fr) minmax(0,1fr) minmax(0,1fr)",
+    ih("FTP", "передача файлов по модели клиент/сервер", big=True),
+    pnl("Режим <span class='hl'>ASCII</span>", '<div class="frow">' + ftile("TXT") + ftile("LOG") + ftile("CFG") + '</div><p class="p sm" style="text-align:center;margin:.4rem 0 0">Текстовые файлы</p>', "", 1),
+    pnl("<span class='hl'>Бинарный</span> режим", '<div class="frow">' + ftile("EXE", "blue") + ftile("BIN", "blue") + ftile("PNG", "blue") + '</div><p class="p sm" style="text-align:center;margin:.4rem 0 0">Нетекстовые файлы</p>', "", 1), cls="ac") +
+    G("minmax(0,.7fr) minmax(0,2fr) minmax(0,.7fr)", devbox("laptop", "FTP-клиент", "", "folder", "12rem"),
+      f'<div class="lane"><small>Загрузка файлов на сервер</small><div class="lanebar c-teal">{FILES_UP}{mline("r", "teal")}</div>'
+      f'<div class="lanebar c-blue">{FILES_DN}{mline("l", "blue")}</div><small>Выгрузка файлов с сервера</small></div>',
+      devbox("server", "FTP-сервер", "", "", "8rem"), cls="ac", style="margin:.8rem 0") +
+    G("minmax(0,1fr) minmax(0,1fr)",
+      pnl("", '<div class="pnh">' + hexicon("file", "hx") + '<p class="p sm" style="margin:0"><b class="hl">ASCII</b> — отправитель преобразовывает символы в код ASCII перед отправкой, получатель — обратно в символы. Подходит для TXT, LOG, CFG: файлов конфигурации и лог-файлов сетевых устройств.</p></div>', "", 4),
+      pnl("", '<div class="pnh">' + hexicon("zip", "hx") + '<p class="p sm" style="margin:0"><b class="hl">Бинарный режим</b> — передаёт файлы без преобразования формата. Подходит для BIN, EXE, PNG: изображений, программ и файлов версий сетевых устройств.</p></div>', "", 4)))
+
+# 11/12 ---------------------------------------------------------------- FTP активный / пассивный (s10, s11)
+def ftp_mode(mode):
+    act = mode == "a"
+    rows = ([("Клиент инициирует соединение", "FTP-клиент устанавливает TCP-соединение с TCP-портом 21 на FTP-сервере.", "TCP SYN, порт 21", "r", "teal"),
+             ("Аутентификация", "Обмен данными для входа пользователя.", "USER / PASS", "b", "teal"),
+             ("Команда PORT", "Клиент сообщает открытый порт P (случайный порт; P > 1024).", "PORT P (P > 1024)", "r", "teal"),
+             ("Установка соединения для данных", "FTP-сервер (порт 20) инициирует TCP-соединение на порт P FTP-клиента.", "TCP SYN с порта 20 на порт P", "l", "blue"),
+             ("Передача файлов", "После установления соединения начинается передача данных.", "Передача данных", "b", "blue")] if act else
+            [("Установка управляющего соединения", "Клиент устанавливает TCP-соединение с портом 21 на FTP-сервере.", "TCP SYN, порт 21", "r", "teal"),
+             ("Аутентификация", "Обмен данными для входа пользователя (USER / PASS).", "USER / PASS", "b", "teal"),
+             ("Команда PASV", "Клиент отправляет команду PASV для запроса открытого порта на сервере.", "PASV", "r", "teal"),
+             ("Ответ Enter PASV", "Сервер открывает случайный порт N (> 1024) и сообщает его клиенту.", "Enter PASV (порт N)", "l", "teal"),
+             ("Установка соединения для данных", "Клиент инициирует TCP-соединение с порта P на порт N сервера.", "TCP SYN с порта P на порт N", "r", "blue"),
+             ("Передача файлов", "После установки соединения начинается передача данных.", "Передача данных", "b", "blue")])
+    def ar(d, col):
+        return mline("r", col) + mline("l", col) if d == "b" else mline(d, col)
+    rws = "".join(f'<div class="srow" data-s="{i+1}" data-w="1500"><span class="hn">{i+1}</span><div class="st"><b>{t}</b><span>{x}</span></div>'
+                  f'<div class="ar c-{c}">{l}{ar(d, c)}</div></div>' for i, (t, x, l, d, c) in enumerate(rows))
+    n = len(rows)
+    srvports = ('<div class="plist"><span class="chip">Порт 21<br><small>управление</small></span><span class="chip blue">' +
+                ("Порт 20<br><small>данные</small>" if act else "Порт N (&gt; 1024)<br><small>данные</small>") + '</span></div>')
+    head = ih("FTP", "активный режим" if act else "пассивный режим", "", "Установка соединения и передача файлов", big=True)
+    inf = info("В активном режиме FTP-клиент использует случайные порты и указывает серверу порт, на который нужно подключиться для передачи данных." if act else
+               "В пассивном режиме FTP-сервер открывает порт для передачи данных, а клиент устанавливает с ним соединение.", "info", 0)
+    ports = pnl("Ключевые порты", '<div class="ports">' + (
+        '<div><span class="pb">21</span>Управляющее соединение (от клиента к серверу)</div><div><span class="pb blue">20</span>Соединение для передачи данных (от сервера к клиенту)</div>' if act else
+        '<div><span class="pb">21</span>Управляющее соединение (от клиента к серверу)</div><div><span class="pb blue">N</span>Порт для передачи данных (открывает сервер, &gt; 1024)</div>') +
+        '<div><span class="pb blue">P</span>Случайный порт клиента (&gt; 1024)</div></div>', "", n + 1, ic="gear")
+    mid = (pnl("Порядок работы", steps(["Клиент подключается к порту 21 сервера.", "Выполняется аутентификация.", "Клиент сообщает серверу порт P с помощью команды PORT.",
+                                       "Сервер подключается с порта 20 на порт P клиента.", "Передаются данные."], n + 1), "", n + 1, ic="check") if act else
+           pnl("Преимущества", bul(["Работает, если клиент находится за NAT (клиент инициирует соединение).", "Не требует открытия входящих соединений на клиенте.",
+                                    "Упрощает прохождение через межсетевые экраны на стороне клиента."]), "", n + 1, ic="check"))
+    lim = (pnl("Особенности", bul(["Для передачи данных сервер инициирует соединение.", "Клиент должен быть доступен извне (открыт порт P).",
+                                   "Используются разные порты для управления и передачи данных.", "Подходит для простых сетей, может быть ограничен межсетевыми экранами."]), "", n + 1, ic="file") if act else
+           pnl("Возможные ограничения", bul(["Если FTP-сервер во внутренней сети за межсетевым экраном и недоступен для входящих соединений от клиента, соединение не устанавливается.",
+                                             "Требуется, чтобы клиент мог устанавливать соединения к открытым портам сервера."]), "amb", n + 1, ic="warn"))
+    return (G("minmax(0,1fr) minmax(0,1.3fr)", head, inf, cls="ac") +
+            G("minmax(0,.55fr) minmax(0,2fr) minmax(0,.55fr)",
+              '<div class="col-dev">' + devsvg("laptop", "folder", "11rem") + '<span class="chip">Порт P (&gt; 1024)</span><span class="dvbl">FTP-клиент</span></div>',
+              f'<div class="lst">{rws}</div>',
+              '<div class="col-dev">' + devsvg("server", "", "7rem") + srvports + '<span class="dvbl">FTP-сервер</span></div>', cls="ac") +
+            G("repeat(3,minmax(0,1fr))", ports, mid, lim, style="margin-top:.8rem"))
+slide("FTP: активный режим", "", "", ftp_mode("a"))
+slide("FTP: активный — диаграмма", "", "", G("minmax(0,.6fr) minmax(0,1.8fr)",
+    '<div>' + ih("Активный режим", "по портам", "кто кому открывает соединение",
+       "Каждая вертикальная линия — отдельный порт. Смотрите на направление пятой стрелки: соединение для данных открывает <b class='hl'>сервер</b> с порта 20.") +
+    pnl("Лекция", p("В активном режиме клиент FTP использует случайный порт (больше 1024) для запроса на соединение на порт 21 FTP-сервера. FTP-клиент прослушивает порт Р и командой PORT уведомляет сервер. Когда необходимо передать данные, FTP-сервер отправляет запрос на соединение с порта 20 на порт P FTP-клиента.", cls="p sm"), "", 0) + '</div>',
+    FTPA, cls="ac"))
+slide("FTP: пассивный режим", "", "", ftp_mode("p"))
+slide("FTP: пассивный — диаграмма", "", "", G("minmax(0,.6fr) minmax(0,1.8fr)",
+    '<div>' + ih("Пассивный режим", "по портам", "кто кому открывает соединение",
+       "Сравните с активным режимом: теперь соединение для данных открывает <b class='hl'>клиент</b> — с порта P на порт N сервера.") +
+    pnl("Лекция", p("После получения команды PASV FTP-сервер включает порт N (случайный порт больше 1024) и с помощью команды Enter PASV уведомляет FTP-клиент об открытом номере порта. Когда необходимо передать данные, FTP-клиент отправляет запрос на соединение с порта Р на порт N на FTP-сервере.", cls="p sm"), "", 0) + '</div>',
+    FTPP, cls="ac"))
+
+slide("FTP: NAT и межсетевой экран", "", "", ih("Проблемы", "активного и пассивного режимов", "", "Активный режим и пассивный режим различаются способами передачи данных и имеют свои преимущества и недостатки.") +
+      G("minmax(0,1fr) minmax(0,1fr)", pnl("Активный режим ломается на NAT", NATF, "red", 0, ic="router"), pnl("Пассивный режим и межсетевой экран", FWF, "amb", 0, ic="fw")))
+
+# 16 ---------------------------------------------------------------- TFTP (s12)
+TFTPW = seq("tftpw", [("TFTP-клиент", "", "pc"), ("TFTP-сервер", "", "server")], [
+    {"a": 0, "b": 1, "t": "WRQ (запрос на запись)", "col": "blue"}, {"a": 1, "b": 0, "t": "ACK", "col": "violet"}, {"a": 0, "b": 1, "t": "DATA 1", "col": "amber"},
+    {"a": 1, "b": 0, "t": "ACK", "col": "violet"}, {"a": 0, "b": 1, "t": "DATA n", "col": "amber"}, {"a": 1, "b": 0, "t": "ACK", "col": "violet"}], width=420, gap=38, wdef=700, top=118)
+TFTPR = seq("tftpr", [("TFTP-клиент", "", "pc"), ("TFTP-сервер", "", "server")], [
+    {"a": 0, "b": 1, "t": "RRQ (запрос на чтение)", "col": "green"}, {"a": 1, "b": 0, "t": "DATA 1", "col": "amber"}, {"a": 0, "b": 1, "t": "ACK", "col": "violet"},
+    {"a": 1, "b": 0, "t": "DATA n", "col": "amber"}, {"a": 0, "b": 1, "t": "ACK", "col": "violet"}], width=420, gap=38, wdef=700, top=118)
+PK5 = [("RRQ", "Запрос на чтение (чтение файла с сервера)", "file", "grn"), ("WRQ", "Запрос на запись (выгрузка файла на сервер)", "file", "blue"),
+       ("DATA", "Пакет передачи данных", "file", "amb"), ("ACK", "Подтверждение получения пакета", "check", "vio"), ("ERROR", "Пакет контроля ошибок", "cross", "red")]
+slide("TFTP", "", "", G("minmax(0,.8fr) minmax(0,1.3fr) minmax(0,.9fr)",
+    ih("TFTP", "простая передача файлов", "", "Лёгкий. Быстрый. Надёжный.<br>По сравнению с FTP предназначен для передачи небольших файлов, и его проще реализовать.", big=True),
+    '<div class="G ac" style="--gc:auto 1fr auto">' + devbox("laptop", "TFTP-клиент", "", "folder", "9rem") +
+    f'<div class="ar c-teal" style="text-align:center;font-family:var(--hf)" data-s="1">Запросы (RRQ/WRQ) и передача данных{mline("r", "teal")}{mline("l", "teal")}<span class="chip">Порт 69 / UDP</span></div>' +
+    devbox("server", "TFTP-сервер", "", "", "6rem") + '</div>',
+    pnl("Стек протоколов TFTP", G("1fr 1fr", '<div class="pstack"><div>TFTP</div><div>UDP</div><div>IP</div></div>',
+                                 '<div class="lst">' + lrow("server", "Использует UDP", "порт 69") + lrow("shield", "Аутентификация", "не требуется") + '</div>', cls="ac"), "", 1), cls="ac") +
+    G("minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr)",
+      pnl("Пакеты TFTP", '<div class="pns">TFTP использует пять типов пакетов</div>' + G("repeat(5,minmax(0,1fr))", *[tile(ic, n, d, c, 2, i * 90) for i, (n, d, ic, c) in enumerate(PK5)]), "", 2),
+      pnl("Выгрузка файла", '<div class="pns">Передача файла с клиента на сервер (WRQ)</div>' + TFTPW, "", 3),
+      pnl("Загрузка файла", '<div class="pns">Получение файла с сервера (RRQ)</div>' + TFTPR, "", 3), style="margin:.8rem 0") +
+    G("minmax(0,1.3fr) minmax(0,1fr)",
+      pnl("Основные особенности", G("repeat(4,minmax(0,1fr))", tile("hand", "Простая реализация", "Минимальный набор функций", "plain", 4), tile("zip", "Небольшие файлы", "Конфигурации и служебные файлы", "plain", 4),
+                                    tile("lock", "Без аутентификации", "Не требует учётных данных", "plain", 4), tile("folder", "Нет просмотра каталога", "Нельзя просматривать список файлов на сервере", "plain", 4)), "", 4),
+      pnl("Применение", G("repeat(3,minmax(0,1fr))", tile("gear", "Конфигурации", "файлы сетевых устройств", "plain", 4), tile("file", "Образы ПО", "например, прошивки", "plain", 4),
+                                                       tile("server", "Развёртывание", "простое и быстрое", "plain", 4)) + qt("TFTP — простое решение для задач, где важны скорость и минимальные требования.", 4), "", 4)))
+slide("TFTP: все сценарии", "", "", G("minmax(0,.8fr) minmax(0,1.5fr)",
+    '<div>' + ih("TFTP", "запись, чтение, ошибка", "пошаговый обмен пакетами", "Цвет стрелки — тип пакета: <span style='color:var(--blue)'>RRQ/WRQ</span>, <span style='color:var(--amber)'>DATA</span>, <span style='color:var(--violet)'>ACK</span>, <span style='color:var(--red)'>ERROR</span>. Каждый блок данных подтверждается отдельно.") +
+    G("1fr", *[lrow(ic, n, d, 0) for n, d, ic, c in PK5]) + '</div>', TFTP, cls="ac"))
+
+# 18 ---------------------------------------------------------------- Telnet (s13)
+slide("Telnet", "", "", G("minmax(0,.8fr) minmax(0,1fr) minmax(0,1fr)",
+    ih("Telnet", "удалённое управление сетевым оборудованием", "", "Простое решение для доступа и настройки устройств.", big=True),
+    pnl("Протокол <span class='hl'>Telnet</span>", '<div class="pnh">' + hexicon("term", "hx lg") + '<p class="p sm" style="margin:0">Telnet использует TCP (порт 23) для передачи команд и данных между клиентом и сервером. Позволяет удалённо управлять сетевыми устройствами с помощью командной строки.</p></div>', "", 1),
+    pnl("Сценарии применения", G("repeat(3,minmax(0,1fr))", tile("gear", "Настройка", "и управление устройствами", "", 1), tile("target", "Диагностика", "и устранение неисправностей", "", 1), tile("file", "Удалённый доступ", "к сети", "", 1)), "", 1), cls="ac") +
+    TEL +
+    G("repeat(3,minmax(0,1fr))",
+      pnl("Основные особенности", bul(["Использует TCP (порт 23).", "Позволяет управлять устройствами с помощью команд.", "Не требует выделенного кабеля (в отличие от консольного порта), если IP-адрес сервера Telnet доступен.",
+                                       "Устройство, которым управляют, — сервер Telnet, подключающееся — клиент Telnet.", "Многие сетевые устройства могут работать и как сервер, и как клиент Telnet."]), "", 2, ic="check"),
+      pnl("Преимущества", bul(["Простая реализация", "Удобное удалённое управление", "Быстрый доступ к устройствам", "Подходит для начальной настройки и диагностики"]), "", 2, ic="hand"),
+      pnl("Ограничения", bul(["Передаёт данные в открытом виде (без шифрования)", "Ниже уровень безопасности по сравнению с SSH", "Не рекомендуется использовать в незащищённых сетях"]) +
+          qt("Telnet — это удобно, но помните о безопасности вашей сети.", 2), "amb", 2, ic="warn"), style="margin-top:.8rem"))
+
+# 19 ---------------------------------------------------------------- WWW (s15)
+def _wmap():
+    pts = [(120, 90), (360, 60), (560, 110), (620, 250), (420, 290), (170, 250), (300, 210)]
+    b = ['<path class="wmap" d="M40 120l60-40 80 10 40-30 70 20 30-30 90 10 60 40 90-10 40 50-30 60-80 20-40 60-70 10-40-40-60 20-50 70-60-20-10-60-70-10-40-50z"/>']
+    els = {}
+    for i, (x, y) in enumerate(pts):
+        b.append(f'<g transform="translate({x} {y}) scale(.5)">{dev("laptop", "page")}</g>')
+        eid = f"wm{i}"
+        b.append(f'<g class="arw" data-id="{eid}"><path class="dr wt dsh" pathLength="1" d="M380 170Q{(380 + x) / 2} {min(y, 170) - 60} {x} {y - 20}"/></g>')
+        els[eid] = {"c": {0: "", 1 + i // 2: "on"}}
+    b.append(f'<g transform="translate(380 175) scale(1.5)">{dev("cloud", "WWW")}</g>')
+    sc = scene("wmap", 4, els, {i: 700 for i in range(5)})
+    return f'<div {sc}><svg class="mini" viewBox="0 0 720 330" aria-hidden="true">{"".join(b)}</svg></div>'
+slide("WWW", "", "", G("minmax(0,.8fr) minmax(0,1.7fr)",
+    '<div>' + ih("WWW", "всемирная паутина", "", "<b class='hl'>Глобальный доступ к информации.</b> На начальном этапе развития Интернета для обмена документами предлагалось использовать Всемирную паутину (World Wide Web, WWW).", big=True) +
+    G("repeat(3,minmax(0,1fr))", tile("globe", "Глобальный доступ", "", "plain"), tile("link", "Объединяет людей", "", "plain"), tile("shield", "Основа Интернета", "", "plain")) + '</div>',
+    pnl("Мировая сеть в действии", _wmap() + '<div class="rtag">Документы доступны повсюду</div>', "", 0), cls="as") +
+    G("minmax(0,1.1fr) minmax(0,.9fr) minmax(0,1fr)",
+      pnl("Из чего состоит WWW?", '<div class="plus">' + tile("file", "HTML", "язык гипертекстовой разметки для отображения документа в браузере", "amb", 2) + '<span>+</span>' +
+          tile("file", "HTTP", "протокол передачи документов по сети", "blue", 2, 150) + '<span>+</span>' + tile("link", "URL", "адреса для указания местоположения документов", "vio", 2, 300) + '</div>', "", 2),
+      pnl("Как это работает?", steps(["Пользователь вводит URL-адрес в браузере.", "Браузер отправляет HTTP-запрос на веб-сервер.", "Веб-сервер обрабатывает запрос и отправляет ответ (HTML-страницу, изображения).", "Браузер получает данные и отображает веб-страницу."], 3), "", 3),
+      pnl("Что такое WWW сейчас", '<p class="p sm">WWW на самом деле было названием клиентского приложения для просмотра HTML-документов, а теперь представляет собой набор технологий <b>(HTML + HTTP + URL-адрес)</b> и широко известен как Интернет.</p>' +
+          '<div class="urlbar"><i></i><i></i><i></i>https://www.example.com/index.html</div>', "", 3), style="margin-top:.8rem") +
+    '<div class="mt">' + qt("Всемирная паутина делает знания, информацию и возможности доступными для каждого — в любой точке мира.", 4) + '</div>')
+
+# 20 ---------------------------------------------------------------- HTTP доступ к веб-страницам (s14)
+HTTPW = ('<svg class="mini" viewBox="0 0 760 300" aria-hidden="true">'
+         f'<g transform="translate(120 170) scale(1.6)">{dev("laptop", "page")}</g><g transform="translate(600 160) scale(1.6)">{dev("server")}</g>'
+         f'<g transform="translate(360 150) scale(1.15)">{dev("cloud")}</g><text x="360" y="146" text-anchor="middle" style="font-family:var(--hf)">Интернет</text><text x="360" y="162" text-anchor="middle" class="ml2" fill="#8fb8b0">(IP-сеть)</text>'
+         '<text x="120" y="40" text-anchor="middle" style="font-family:var(--hf)">Браузер (HTTP-клиент)</text><text x="600" y="40" text-anchor="middle" style="font-family:var(--hf)">Веб-сервер (HTTP-сервер)</text>'
+         + arrow("hw1", 220, 92, 520, 92, "blue") + arrow("hw2", 520, 236, 220, 236, "red") +
+         '<g class="an" data-id="hwt1"><text x="370" y="80" text-anchor="middle" style="font-family:var(--hf);fill:#4aa8ff">1  HTTP-запрос</text></g>'
+         '<g class="an" data-id="hwt2"><text x="370" y="262" text-anchor="middle" style="font-family:var(--hf);fill:#ff5c6e">2  HTTP-ответ: HTML, изображения…</text></g></svg>')
+HTTPW_SC = scene("hw", 2, {"hw1": {"c": {0: "", 1: "on"}}, "hw2": {"c": {0: "", 2: "on"}}, "hwt1": {"o": {0: 0, 1: 1}}, "hwt2": {"o": {0: 0, 2: 1}}}, {1: 1200, 2: 1200})
+slide("Доступ к веб-странице", "", "", G("minmax(0,.8fr) minmax(0,1.5fr) minmax(0,.45fr)",
+    '<div>' + ih("HTTP", "доступ к веб-страницам", "", "При вводе URL браузер получает данные с веб-сервера и отображает контент на странице.", big=True) +
+    G("repeat(3,minmax(0,1fr))", tile("globe", "Простой доступ", "по URL-адресу", "plain"), tile("target", "Высокая скорость", "", "plain"), tile("shield", "Широкое применение", "основа веб-сервисов", "plain")) + '</div>',
+    pnl("Как это работает?", f'<div {HTTPW_SC}>{HTTPW}</div>', "", 0),
+    pnl("Ресурсы сервера", '<div class="lst">' + lrow("file", "HTML") + lrow("img", "Картинки") + lrow("video", "Видео") + lrow("db", "Другие файлы") + '</div>', "", 1), cls="as") +
+    G("minmax(0,1fr) minmax(0,1.2fr) minmax(0,.9fr)",
+      pnl("Что такое HTTP?", '<div class="pnh">' + hexicon("file", "hx lg") + '<p class="p sm" style="margin:0"><b class="hl">HTTP (HyperText Transfer Protocol)</b> — протокол прикладного уровня для связи между клиентским браузером или другой программой и веб-сервером. Основан на типовой архитектуре клиент/сервер и использует TCP для передачи.</p></div>', "", 2),
+      pnl("URL-адрес", '<p class="p sm"><b class="hl">URL</b> однозначно определяет местонахождение веб-страницы или других ресурсов в Интернете. URL может содержать имя страницы гипертекста — обычно с расширением <b>.html</b> или <b>.htm</b>.</p>' + URLBAR.replace('class="url" data-id="url"', 'class="url split"', 1), "", 2),
+      pnl("Протоколы передачи", '<div class="lst">' + lrow("globe", "HTTP", "Передача веб-страниц") + lrow("lock", "HTTPS", "Безопасная передача данных") + lrow("link", "TCP", "Надёжная доставка данных") + lrow("globe", "IP", "Адресация и маршрутизация") + '</div>', "", 2), style="margin:.8rem 0") +
+    G("minmax(0,1.5fr) minmax(0,1fr)",
+      pnl("Основные этапы загрузки страницы", '<div class="chain">' + "".join(f'<div class="tile plain" data-s="3" style="--dl:{i*150}ms">{hexicon(ic, "hx")}<b>{t}</b></div>' for i, (ic, t) in enumerate([("target", "Ввод URL в браузере"), ("file", "Отправка HTTP-запроса"), ("server", "Обработка запроса на сервере"), ("file", "Получение данных (HTML)"), ("desk", "Отображение страницы")])) + '</div>', "", 3),
+      qt("HTTP делает интернет доступным для всех — до сложных облачных сервисов.", 4)))
+
+# 21 ---------------------------------------------------------------- HTTP запрос-ответ, методы, HTTPS (s17)
+REQ = code(['<span class="k">GET</span> /index.html <span class="v">HTTP/1.1</span>', '<span class="d">Host:</span> www.example.com', '<span class="d">User-Agent:</span> Mozilla/5.0', '<span class="d">Accept:</span> text/html'], 5)
+RSP = code(['<span class="v">HTTP/1.1</span> <span class="g">200 OK</span>', '<span class="d">Content-Type:</span> text/html', '<span class="d">Content-Length:</span> 1024', '', '&lt;html&gt; … &lt;/html&gt;'], 5)
+MINI_HACK = ('<svg class="mini" viewBox="0 0 320 150" aria-hidden="true">'
+             f'<g transform="translate(40 60) scale(.7)">{dev("laptop")}</g><g transform="translate(280 60) scale(.7)">{dev("server", "", "red")}</g>'
+             f'<g transform="translate(160 118) scale(.55)">{dev("hacker")}</g><path class="lk2" style="stroke:var(--red)" d="M80 60H240 M160 60V92"/>'
+             '<text x="160" y="146" text-anchor="middle" style="fill:#ff5c6e;font-size:12px">Перехват данных</text></svg>')
+MINI_SEC = ('<svg class="mini" viewBox="0 0 320 110" aria-hidden="true">'
+            f'<g transform="translate(40 55) scale(.7)">{dev("laptop")}</g><g transform="translate(280 55) scale(.7)">{dev("server")}</g>'
+            '<path class="lk2" style="stroke:var(--green);stroke-dasharray:none" d="M80 55H240"/><path class="scri" style="stroke:var(--green)" d="M150 50h20v16h-20z M154 50v-6a6 6 0 0 1 12 0v6"/>'
+            '<text x="160" y="100" text-anchor="middle" style="fill:#8ce36a;font-size:12px">Зашифрованное соединение</text></svg>')
+def meth(n, sub, d, cl, col, ic):
+    return (f'<div class="card pn {col}" data-s="2"><div class="pnh">{hexicon(ic, "hx")}<div><h3 style="margin:0">{n}</h3><div class="pns" style="margin:0">{sub}</div></div></div>'
+            f'<p class="p sm">{d}</p><div class="code" style="padding:.4rem .6rem">{cl}</div></div>')
+slide("HTTP: методы", "", "", G("minmax(0,.9fr) minmax(0,1.2fr) minmax(0,.8fr)",
+    ih("HTTP", "протокол запрос-ответ", "", "HTTP работает по принципу «запрос-ответ»: клиент (браузер) отправляет запрос на сервер, а сервер возвращает ответ с данными (веб-страницей, изображением и т.д.).", big=True),
+    HTTPM,
+    pnl("Основные особенности", '<div class="lst">' + lrow("target", "Простой и понятный протокол") + lrow("file", "Работает по модели клиент/сервер") + lrow("info", "Передаёт данные в открытом виде (без шифрования)") + '</div>', "", 1), cls="ac") +
+    G("minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr)",
+      pnl("Методы HTTP (запросы клиента)", G("repeat(3,minmax(0,1fr))",
+          meth("GET", "Получение данных", "Извлечение данных с сервера. Например, при вводе URL в браузере отправляется GET-запрос для получения страницы.", "GET /index.html HTTP/1.1", "blue", "target"),
+          meth("PUT", "Отправка и обновление ресурсов", "Создание новых ресурсов или обновление существующих: профиль пользователя, изменения в документах.", "PUT /user/profile HTTP/1.1", "grn", "file"),
+          meth("POST", "Отправка данных", "Передача больших объёмов данных. Повторные POST-запросы могут создать несколько одинаковых ресурсов.", "POST /upload HTTP/1.1", "vio", "file")), "", 2),
+      pnl("HTTP — небезопасный протокол", '<p class="p sm">Сообщения запроса/ответа передаются открытым текстом, без шифрования: нарушители могут перехватывать данные пользователей.</p>' + MINI_HACK, "red", 3),
+      pnl("HTTPS — безопасное решение", '<p class="p sm">HTTPS (HTTP Secure) обеспечивает <b class="hl">аутентификацию и шифрование</b> данных между узлами.</p>' + MINI_SEC +
+          G("repeat(3,minmax(0,1fr))", tile("shield", "Аутентификация", "", "plain", 4), tile("lock", "Шифрование", "", "plain", 4), tile("shield", "Защита от перехвата", "", "plain", 4)), "grn", 4), style="margin:.8rem 0") +
+    G("minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)", pnl("Пример HTTP-запроса", REQ, "", 5), pnl("Пример HTTP-ответа", RSP, "", 5),
+      pnl("Порты и протоколы", '<div class="ports"><div><span class="pb">80</span><b>HTTP</b> — передача данных без шифрования</div><div><span class="pb blue">443</span><b>HTTPS</b> — безопасная передача (шифрование TLS)</div></div>' +
+          '<div class="mt">' + qt("HTTPS — тот же HTTP, но с защитой.", 5) + '</div>', "", 5)))
+slide("HTTPS: перехват", "", "", G("minmax(0,.8fr) minmax(0,1.5fr)",
+    ih("HTTP небезопасен,", "HTTPS — решение", "анимация перехвата",
+       "К сожалению, протокол HTTP не обеспечивает безопасности: сообщения передаются открытым текстом без шифрования. Для защищённого обмена была придумана модификация HTTPS (HTTP Secure) — аутентификация и шифрование данных между узлами."),
+    HTTPS, cls="ac"))
+
+# 23 ---------------------------------------------------------------- пять шагов по пакетам
+slide("Пять шагов: по пакетам", "", "", ih("Как открывается", "веб-страница", "каждый пакет: MAC, IP, порты",
+      "При введении веб-адреса (например, https://www.eltex-co.ru/index.html) браузер устанавливает сеанс связи по протоколу HTTP с веб-сервисом на сервере. Справа — поля пакета на каждом участке.", inline=True) + WEB)
+
+# 24 ---------------------------------------------------------------- как работает HTTP (s18)
+def col5(n, t, d, vis, foot_ic, foot_t, foot_d, s):
+    return (f'<div class="card pn c5" data-s="{s}" data-w="1100"><div class="pnh"><span class="nb">{n:02d}</span><h3 style="text-transform:uppercase">{t}</h3></div><p class="p sm">{d}</p>'
+            f'<div class="c5v">{vis}</div><div class="lrow">{hexicon(foot_ic, "hx sm")}<div><b class="hl">{foot_t}</b><span>{foot_d}</span></div></div></div>')
+V1 = ('<div class="urlbar"><i></i><i></i><i></i>https://www.eltex-co.ru/index.html</div><div class="lst" style="margin-top:.5rem">'
+      '<div class="G ac" style="--gc:auto 1fr"><span class="chip">https</span><small class="dimp">Протокол</small><span class="chip">www.eltex-co.ru</span><small class="dimp">Имя сервера</small><span class="chip">index.html</span><small class="dimp">Запрашиваемый файл</small></div></div>')
+V2 = '<div class="G ac" style="--gc:auto 1fr">' + devsvg("dns", "", "4.5rem") + '<div class="lst"><span class="chip">www.eltex-co.ru</span><span class="chip amb">62.109.1.166</span></div></div>'
+V3 = '<div class="G ac" style="--gc:auto 1fr">' + devsvg("laptop", "", "4.5rem") + code(["GET /index.html HTTP/1.1", "Host: www.eltex-co.ru", "User-Agent: …", "Accept: …"], 0) + '</div>'
+V4 = '<div class="G ac" style="--gc:auto 1fr">' + devsvg("server", "", "3.6rem") + code(['<span class="g">HTTP/1.1 200 OK</span>', "Content-Type: text/html", '<span class="k">&lt;!DOCTYPE html&gt;</span>', '<span class="k">&lt;html&gt;…&lt;/html&gt;</span>'], 0) + '</div>'
+V5 = devsvg("laptop", "page", "9rem")
+slide("Как работает HTTP", "", "", G("minmax(0,1fr) minmax(0,1.2fr)",
+    ih("Как работает", "HTTP", "от ввода адреса до отображения веб-страницы", big=True),
+    info("<b>HTML</b> — стандартизированный язык гипертекстовой разметки документов для просмотра веб-страниц в браузере. Он нужен, чтобы браузер понимал, как отобразить ту или иную веб-страницу.", "file", 0), cls="ac") +
+    G("repeat(5,minmax(0,1fr))",
+      col5(1, "Ввод URL и разбор адреса", "Браузер делит веб-адрес на три части: протокол, имя сервера и запрашиваемый файл.", V1, "globe", "URL", "протокол, имя, файл", 1),
+      col5(2, "Имя в IP-адрес", "Браузер преобразует имя сервера в IP-адрес, с помощью которого устанавливается соединение с сервером.", V2, "globe", "DNS", "преобразует имя в IP-адрес", 2),
+      col5(3, "Отправка HTTP-запроса", "Браузер отправляет запрос GET и запрашивает нужный файл (index.html — страница по умолчанию).", V3, "mail", "HTTP-запрос (GET)", "запросить файл с сервера", 3),
+      col5(4, "Ответ с сервера", "Сервер отправляет запрашиваемый файл с HTML-кодом веб-сайта.", V4, "folder", "HTTP-ответ", "файл с HTML-кодом", 4),
+      col5(5, "Отображение страницы", "Браузер преобразует принятый HTML-код и формирует страницу в окне браузера.", V5, "desk", "Браузер", "формирует веб-страницу", 5)) +
+    G("auto 1fr auto 1fr auto", devbox("laptop", "Клиент (браузер)", "", "", "5rem", 6),
+      f'<div class="ar c-teal" data-s="6" style="text-align:center;font-family:var(--hf)">HTTP: запрос{mline("r", "teal")}</div>', devsvg("globe", "", "4rem"),
+      f'<div class="ar c-teal" data-s="7" style="text-align:center;font-family:var(--hf)">{mline("l", "teal")}HTTP: ответ</div>', devbox("server", "Сервер (веб-сервис)", "", "", "3.5rem", 6), cls="ac", style="margin-top:.8rem"))
+
+# 25 ---------------------------------------------------------------- как открывается веб-страница (s31)
+OPEN = flow("open", "0 0 1000 420", {
+    "u": {"x": 110, "y": 250, "ic": "laptop", "label": "Пользователь", "scr": "page", "r": 52},
+    "n": {"x": 440, "y": 250, "ic": "pc", "label": "Узел (клиент)", "scr": "globe", "r": 52},
+    "d": {"x": 700, "y": 90, "ic": "dns", "label": "DNS-сервер"},
+    "w": {"x": 890, "y": 280, "ic": "server", "label": "WEB-сервер", "sub": "www.eltex-co.ru"}}, [
+    {"a": "u", "b": "n", "pk": "1 Ввод URL", "col": "blue", "cap": "Пользователь вводит в браузере адрес www.eltex-co.ru — формируется HTTP-запрос. В запросе указывается URL: протокол, доменное имя и путь к ресурсу."},
+    {"hl": ["n"], "tag": {"n": "DNS-кэш: нет"}, "cap": "Компьютер проверяет DNS-кэш. Если запись есть — HTTP-запрос сразу уходит на IP-адрес из записи."},
+    {"a": "n", "b": "d", "pk": "2 DNS-запрос", "col": "blue", "cap": "Записи нет — формируется и отправляется запрос на DNS-сервер с таблицей доменных имён и IP-адресов."},
+    {"a": "d", "b": "n", "pk": "3 61.109.1.166", "col": "green", "cap": "DNS-сервер возвращает IP-адрес сайта. Компьютер использует его для завершения формирования HTTP-запроса."},
+    {"a": "n", "b": "w", "pk": "3 GET /", "col": "blue", "cap": "Компьютер отправляет HTTP-запрос на IP-адрес веб-сервера."},
+    {"a": "w", "b": "n", "pk": "4 HTML", "col": "green", "cap": "Сервер обрабатывает запрос и отправляет HTTP-ответ с HTML-страницей."},
+    {"a": "n", "b": "u", "pk": "4 страница", "col": "green", "tag": {"u": "веб-страница"}, "cap": "Получив ответ от сервера, веб-браузер отображает веб-страницу."},
+], links=[("u", "n"), ("n", "d"), ("n", "w")], wdef=2300)
+slide("Как открывается веб-страница", "", "", G("minmax(0,1.3fr) minmax(0,1fr)",
+    ih("Как открывается", "веб-страница?", "", "Рассмотрим обмен информацией между приложениями с использованием протоколов уровня приложений на примере загрузки сайта www.eltex-co.ru."),
+    info("<b>URL (Uniform Resource Locator)</b> состоит из протокола, доменного имени и пути к ресурсу.<br><span class='chip amb'>https://</span> <span class='chip'>www.eltex-co.ru</span> <span class='chip vio'>/</span>", "info", 0), cls="ac") +
+    OPEN + G("repeat(4,minmax(0,1fr))",
+             pnl("<span class='bn'>01</span> Формирование запроса", '<p class="p sm">Пользователь вводит адрес <span class="hl">www.eltex-co.ru</span>. Формируется HTTP-запрос: URL из протокола, доменного имени и пути к ресурсу.</p>', "", 0),
+             pnl("<span class='bn'>02</span> Получение IP-адреса", '<p class="p sm">Компьютер проверяет DNS-кэш. Записи нет — DNS-запрос; DNS-сервер возвращает IP-адрес сайта.</p>', "", 0),
+             pnl("<span class='bn'>03</span> Запрос к web-серверу", '<p class="p sm">Компьютер отправляет HTTP-запрос на IP-адрес веб-сервера. Сервер обрабатывает запрос.</p>', "", 0),
+             pnl("<span class='bn'>04</span> Получение и отображение", '<p class="p sm">Веб-сервер отправляет HTTP-ответ с HTML-страницей; браузер отображает её пользователю.</p>', "", 0), style="margin-top:.8rem"))
+
+# 26 ---------------------------------------------------------------- HOSTS.txt (s19)
+ARPA = ('<svg class="mini" viewBox="0 0 560 190" aria-hidden="true">' +
+        "".join(f'<g transform="translate(50 {40 + i * 55}) scale(.5)">{dev("monitor")}</g><path class="lk2" d="M80 {40 + i * 55}L200 95"/>' for i in range(3)) +
+        '<path class="fpg" d="M200 50h50l18 18v70h-68z M250 50v18h18"/><path class="sln" d="M212 80h40 M212 92h40 M212 104h40 M212 116h30"/>'
+        '<text x="234" y="162" text-anchor="middle" style="font-family:var(--hf);font-size:15px">HOSTS.txt</text>'
+        f'<g transform="translate(480 90) scale(.9)">{dev("server")}</g><text x="480" y="170" text-anchor="middle" style="font-family:var(--hf)">NIC</text>'
+        + arrow("ah1", 300, 70, 430, 70, "teal") + arrow("ah2", 430, 120, 300, 120, "teal", dash=True) +
+        '<text x="365" y="58" text-anchor="middle" style="font-size:11px">изменения по e-mail</text><text x="365" y="142" text-anchor="middle" style="font-size:11px">периодическое обновление</text></svg>')
+ARPA_SC = scene("arpa", 2, {"ah1": {"c": {0: "", 1: "on"}}, "ah2": {"c": {0: "", 2: "on"}}}, {1: 1000, 2: 1000})
+slide("От HOSTS.txt к DNS", "", "", G("minmax(0,.8fr) minmax(0,1.3fr) minmax(0,.8fr)",
+    ih("От HOSTS.txt", "к DNS", "", "С ростом сети возникла необходимость в более масштабируемом и надёжном способе сопоставления имён и IP-адресов.", big=True),
+    pnl("ARPANET: начало", f'<p class="p sm">ARPANET, предшественник Интернета, сопоставлял имена хостов с IP-адресами одним файлом HOSTS.txt. За него отвечал сетевой информационный центр (NIC).</p><div {ARPA_SC}>{ARPA}</div>', "", 0),
+    pnl("Содержимое HOSTS.txt", code(['<span class="d"># IP-адрес    Имя хоста</span>', "10.0.0.1      host1", "10.0.0.2      host2", "10.0.0.3      host3", "…"], 0) +
+        info("Файл HOSTS.txt содержит соответствие между именами хостов и их IP-адресами.", "info", 0), "", 1), cls="as") +
+    G("minmax(0,1.1fr) minmax(0,1fr)",
+      pnl("Проблемы при росте сети", '<p class="p sm">После перехода ARPANET на TCP/IP количество пользователей резко возросло. Поддерживать файл HOSTS.txt вручную стало очень сложно.</p>' +
+          G("repeat(3,minmax(0,1fr))", tile("warn", "Конфликт имён", "Трудно гарантировать, что имена не совпадут с уже используемыми", "red", 2), tile("db", "Согласованность", "Имена могли измениться несколько раз до обновления файла", "blue", 2, 120),
+            tile("layers", "Масштабируемость", "Ручное обновление не подходит для большой сети", "vio", 2, 240)), "", 2),
+      pnl("Решение — DNS", '<p class="p sm">Поэтому была введена система доменных имён (DNS). Анимация ниже: как файл расходился по сети и где он ломался.</p>' + HOSTS, "", 3), style="margin:.8rem 0") +
+    G("repeat(4,minmax(0,1fr))", lrow("gear", "Автоматизация", "Записи обновляются автоматически", 4), lrow("layers", "Иерархическая структура", "Распределённая система серверов", 4),
+      lrow("shield", "Уникальность имён", "Исключает конфликты имён", 4), lrow("target", "Масштабируемость", "Миллионы доменов по всему миру", 4)) +
+    '<div class="mt">' + qt("DNS — основа современного Интернета: надёжное и масштабируемое сопоставление имён хостов с IP-адресами.", 5) + '</div>')
+
+# 27 ---------------------------------------------------------------- DNS (s20_1)
+DNS3 = flow("dns3", "0 0 1000 300", {
+    "u": {"x": 130, "y": 150, "ic": "laptop", "label": "Пользователь (браузер)", "scr": "globe", "r": 50},
+    "d": {"x": 500, "y": 150, "ic": "dns", "label": "DNS-сервер", "r": 50},
+    "w": {"x": 860, "y": 150, "ic": "server", "label": "WEB-сервер", "sub": "62.109.1.166", "r": 50}}, [
+    {"a": "u", "b": "d", "pk": "Кто такой www.eltex-co.ru?", "col": "blue", "cap": "1 DNS-запрос: пользователь вводит доменное имя, браузер отправляет DNS-запрос на DNS-сервер."},
+    {"a": "d", "b": "u", "pk": "62.109.1.166", "col": "violet", "cap": "2 DNS-ответ: DNS-сервер находит соответствие и отправляет пользователю IP-адрес домена."},
+    {"a": "u", "b": "w", "pk": "HTTP/HTTPS к 62.109.1.166", "col": "teal", "curve": 90, "cap": "3 Доступ к веб-сайту: браузер использует полученный IP-адрес для соединения с веб-сервером."},
+    {"a": "w", "b": "u", "pk": "веб-страница", "col": "green", "curve": -90, "cap": "Веб-сервер возвращает запрашиваемый ресурс."},
+], links=[("u", "d")], wdef=2000)
+slide("DNS: назначение", "", "", G("minmax(0,.7fr) minmax(0,1.8fr)",
+    ih("DNS", "преобразование имён в IP-адреса", "", "DNS (Domain Name System) — система, которая сопоставляет доменные имена с IP-адресами, и наоборот.", big=True),
+    '<div class="ibox" data-s="0">' + devsvg("globe", "", "4.5rem") + '<div>Вместо запоминания IP-адресов мы используем удобные доменные имена</div><div class="urlbar">https://www.eltex-co.ru</div><div>DNS переводит доменное имя в IP-адрес, например: <b>62.109.1.166</b></div></div>', cls="ac") +
+    pnl("Как работает DNS?", '<div class="pns">Процесс получения IP-адреса по доменному имени</div>' + DNS3, "", 0) +
+    G("minmax(0,1.1fr) minmax(0,.9fr) minmax(0,.8fr)",
+      pnl("Зачем нужен DNS?", G("repeat(3,minmax(0,1fr))", tile("user", "Удобство", "Легко запомнить имя вместо числового адреса", "plain", 1),
+                                tile("gear", "Гибкость", "Если IP-адрес изменится, пользователь этого не заметит", "plain", 1), tile("shield", "Масштабируемость", "Миллионы доменных имён", "plain", 1)), "", 1),
+      pnl("DNS работает в обе стороны", G("1fr 1fr", tile("link", "Имя в IP-адрес", "www.eltex-co.ru<br>62.109.1.166", "blue", 2), tile("link", "IP-адрес в имя", "62.109.1.166<br>www.eltex-co.ru", "vio", 2)), "", 2),
+      pnl("Важно", '<div class="lst">' + lrow("warn", "IP DNS-сервера", "Для работы разрешения имён на интерфейсе должен быть указан IP-адрес DNS-сервера.", 3) +
+          lrow("file", "Раньше — HOSTS.txt", "С ростом сети поддерживать его вручную стало невозможно.", 3) + '</div>', "amb", 3), style="margin-top:.8rem") +
+    '<div class="mt">' + qt("DNS делает Интернет удобным, надёжным и масштабируемым.", 4) + '</div>')
+
+# 28 ---------------------------------------------------------------- как работает DNS (s20_2)
+def dnsrow(n, t, d, vis, side_t, side_d, s):
+    return (f'<div class="card pn drow" data-s="{s}" data-w="1500"><div class="G ac" style="--gc:auto minmax(0,.9fr) minmax(0,1.6fr) minmax(0,.9fr)">'
+            f'<span class="nb" style="width:3.4rem;height:3rem;font-size:1.6rem">{n}</span><div><h3 class="uh">{t}</h3><p class="p sm">{d}</p></div>{vis}'
+            f'<div class="ibox" style="display:block"><b style="font-family:var(--hf);text-transform:uppercase;color:#fff">{side_t}</b><div>{side_d}</div></div></div></div>')
+def dvis(left, lab, col, d, right):
+    return (f'<div class="G ac" style="--gc:auto 1fr auto">{devsvg(left[0], left[1], "7rem")}<div class="ar c-{col}" style="text-align:center">'
+            f'<span class="chip {col}">{lab}</span>{mline(d, col)}</div>{devsvg(right, "", "4.6rem")}</div>')
+slide("DNS: как работает", "", "", G("minmax(0,.55fr) minmax(0,2.2fr)",
+    '<div>' + ih("DNS", "как работает DNS?", "", "DNS преобразует удобные для запоминания доменные имена в IP-адреса, позволяя устройствам находить нужные ресурсы в сети.", big=True) +
+    pnl("", '<p class="p sm">Например: вместо запоминания IP-адреса <b>62.109.1.166</b> мы используем доменное имя <b class="hl">www.eltex-co.ru</b></p>', "", 0) +
+    '<div class="mt">' + qt("DNS делает интернет удобным, надёжным и масштабируемым.", 0) + '</div></div>',
+    '<div class="lst">' + dnsrow(1, "DNS-запрос", "Пользователь вводит доменное имя в браузере. Браузер формирует DNS-запрос к DNS-серверу.",
+                                 dvis(("laptop", "globe"), "Кто такой www.eltex-co.ru?", "blue", "r", "dns"), "DNS-запрос", "Браузер отправляет запрос на разрешение доменного имени <b>www.eltex-co.ru</b>.", 1) +
+    dnsrow(2, "DNS-ответ", "DNS-сервер сопоставляет доменное имя с его IP-адресом и отправляет пользователю DNS-ответ.",
+           dvis(("laptop", "globe"), "www.eltex-co.ru = 62.109.1.166", "vio", "l", "dns"), "DNS-ответ", "DNS-сервер находит соответствие и отправляет IP-адрес домена: <b style='color:var(--violet)'>62.109.1.166</b>.", 2) +
+    dnsrow(3, "Доступ к ресурсу", "Пользователь использует полученный IP-адрес для соединения с веб-сервером и доступа к ресурсу.",
+           dvis(("laptop", "page"), "HTTP/HTTPS-запрос к 62.109.1.166", "teal", "r", "server"), "Веб-ресурс", "Браузер устанавливает соединение с веб-сервером по IP-адресу и получает ресурс (веб-страницу).", 3) + '</div>', cls="as"))
+
+# 29 ---------------------------------------------------------------- путь DNS-запроса
+slide("DNS: путь запроса", "", "", ih("Путь DNS-запроса", "от кэша до авторитетного сервера", "кэш ПК · роутер · провайдер · корень · TLD · авторитетный",
+      "Компьютер спрашивает сначала себя, потом роутер, потом DNS-сервер провайдера, а тот — иерархию серверов. Справа — поля пакета на каждом участке.", inline=True) + DNSFULL)
+
+# 30 ---------------------------------------------------------------- структура пакета DNS (s21)
+DSEC2 = [("Header", "file", "Заголовок", "Служебная информация о пакете: идентификатор, флаги, количество записей и др. — 12 октетов.", "blue"),
+         ("Question", "info", "Секция запроса", "Для какого имени и какой тип записи нужен. Сервер при ответе копирует эту информацию обратно.", "teal"),
+         ("Answer", "mail", "Секция ответа", "Один или несколько ответов на запрос (например, IP-адрес).", "teal"),
+         ("Authority", "server", "Секция ответа об уполномоченных серверах", "С помощью каких авторитетных серверов получена информация из секции ответа.", "blue"),
+         ("Additional", "layers", "Секция ответа дополнительных записей", "Дополнительные записи, связанные с запросом, но не являющиеся строгими ответами.", "teal")]
+slide("Структура пакета DNS", "", "", ih("Структура", "пакета DNS", "", "Все сообщения DNS имеют одинаковый формат: заголовок, вопрос, ответ. На DNS-серверах хранятся различные типы записей, содержащие имя, адрес и тип записи.", inline=True, big=True) +
+      '<div class="relbox">' + globe_deco("gdeco g-r") + '<div class="dsec">' + "".join(
+          f'<div class="dsrow" data-s="{i+1}" data-w="900"><div class="slab {"hi" if c == "blue" else ""}" style="--dl:0ms">{hexicon(ic, "hx sm")}<b>{n}</b></div><span class="dsl"></span>'
+          f'<div class="ibox" style="display:block"><b style="color:var(--cyan)">{t}</b><div>{d}</div></div></div>' for i, (n, ic, t, d, c) in enumerate(DSEC2)) + '</div></div>')
+
+# 31 ---------------------------------------------------------------- заголовок DNS (s22)
+def cbox(t, d, s):
+    return f'<div class="cbox" data-s="{s}"><b>{t}</b><span>{d}</span></div>'
+HT = ('<div class="htab" data-s="1"><div class="hr full"><b>ID</b><small>16 бит</small></div><div class="hr bits8">' +
+      "".join(f'<div style="flex:{w}"><b>{n}</b><small>{w} бит{"а" if w in (3, 4) else ""}</small></div>' for n, w in (("QR", 1), ("Opcode", 4), ("AA", 1), ("TC", 1), ("RD", 1), ("RA", 1), ("Z", 3), ("Rcode", 4))) +
+      '</div>' + "".join(f'<div class="hr full"><b>{n}</b><small>16 бит</small></div>' for n in ("QDCOUNT", "ANCOUNT", "NSCOUNT", "ARCOUNT")) + '</div>')
+slide("Заголовок DNS", "", "", G("minmax(0,1fr) minmax(0,1.2fr)", ih("Структура", "заголовка DNS", big=True), '<p class="p">Заголовок DNS содержит служебную информацию о запросе или ответе.</p>', cls="ac") +
+      G("minmax(0,.6fr) minmax(0,2fr) minmax(0,.6fr)",
+        '<div class="lst">' + cbox("ID", "Уникальный идентификатор транзакции: пакет принадлежит одной сессии «запрос-ответ».", 2) + cbox("QR", "Тип сообщения: 0 — запрос, 1 — ответ.", 2) +
+        cbox("Opcode", "Код операции (тип запроса).", 2) + cbox("QDCOUNT", "Количество записей в разделе запросов.", 3) + cbox("ANCOUNT", "Количество записей в разделе ответов.", 3) + '</div>',
+        '<div>' + G("repeat(6,minmax(0,1fr))", cbox("AA", "Является ли сервер авторитетным для домена.", 2), cbox("TC", "Флаг усечения (сообщение усечено).", 2), cbox("RD", "Запрашивает рекурсивное разрешение.", 2),
+                    cbox("RA", "Поддерживает ли сервер рекурсию.", 2), cbox("Z", "Зарезервированные биты (равны 0).", 2), cbox("Rcode", "Код ответа (результат запроса).", 2)) +
+        '<div class="mt">' + HT + '</div>' + info("Структура заголовка используется как в запросах, так и в ответах. После заголовка следуют секции с данными (вопросы, ответы, дополнительные записи).", "file", 4) + '</div>',
+        '<div class="lst" style="justify-content:flex-end">' + cbox("NSCOUNT", "Количество записей, связанных с именем сервера (уполномоченные серверы).", 3) + cbox("ARCOUNT", "Количество записей в Additional Record Section.", 3) + '</div>', cls="as"))
+
+# 32 ---------------------------------------------------------------- флаги (s24) и RFC 5395 (s25)
+FL_IC = {"QR": "link", "Opcode": "file", "AA": "shield", "TC": "cross", "RD": "target", "RA": "server", "Z": "cross", "Rcode": "file", "AD": "check", "CD": "info"}
+def flagbar(flags, s=1):
+    cells = "".join(f'<div class="fb{" new" if n in ("AD", "CD") else ""}" style="flex:{w}" tabindex="0"><b>{n}</b><small>{w} бит{"а" if w in (3, 4) else ""}</small></div>' for n, w, d in flags)
+    return f'<div class="fbar" data-s="{s}">{cells}</div>'
+slide("Флаги DNS", "", "", G("minmax(0,1fr) minmax(0,1.2fr)", ih("Параметры поля", "«Флаги» DNS", big=True),
+      info("Поле «Флаги» (Flags) в заголовке DNS — 2 байта. Оно содержит управляющие параметры: тип сообщения, коды операций и опции запроса или ответа.", "info", 0), cls="ac") +
+      flagbar(FLAGS) + G("repeat(8,minmax(0,1fr))", *[f'<div class="card pn fc" data-s="2" style="--dl:{i*80}ms"><h3>{n}</h3><p class="p sm">{d}</p>{hexicon(FL_IC[n], "hx")}</div>' for i, (n, w, d) in enumerate(FLAGS)], style="margin-top:1rem") +
+      '<div class="mt">' + info("Поле «Флаги» используется как в DNS-запросах, так и в DNS-ответах. В анимации «Путь DNS-запроса» видно, как меняются RD, AA и RA.", "file", 3) + '</div>')
+slide("RFC 5395", "", "", G("minmax(0,1fr) minmax(0,1.2fr)", ih("Параметры поля «Флаги»", "стандарт RFC 5395", big=False),
+      info("В стандарте RFC 5395 появились дополнительные биты <b>AD</b> и <b>CD</b>, заимствованные из поля Z, и добавились значения в поле Opcode.", "info", 0), cls="ac") +
+      flagbar(FLAGS2) + G("minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)",
+        pnl("Opcode", table(["Код", "Значение"], [["0", "стандартный запрос"], ["1", "инверсный запрос"], ["2", "запрос статуса сервера"], ["4", "уведомление: ведущий сервер сообщает ведомым, что данные изменены"], ["5", "обновление"], ["3, 6–15", "зарезервированы"]], "sm"), "", 2),
+        pnl("AD — Authentic data", '<p class="p sm">Устанавливается в ответе: включённые данные были проверены сервером, который их предоставил.</p>', "amb", 2, ic="check"),
+        pnl("CD — Checking disabled", '<p class="p sm">Устанавливается в запросе: непроверенные данные приемлемы для преобразователя, отправляющего запрос.</p>', "amb", 2, ic="info"), style="margin-top:1rem") +
+      '<div class="mt">' + bitrow(FLAGS2, 3) + '</div>')
+
+# 34 ---------------------------------------------------------------- Wireshark: запрос и ответ (s23, s26)
+WSQ = ('<div class="ws" data-s="1">▾ Domain Name System (query)\n    Transaction ID: 0x02bc\n  ▾ <span class="hl">Flags: 0x0100 Standard query</span>\n'
+       '      0... .... .... .... = Response: Message is a query\n      .000 0... .... .... = Opcode: Standard query (0)\n      .... ..0. .... .... = Truncated: Message is not truncated\n'
+       '      <span class="rd">.... ...1 .... .... = Recursion desired: Do query recursively</span>\n      .... .... .0.. .... = Z: reserved (0)\n    Questions: 1\n    Answer RRs: 0\n'
+       '    Authority RRs: 0\n    Additional RRs: 0\n  ▾ Queries\n    ▾ <span class="hl">arc-emea.msn.com: type A, class IN</span>\n        Name: arc-emea.msn.com\n'
+       '        <span class="rd">Type: A (Host Address) (1)</span>\n        <span class="rd">Class: IN (0x0001)</span></div>')
+WSA = ('<div class="ws" data-s="1">▾ Queries\n    arc-emea.msn.com: type A, class IN\n▾ Answers\n  ▸ arc-emea.msn.com: type <span class="hl">CNAME</span>, class IN, cname arc-…\n'
+       '  ▸ arc-emea.trafficmanager.net: type CNAME, class IN, …\n  ▾ iris-de-prod-azsc-v2-frc.francecentral.cloudapp.az…\n        Type: A (Host Address) (1)\n        Class: IN (0x0001)\n'
+       '        <span class="rd">Time to live: 10 (10 seconds)</span>\n        Data length: 4\n        <span class="rd">Address: 20.199.58.43</span></div>')
+slide("DNS-запрос в Wireshark", "", "", G("minmax(0,1fr) minmax(0,1.2fr)",
+    '<div>' + ih("DNS-запрос", "в Wireshark", "рисунок 7.3.1.3") +
+    pnl("Что видно в захвате", bul(["Компьютер поручает DNS-серверу найти адрес IPv4: <b>Type = A</b>.", "Имя ресурса: <b>arc-emea.msn.com</b> (поле Name).", "Класс адресов Internet: <b>Class = IN</b>.",
+                                    "В поле Flags единицей отмечено <b>Recursion Desired</b>: нужно сразу предоставить конечный IP-адрес без промежуточных адресов доменов."]), "", 2) + '</div>',
+    WSQ, cls="ac"))
+slide("DNS-ответ и типы записей", "", "", G("minmax(0,1fr) minmax(0,1.2fr)",
+    '<div>' + ih("DNS-ответ", "и типы записей", "рисунок 7.3.1.6") +
+    pnl("Что видно в захвате", bul(["По запросу для arc-emea.msn.com найдено три записи.", "Одна из них — адрес IPv4 <b>20.199.58.43</b>, действительна ещё <b>10 секунд</b>.", "Тип <b>CNAME</b> — каноническое имя: псевдоним привязан к действительному доменному имени."]), "", 2) +
+    pnl("Типы записей", '<div class="lst">' + lrow("pc", "A", "IPv4-адрес конечного устройства", 3) + lrow("pc", "AAAA", "IPv6-адрес конечного устройства", 3) + lrow("server", "NS", "доверенный сервер имён", 3) +
+        lrow("mail", "MX", "запись обмена почтовыми сообщениями", 3) + lrow("link", "CNAME", "каноническое имя (псевдоним)", 3) + '</div>', "", 3) + '</div>',
+    WSA + '<div class="mt">' + info("Локальный DNS-сервер ищет имя в своих записях. Нет совпадения — обращается к другим DNS-серверам; найденный IP-адрес передаётся локальному серверу и пользователю.", "dns", 4) + '</div>', cls="ac"))
+
+# 36 ---------------------------------------------------------------- структура доменного имени — дерево (s27_3)
+def _tree():
+    N = {"r": (330, 50, "."), "com": (200, 150, ".com"), "ru": (460, 150, ".ru"), "ex": (200, 250, "example"), "ya": (460, 250, "yandex"),
+         "www": (90, 350, "www"), "mail": (230, 350, "mail"), "sup": (370, 350, "support")}
+    E = [("r", "com"), ("r", "ru"), ("com", "ex"), ("ru", "ya"), ("ex", "www"), ("ex", "mail"), ("ex", "sup")]
+    b, els = [], {}
+    for i, (a, c) in enumerate(E):
+        x1, y1, _ = N[a]; x2, y2, _ = N[c]
+        eid = f"te{i}"
+        b.append(f'<g class="arw" data-id="{eid}"><path class="dr wt" pathLength="1" d="M{x1} {y1 + 20}V{(y1 + y2) / 2}H{x2}V{y2 - 20}"/></g>')
+        els[eid] = {"c": {0: "", {0: 1, 1: 1, 2: 2, 3: 2, 4: 3, 5: 3, 6: 3}[i]: "on"}}
+    for k, (x, y, t) in N.items():
+        w = 44 + len(t) * 11
+        lvl = {"r": 0, "com": 1, "ru": 1, "ex": 2, "ya": 2}.get(k, 3)
+        b.append(f'<g class="an" data-id="tn_{k}"><path class="tnode" d="M{x - w / 2 + 10} {y - 20}H{x + w / 2 - 10}L{x + w / 2} {y}L{x + w / 2 - 10} {y + 20}H{x - w / 2 + 10}L{x - w / 2} {y}Z"/>'
+                 f'<text x="{x}" y="{y + 6}" text-anchor="middle">{t}</text></g>')
+        els[f"tn_{k}"] = {"o": {0: 0, lvl: 1}} if lvl else {"o": {0: 1}}
+    sc = scene("tree", 3, els, {i: 1000 for i in range(4)})
+    return f'<div {sc}><svg class="mini tree" viewBox="20 20 520 360" aria-hidden="true">{"".join(b)}</svg></div>'
+slide("Структура доменного имени", "", "", G("minmax(0,.7fr) minmax(0,1.1fr) minmax(0,1fr)",
+    '<div>' + ih("Структура", "доменного имени", "", "Доменное имя имеет иерархическую структуру, состоящую из нескольких частей, разделённых точками.") +
+    '<div class="lst">' + lrow("globe", "Корневой домен", "Обозначается точкой (.) и не содержит символов.") + lrow("globe", "Домен верхнего уровня (TLD)", "Доменная зона: тип организации или география.") +
+    lrow("server", "Домен второго уровня (SLD)", "Уникальное имя ресурса в зоне: в одной зоне не может быть двух одинаковых SLD.") + lrow("link", "Поддомен (домен третьего уровня)", "Необязательный уровень для организации структуры сайта.") + '</div></div>',
+    '<div>' + info("<b>FQDN (Fully Qualified Domain Name)</b> — формат доменного имени:<br><span class='mono hl'>hostname.second-level domain.top-level domain.root domain.</span>", "info", 0) + _tree() +
+    '<div class="ibox" data-s="0">' + hexicon("globe", "hx") + '<div>Пример полного доменного имени (FQDN): <span class="chip" style="font-size:1.2rem">www.mail.example.ru.</span></div></div></div>',
+    '<div class="lst">' + pnl("TLD географического типа", '<div class="pns">принадлежность к территории, обычно две буквы</div><table class="tbl2"><tr><th>TLD</th><th>Страна</th></tr>' +
+                              "".join(f"<tr><td>{a}</td><td>{b_}</td></tr>" for a, b_ in (("ru", "Россия"), ("рф", "Россия"), ("kz", "Казахстан"), ("su", "Страны СНГ"), ("uk", "Великобритания"), ("de", "Германия"))) + '</table>', "", 1, ic="globe") +
+    pnl("TLD административного типа", '<div class="pns">тип организации, обычно три буквы</div><table class="tbl2"><tr><th>TLD</th><th>Тип организации</th></tr>' +
+        "".join(f"<tr><td>{a}</td><td>{b_}</td></tr>" for a, b_ in (("com", "Коммерческая"), ("edu", "Образовательная"), ("net", "Коммуникационная"), ("org", "Некоммерческая"), ("int", "Международная"))) + '</table>', "", 2, ic="book") +
+    info("У одного домена второго уровня может быть несколько поддоменов: <b>mail</b> и <b>support</b> в www.mail.example.ru и www.support.example.ru — поддомены домена example.ru.", "folder", 3) + '</div>', cls="as"))
+
+# 37 ---------------------------------------------------------------- WWW.SHOP.EXAMPLE.RU (s28)
+DP = [("WWW", "c-teal"), ("SHOP", "c-blue"), ("EXAMPLE", "c-grn"), ("RU", "c-amb")]
+bigdom = '<div class="bigdom">' + "".join(f'<span class="bd {c}" data-s="{5 - i if i else 4}" data-w="900">{t}</span>{"<i>.</i>" if i < 3 else ""}' for i, (t, c) in enumerate(DP)) + '</div>'
+def dcard(n, t, d, ic, s, col):
+    return f'<div class="card pn" data-s="{s}"><div class="pnh"><span class="nb nb-{col}">{n}</span><h3>{t}</h3></div><div class="G ac" style="--gc:auto 1fr">{hexicon(ic, "hx lg")}<p class="p sm" style="margin:0">{d}</p></div></div>'
+slide("Части доменного имени", "", "", G("minmax(0,.6fr) minmax(0,2fr)",
+    '<div>' + ih("Структура", "доменного имени", "", "Доменное имя состоит из нескольких частей, разделённых точками. Каждая часть выполняет свою функцию и указывает на уровень в иерархии доменных имён.") +
+    qt("Правильно выбранная структура доменного имени помогает сделать сайт узнаваемым, удобным и простым для пользователей.", 5) + '</div>',
+    '<div>' + G("minmax(0,1fr) minmax(0,1fr)", dcard(1, "Поддомен для обозначения веб-сайта", "Три символа «WWW» часто используются как обозначение веб-сайта — аббревиатура от «World Wide Web» (Всемирная паутина).", "desk", 4, "teal"),
+                dcard(4, "Домен верхнего уровня", "Общая категория или географическая принадлежность ресурса. Например, .RU — национальный домен России.", "globe", 1, "amb")) +
+    bigdom + G("minmax(0,1fr) minmax(0,1fr)", dcard(2, "Поддомен", "Дополнительный уровень для организации структуры сайта или создания различных разделов, например WWW.SERVICE.EXAMPLE.RU.", "layers", 3, "blue"),
+               dcard(3, "Домен второго уровня", "Основа уникального доменного имени, которая обычно указывает название сайта.", "server", 2, "grn")) + '</div>', cls="ac"))
+
+# 38 ---------------------------------------------------------------- типы DNS-запросов (s29)
+def dnsmode(name, rec):
+    b = [f'<g transform="translate(90 190) scale(1.1)">{dev("pc")}</g><text x="90" y="270" text-anchor="middle" style="font-family:var(--hf)">Клиент DNS</text>',
+         f'<g transform="translate(400 70) scale(.9)">{dev("server")}</g><text x="400" y="140" text-anchor="middle" style="font-family:var(--hf)">DNS-сервер 1</text>',
+         f'<g transform="translate(400 250) scale(.9)">{dev("server")}</g><text x="400" y="322" text-anchor="middle" style="font-family:var(--hf)">DNS-сервер 2</text>']
+    if rec:
+        A = [(150, 160, 340, 80, "blue", "1"), (400, 130, 400, 195, "blue", "2"), (425, 195, 425, 130, "red", "3"), (340, 100, 150, 180, "red", "4")]
+    else:
+        A = [(150, 160, 340, 80, "blue", "1"), (340, 100, 150, 180, "red", "2"), (150, 200, 340, 250, "blue", "3"), (340, 270, 150, 222, "red", "4")]
+    els = {}
+    for i, (x1, y1, x2, y2, c, n) in enumerate(A):
+        off = 12 if x1 != x2 else 0
+        b.append(arrow(f"{name}{i}", x1, y1, x2, y2, c))
+        mx, my = (x1 + x2) / 2 + (0 if x1 != x2 else -26 if c == "blue" else 26), (y1 + y2) / 2 - (14 if x1 != x2 else 0)
+        col = "#4aa8ff" if c == "blue" else "#ff5c6e"
+        b.append(f'<g class="an" data-id="{name}n{i}"><circle cx="{mx}" cy="{my}" r="13" fill="{col}"/><text x="{mx}" y="{my + 5}" text-anchor="middle" style="font-family:var(--hf);fill:#03120f">{n}</text></g>')
+        els[f"{name}{i}"] = {"c": {0: "", i + 1: "on"}}
+        els[f"{name}n{i}"] = {"o": {0: 0, i + 1: 1}}
+    sc = scene(name, 4, els, {i: 1300 for i in range(5)})
+    return f'<div {sc}><svg class="mini" viewBox="0 0 520 330" aria-hidden="true">{"".join(b)}</svg></div>'
+def order(items):
+    return '<div class="G" style="--gc:1fr 1fr">' + "".join(f'<div class="lrow plain2"><span class="hn" style="background:{"var(--blue)" if c == "b" else "var(--red)"}">{i+1}</span><span>{t}</span></div>' for i, (t, c) in enumerate(items)) + '</div>'
+slide("Типы DNS-запросов", "", "", G("minmax(0,1.3fr) minmax(0,1fr)",
+    ih("Типы", "DNS-запросов", "", "Когда DNS-сервер не имеет записи запрашиваемого доменного имени, клиент может выполнить запрос в одном из двух режимов.", inline=True, big=True),
+    info("<b>DNS — это распределённая система.</b> База данных большинства DNS-серверов не содержит всех записей доменных имён.", "info", 0), cls="ac") +
+    G("minmax(0,1fr) minmax(0,1fr)",
+      pnl("Рекурсивный запрос", '<p class="p sm">DNS-сервер запрашивает другие DNS-серверы и возвращает результат запроса DNS-клиенту.</p>' + dnsmode("rq", True) +
+          '<h3 class="uh">Порядок действий</h3>' + order([("Клиент отправляет запрос DNS-серверу.", "b"), ("DNS-сервер запрашивает другие DNS-серверы.", "b"), ("Другие DNS-серверы возвращают ответ DNS-серверу.", "r"), ("DNS-сервер возвращает результат клиенту.", "r")]), "big", 0),
+      pnl("Итеративный запрос", '<p class="p sm">DNS-сервер сообщает клиенту IP-адрес другого DNS-сервера, с которого клиент запрашивает доменное имя.</p>' + dnsmode("iq", False) +
+          '<h3 class="uh">Порядок действий</h3>' + order([("Клиент отправляет запрос DNS-серверу.", "b"), ("DNS-сервер сообщает IP-адрес другого DNS-сервера.", "r"), ("Клиент запрашивает имя у указанного DNS-сервера.", "b"), ("DNS-сервер возвращает результат клиенту.", "r")]), "big", 0)))
+slide("Рекурсия по цепочке", "", "", G("minmax(0,.7fr) minmax(0,1.7fr)",
+    ih("Рекурсивный и итеративный", "по всей цепочке", "клиент · локальный · корень · TLD · авторитетный",
+       "Переключите режим: в рекурсивном вся работа на локальном DNS-сервере, клиент получает один ответ. В итеративном клиент сам обходит серверы по ссылкам."),
+    '<div><div class="seg" data-sw="1"><button class="btn on" type="button" data-to="dnsr" aria-pressed="true">Рекурсивный</button><button class="btn" type="button" data-to="dnsi" aria-pressed="false">Итеративный</button></div>' +
+    DNSR + DNSI.replace('class="card dgc flow"', 'hidden class="card dgc flow"', 1) + '</div>', cls="as"))
+
+# 40 ---------------------------------------------------------------- доверенные и недоверенные (s30)
+TRUST = flow("trust", "0 0 900 560", {
+    "c": {"x": 80, "y": 90, "ic": "laptop", "label": "Клиент (браузер)"},
+    "l": {"x": 330, "y": 90, "ic": "server", "label": "Недоверенный", "sub": "локальный, кэширующий"},
+    "o": {"x": 740, "y": 90, "ic": "server", "label": "Корневой «.»"},
+    "t": {"x": 740, "y": 290, "ic": "server", "label": "Зона .ru"},
+    "a": {"x": 740, "y": 470, "ic": "server", "label": "Авторитетный", "sub": "зона example.ru"}}, [
+    {"a": "c", "b": "l", "pk": "1 www.shop.example.ru ?", "col": "blue", "cap": "1 DNS-запрос: клиент обращается к недоверенному (локальному, кэширующему) DNS-серверу."},
+    {"a": "l", "b": "o", "pk": "2 запрос", "col": "teal", "cap": "2 Запрос к корневому серверу."},
+    {"a": "o", "b": "l", "pk": "3 адрес .ru", "col": "green", "cap": "3 Ответ: адрес сервера зоны .ru."},
+    {"a": "l", "b": "t", "pk": "4 запрос", "col": "teal", "cap": "4 Запрос к серверу зоны .ru."},
+    {"a": "t", "b": "l", "pk": "5 адрес example.ru", "col": "green", "cap": "5 Ответ: адрес сервера example.ru."},
+    {"a": "l", "b": "a", "pk": "6 запрос", "col": "teal", "cap": "6 Запрос к авторитетному серверу зоны example.ru."},
+    {"a": "a", "b": "l", "pk": "7 IP, AA=1", "col": "amber", "tag": {"l": "в кэш на время TTL"}, "cap": "7 Авторитетный ответ (AA=1). Недоверенный сервер сохраняет его в памяти на время действия TTL."},
+    {"a": "l", "b": "c", "pk": "8 IP, AA=0", "col": "amber", "cap": "8 DNS-ответ клиенту. Повторный запрос (если запись в кэше) будет обслужен сразу, не обращаясь к доверенным серверам."},
+], links=[("c", "l"), ("l", "o"), ("l", "t"), ("l", "a")], wdef=1900)
+slide("Доверенные и недоверенные", "", "", G("minmax(0,.75fr) minmax(0,1.6fr) minmax(0,.85fr)",
+    '<div>' + ih("Доверенные и недоверенные", "DNS-серверы", "как это работает?", "DNS — иерархическая система, в которой недоверенные серверы обращаются к доверенным за информацией о доменах и кэшируют ответы для ускорения последующих запросов.") +
+    '<div class="lst">' + pnl("Доверенный DNS-сервер", '<p class="p sm">Хранит оригинальные записи о соответствии доменных имён и IP-адресов в рамках своей зоны ответственности и имеет право выдавать авторитетные ответы: информация актуальна и достоверна.</p>', "", 1, ic="server") +
+    pnl("Недоверенный DNS-сервер", '<p class="p sm">Не имеет оригинальных записей в зоне ответственности. Перенаправляет запросы к вышестоящим серверам и запоминает ответы; при повторном запросе выдаёт их из памяти, не загружая корневые серверы.</p>', "", 1, ic="db") + '</div></div>',
+    pnl("Пример работы DNS", TRUST + info("<b>Кэш DNS.</b> Недоверенный сервер сохраняет ответ в памяти на время действия TTL и при повторном запросе выдаёт его из кэша.", "db", 0), "", 0),
+    '<div class="lst">' + pnl("Авторитетные и неавторитетные данные", '<div class="lst">' + lrow("shield", "Авторитетные данные", "Хранятся в базе данных в рамках своей зоны; за выдачу и достоверность отвечает доверенный сервер.", 2) +
+                              lrow("db", "Неавторитетные данные", "Получены перенаправлением запроса к доверенному серверу и записаны в память локального DNS-сервера.", 2) + '</div>', "", 2) +
+    pnl("Флаг AA (Authoritative Answer)", '<p class="p sm">Флаг AA в DNS-ответе показывает, являются ли данные авторитетными:</p>' +
+        '<div class="lst"><div class="lrow"><span class="nb">1</span><div><span>Данные получены от сервера, который отвечает за эту область данных.</span></div></div>'
+        '<div class="lrow"><span class="nb">0</span><div><span>Выданы из памяти локального DNS-сервера, записавшего их при получении от доверенного сервера.</span></div></div></div>', "", 3) + '</div>', cls="as") +
+    '<div class="mt">' + qt("Кэш на недоверенных серверах снижает нагрузку на доверенные серверы и ускоряет доступ; актуальность данных обеспечивается периодической очисткой памяти с последующим обновлением у доверенных серверов.", 4) + '</div>')
+
+# 41 ---------------------------------------------------------------- проблемы ручной настройки (s32)
+slide("Ручная настройка: проблемы", "", "", G("minmax(0,1fr) minmax(0,1fr)",
+    '<div class="card pn half" data-s="0">' + ih("Проблемы", "при ручной настройке параметров сети") +
+    G("minmax(0,1.1fr) minmax(0,.9fr)",
+      '<div class="card pn" data-s="1"><div class="pns">Конфигурация IPv4-адреса</div><div class="form"><span>IP-адрес</span><b>192 . 168 . 1 . 10</b><span>Маска</span><b>255 . 255 . 255 . 0</b>'
+      '<span>Шлюз</span><b>192 . 168 . 1 . 1</b><span>DNS</span><b>8 . 8 . 8 . 8</b></div></div>',
+      '<div class="qcloud" data-s="2"><span class="qtag">Адрес?</span><span class="qtag">Маска?</span>' + hexicon("warn", "hx lg red") + '<span class="qtag">Шлюз?</span><span class="qtag">DNS?</span></div>', cls="ac") +
+    '<div class="G ac" style="--gc:1fr auto;margin:.6rem 0"><div class="alert" data-s="3">' + hexicon("cross", "hx sm") + 'Нет подключения к сети</div>' + devsvg("laptop", ">_", "8rem") + '</div>' +
+    '<div class="lst">' + lrow("user", "Пользователи", "Обычные пользователи не знакомы с сетевыми параметрами — частые неправильные конфигурации приводят к сбою подключения к сети.", 4) +
+    lrow("warn", "Конфликты", "Случайная конфигурация IP-адресов может вызвать конфликты IP-адресов.", 4) + '</div></div>',
+    '<div class="card pn half" data-s="0">' + ih("Большая", "рабочая нагрузка") +
+    G("minmax(0,1.3fr) minmax(0,.8fr)", '<div class="mon">' + "".join(f'<div data-s="5" style="--dl:{i*30}ms">{devsvg("monitor", "", "100%")}</div>' for i in range(20)) + '</div>',
+      '<div class="lst"><div class="card pn" data-s="6"><h3>План работы на неделю</h3>' + bul(["Распределение IP-адресов", "Настройка параметров", "Проверка доступности", "Решение обращений", "Обновление конфигураций", "…"]) + '</div>' +
+      devbox("user", "Администратор сети", "", "", "4rem", 6) + '</div>', cls="ac") +
+    '<div class="lst mt">' + lrow("gear", "Централизованно и вручную", "Администраторы настраивают сетевые параметры централизованно, с большими нагрузками и повторяющимися задачами.", 7) +
+    lrow("file", "Заранее", "Администраторы должны заранее спланировать и выделить IP-адреса пользователям.", 7) + '</div></div>', cls="as"))
+
+# 42 ---------------------------------------------------------------- низкий коэффициент / WLAN (s33)
+IPS = ["192.168.1.10", "192.168.1.11", "192.168.1.12", None, "192.168.1.14", None, "192.168.1.16", "192.168.1.17", "192.168.1.18", "192.168.1.19", None, "192.168.1.21", None, "192.168.1.23", "192.168.1.24", "192.168.1.25"]
+ipgrid = '<div class="G" style="--gc:repeat(4,minmax(0,1fr));gap:.45rem">' + "".join(
+    f'<div class="ipc{" off" if a is None else ""}" data-s="{2 if a is None else 1}" style="--dl:{i*40}ms">{devsvg("monitor", "", "3rem", "red" if a is None else "")}{a or "Не используется"}</div>' for i, a in enumerate(IPS)) + '</div>'
+WLAN = ('<svg class="mini" viewBox="0 0 620 300" aria-hidden="true"><circle class="zone" cx="170" cy="160" r="140"/><circle class="zone" cx="450" cy="160" r="140"/>'
+        '<text x="170" y="40" text-anchor="middle" style="font-family:var(--hf);fill:#2ee6c8;font-size:18px">Офис A</text><text x="450" y="40" text-anchor="middle" style="font-family:var(--hf);fill:#2ee6c8;font-size:18px">Офис B</text>'
+        f'<g transform="translate(170 100)">{dev("ap")}</g><g transform="translate(450 100)">{dev("ap")}</g>'
+        '<text x="170" y="140" text-anchor="middle">Точка доступа (AP-1)</text><text x="450" y="140" text-anchor="middle">Точка доступа (AP-2)</text>'
+        f'<g transform="translate(120 230) scale(.55)">{dev("laptop")}</g><g transform="translate(190 230) scale(.5)">{dev("phone")}</g><g transform="translate(430 230) scale(.55)">{dev("laptop")}</g><g transform="translate(500 230) scale(.5)">{dev("phone")}</g>'
+        f'<g class="an" data-id="sta" style="--md:2000ms"><g transform="scale(.6)">{dev("laptop")}</g></g>'
+        '<text x="310" y="150" text-anchor="middle" style="font-family:var(--hf)">Перемещение между офисами</text>'
+        '<g class="an" data-id="stq"><text x="450" y="290" text-anchor="middle" style="fill:#f5b83d;font-weight:700">нужна повторная настройка IP-адреса?</text></g></svg>')
+WLAN_SC = scene("wlan", 2, {"sta": {"p": {0: (230, 190), 1: (400, 190)}}, "stq": {"o": {0: 0, 2: 1}}}, {1: 2300, 2: 1200})
+slide("Низкая эффективность", "", "", G("minmax(0,1fr) minmax(0,1fr)",
+    '<div class="card pn half" data-s="0">' + ih("Низкий коэффициент", "использования IP-адресов", "", "В корпоративной сети каждый пользователь использует фиксированный IP-адрес.") + ipgrid +
+    '<div class="G ac mt" style="--gc:auto 1fr" data-s="3"><div class="pie"></div><div><b class="hl" style="font-size:1.6rem;font-family:var(--hf)">62%</b> используется · <b style="color:var(--red);font-size:1.6rem;font-family:var(--hf)">38%</b> не используется'
+    '<p class="p sm">Коэффициент использования IP-адресов очень низкий, а некоторые адреса остаются неиспользованными длительное время.</p></div></div></div>',
+    '<div class="card pn half" data-s="0">' + ih("Низкая гибкость", "в беспроводных сетях (WLAN)", "", "Беспроводные локальные сети обеспечивают гибкое расположение станций (STA), но при перемещении из одной зоны покрытия в другую может потребоваться повторная настройка IP-адреса.") +
+    f'<div {WLAN_SC}>{WLAN}</div>' + '<div class="lst">' + lrow("radio", "Перемещение STA", "При перемещении STA между зонами покрытия может потребоваться повторная настройка IP-адреса.", 3) +
+    lrow("gear", "Неудобство", "Это усложняет использование сети и снижает удобство для пользователей.", 3) + '</div></div>', cls="as"))
+
+# 43 ---------------------------------------------------------------- DHCP (s34)
+DHCPF = flow("dhcpf", "0 0 900 330", {
+    "c1": {"x": 70, "y": 80, "ic": "laptop", "label": "Ноутбук", "r": 30}, "c2": {"x": 200, "y": 70, "ic": "monitor", "label": "ПК", "r": 30},
+    "c3": {"x": 70, "y": 230, "ic": "phone", "label": "Смартфон", "r": 30}, "c4": {"x": 200, "y": 240, "ic": "printer", "label": "Принтер", "r": 26},
+    "sw": {"x": 470, "y": 170, "ic": "switch", "label": "Сетевое оборудование", "r": 34}, "s": {"x": 790, "y": 170, "ic": "server", "label": "Сервер DHCP", "sub": "пул адресов"}}, [
+    {"a": "c1", "b": "sw", "pk": "DHCP Discover", "col": "teal", "cap": "Устройства в сети — клиенты DHCP — получают сетевые параметры автоматически: запрос IP-адреса."},
+    {"a": "sw", "b": "s", "pk": "DHCP Discover", "col": "teal", "cap": "Запрос достигает сервера DHCP."},
+    {"hl": ["s"], "tag": {"s": "свободный адрес из пула"}, "cap": "Сервер выдаёт свободный IP-адрес из выделенного диапазона — пула адресов."},
+    {"a": "s", "b": "sw", "pk": "DHCP Offer / ACK", "col": "green", "cap": "Назначение IP-адреса: IP, маска, шлюз, DNS."},
+    {"a": "sw", "b": "c1", "pk": "DHCP Offer / ACK", "col": "green", "tag": {"c1": "192.168.1.10"}, "cap": "Клиент получил параметры. Так же настраиваются остальные устройства."},
+], links=[("c1", "sw"), ("c2", "sw"), ("c3", "sw"), ("c4", "sw"), ("sw", "s")], extra='<rect class="zone" x="14" y="14" width="260" height="300"/><text class="zl" x="28" y="36">Клиенты DHCP</text>', wdef=1900)
+slide("DHCPv4", "", "", G("minmax(0,.8fr) minmax(0,1.8fr) minmax(0,.8fr)",
+    '<div>' + ih("Работа протокола", "DHCP", "автоматическая настройка сетевых параметров",
+                 "DHCP необходим для автоматического назначения сетевых параметров узла. Без них работа устройства в сети невозможна, поэтому этот сервис используется первым.") +
+    pnl("", '<div class="lst">' + lrow("globe", "IP-адрес", "Уникальный адрес устройства в сети", 1) + lrow("layers", "Маска подсети", "Определяет границы сети", 1) +
+        lrow("router", "Шлюз по умолчанию", "Доступ в другие сети (например, в Интернет)", 1) + lrow("dns", "Адрес DNS-сервера", "Преобразование доменных имён в IP-адреса", 1) + '</div>', "", 1) + '</div>',
+    '<div>' + DHCPF + G("minmax(0,1fr) minmax(0,1fr)",
+                        pnl("В домашних сетях", '<div class="G ac" style="--gc:1fr auto"><p class="p sm" style="margin:0">В качестве DHCP-сервера выступает домашний маршрутизатор.</p>' + devsvg("router", "", "5rem") + '</div>', "", 2, ic="desk"),
+                        pnl("В средних и крупных сетях", '<div class="G ac" style="--gc:1fr auto"><p class="p sm" style="margin:0">В качестве DHCP-сервера выделяется отдельный компьютер.</p>' + devsvg("server", "", "3rem") + '</div>', "", 2, ic="server")) +
+    '<div class="mt">' + qt("Получение IP-адреса автоматически обычно настроено на сетевом интерфейсе по умолчанию после установки операционной системы.", 3) + '</div></div>',
+    pnl("Типы адресации", '<div class="lst">' + pnl("Динамическая адресация", '<p class="p sm">В больших сетях, где количество устройств постоянно меняется: автоматически предоставляет параметры для доступа к сети.</p>', "", 1, ic="link") +
+        pnl("Статическая адресация", '<p class="p sm">Параметры назначаются вручную — для серверов и принтеров, которым нужен постоянный IP-адрес.</p>', "", 1, ic="gear") + '</div>', "", 1), cls="as"))
+
+# 44 ---------------------------------------------------------------- преимущества DHCP (s35)
+POOLF = flow("poolf", "0 0 620 300", {
+    "a": {"x": 60, "y": 60, "ic": "laptop", "label": "Клиент DHCP", "r": 30}, "b": {"x": 60, "y": 160, "ic": "pc", "label": "Клиент DHCP", "r": 30}, "p": {"x": 60, "y": 255, "ic": "phone", "label": "Клиент DHCP", "r": 26},
+    "sw": {"x": 300, "y": 160, "ic": "switch", "label": "Коммутатор", "r": 34}, "s": {"x": 540, "y": 150, "ic": "server", "label": "Сервер DHCP"}}, [
+    {"a": "a", "b": "sw", "pk": "1 запрос", "col": "blue"}, {"a": "b", "b": "sw", "pk": "1 запрос", "col": "blue"}, {"a": "sw", "b": "s", "pk": "запросы", "col": "blue", "cap": "IP-адреса получают из единого пула на сервере DHCP."},
+], links=[("a", "sw"), ("b", "sw"), ("p", "sw"), ("sw", "s")], wdef=1100)
+LEASEF = flow("leasef", "0 0 620 260", {"c": {"x": 90, "y": 120, "ic": "laptop", "label": "Клиент DHCP"}, "s": {"x": 530, "y": 110, "ic": "server", "label": "Сервер DHCP"}}, [
+    {"a": "c", "b": "s", "pk": "1 Запрос адреса", "col": "blue"}, {"a": "s", "b": "c", "pk": "2 Ответ с адресом", "col": "red", "tag": {"c": "аренда 8 часов"}}], links=[("c", "s")], wdef=1300)
+slide("Преимущества DHCP", "", "", G("minmax(0,1fr) minmax(0,1fr)",
+    '<div class="card pn half" data-s="0">' + ih("Унифицированное", "управление", "", "IP-адреса получают из единого пула на сервере DHCP.") + POOLF +
+    G("minmax(0,1.2fr) minmax(0,1fr)", pnl("Пул IP-адресов (Pool-No 1)", '<table class="tbl2">' + "".join(f"<tr><td>{a}</td><td>{b_}</td></tr>" for a, b_ in (("DNS-сервер", "10.1.1.2"), ("Сеть", "10.1.2.0"), ("Маска", "255.255.255.0"), ("Шлюз", "10.1.2.1"), ("Всего адресов", "252"), ("Используется", "2"))) + '</table>', "", 1),
+      '<div class="G ac" style="--gc:auto 1fr" data-s="1">' + hexicon("db", "hx lg") + '<p class="p sm">Сервер DHCP записывает и поддерживает статус использования IP-адресов для унифицированного назначения.</p></div>', cls="ac") + '</div>',
+    '<div class="card pn half" data-s="0">' + ih("Аренда", "IP-адресов", "", "DHCP определяет время аренды (lease) для эффективного использования IP-адресов.", inline=True) + LEASEF +
+    G("minmax(0,1.3fr) minmax(0,.8fr)", pnl("", '<div class="G ac" style="--gc:auto 1fr">' + hexicon("file", "hx lg") + kv([("IP-адрес:", "192.168.1.10"), ("Маска подсети:", "255.255.255.0 (/24)"), ("Шлюз:", "192.168.1.1"), ("DNS-сервер:", "114.114.114.114"), ("Время аренды:", "<span class='hl'>8 часов</span>")]) + '</div>', "", 1),
+      '<div class="G ac" style="--gc:auto 1fr" data-s="1">' + hexicon("clock", "hx lg") + '<p class="p sm">По истечении времени аренды IP-адрес может быть автоматически обновлён.</p></div>', cls="ac") + '</div>', cls="as") +
+    G("repeat(3,minmax(0,1fr))", lrow("user", "Эффективное использование адресного пространства", "Динамическая адресация позволяет повторно использовать IP-адреса — важно в больших сетях с меняющимся количеством устройств.", 2),
+      lrow("gear", "Простое управление", "Централизованное назначение и контроль IP-адресов упрощает администрирование и снижает вероятность ошибок.", 2),
+      lrow("clock", "Гибкость", "Время аренды позволяет эффективно использовать IP-адреса и автоматически обновлять конфигурацию устройств.", 2), style="margin-top:.8rem") +
+    '<div class="mt">' + qt("DHCP обеспечивает автоматическое назначение сетевых параметров, упрощая работу в сети и повышая её эффективность.", 3) + '</div>')
+
+# 45 ---------------------------------------------------------------- DORA (s36)
+CMc, SMc = "e4:5a:d4:1f:f4:80", "a0:a3:f0:d1:26:5a"
+slide("DHCP: четыре этапа", "", "", G("minmax(0,1.5fr) minmax(0,1fr)",
+    ih("Процесс предоставления", "IP-адреса клиенту от DHCP-сервера"),
+    info("DHCP (Dynamic Host Configuration Protocol) — автоматически назначает сетевые параметры устройствам в сети. Адреса — из захвата Wireshark лекции.", "info", 0), cls="ac") +
+    G("minmax(0,.55fr) minmax(0,.5fr) minmax(0,2.2fr) minmax(0,.5fr)",
+      '<div class="lst">' + "".join(f'<div class="lrow" data-s="{i*1+1}"><span class="hn" style="width:2.4rem;height:2.2rem;font-size:1.3rem">{i+1}</span><span style="font-size:.88rem;color:#d3f0ea">{t}</span></div>'
+                                    for i, t in enumerate(["Клиент ищет DHCP-сервер в сети", "Сервер предлагает сетевые параметры клиенту", "Клиент подтверждает выбор предложения от конкретного сервера", "Сервер подтверждает выдачу IP-адреса"])) + '</div>',
+      '<div class="col-dev" style="height:100%">' + devsvg("laptop", "", "7rem") + '<span class="dvbl">DHCP-клиент</span><span class="dvbs">' + CMc + '</span></div>',
+      '<div class="lst">' +
+      msgrow("DHCPDISCOVER", "target", "r", "red", "Широковещательная рассылка", [("IP источника", "0.0.0.0"), ("MAC источника", CMc)], [("IP назначения", "255.255.255.255"), ("MAC назначения", "ff:ff:ff:ff:ff:ff")], 1, 2600) +
+      msgrow("DHCPOFFER", "file", "l", "blue", "Предложенный IP-адрес 10.10.1.13 и срок аренды", [("IP назначения", "255.255.255.255"), ("MAC назначения", "ff:ff:ff:ff:ff:ff")], [("IP источника", "10.10.1.1"), ("MAC источника", SMc)], 2, 2600) +
+      msgrow("DHCPREQUEST", "check", "r", "red", "Широковещательная рассылка", [("IP источника", "0.0.0.0"), ("MAC источника", CMc)], [("IP назначения", "255.255.255.255"), ("MAC назначения", "ff:ff:ff:ff:ff:ff")], 3, 2600) +
+      msgrow("DHCPACK", "check", "l", "blue", "Подтверждает выдачу IP-адреса", [("IP назначения", "255.255.255.255"), ("MAC назначения", "ff:ff:ff:ff:ff:ff")], [("IP источника", "10.10.1.1"), ("MAC источника", SMc)], 4, 2600) + '</div>',
+      '<div class="col-dev" style="height:100%">' + devsvg("server", "", "5rem") + '<span class="dvbl">DHCP-сервер</span><span class="dvbs">10.10.1.1</span></div>', cls="as") +
+    G("minmax(0,1fr) minmax(0,1fr)", info("Если запрашиваемый адрес недоступен, сервер отправляет сообщение с отказом (DHCPNAK), и процесс получения адреса начинается заново.", "info", 5),
+      info("Перед отправкой DHCPACK сервер проверяет доступность адреса (например, с помощью ICMP-запроса).", "gear", 5), style="margin-top:.8rem"))
+
+# 46 ---------------------------------------------------------------- Wireshark DHCP
+def wsd(title, lines, s):
+    return pnl(title, '<div class="ws" style="font-size:.72rem">' + "\n".join(lines) + '</div>', "", s)
+slide("Wireshark: DHCP", "", "", ih("Анализ DHCP", "с помощью Wireshark", "по четырём захватам лекции", inline=True) +
+      table(["Сообщение", "MAC назначения", "IP источника", "IP назначения", "Порты UDP"], [
+          ["DHCPDISCOVER", "ff:ff:ff:ff:ff:ff", "0.0.0.0", "255.255.255.255", "68 ▸ 67"], ["DHCPOFFER", "ff:ff:ff:ff:ff:ff", "10.10.1.1", "255.255.255.255", "67 ▸ 68"],
+          ["DHCPREQUEST", "ff:ff:ff:ff:ff:ff", "0.0.0.0", "255.255.255.255", "68 ▸ 67"], ["DHCPACK", "ff:ff:ff:ff:ff:ff", "10.10.1.1", "255.255.255.255", "67 ▸ 68"]], "mono") +
+      G("repeat(4,minmax(0,1fr))",
+        wsd("DHCPDISCOVER", ['<span class="rd">Info: DHCP Discover</span>', "Ethernet II, Src: EltexEnt_1f:f4:80", '<span class="rd">Destination: Broadcast (ff:ff:ff:ff:ff:ff)</span>', '<span class="rd">IPv4, Src: 0.0.0.0, Dst: 255.255.255.255</span>', "UDP, Src Port: 68, Dst Port: 67"], 2),
+        wsd("DHCPOFFER", ['<span class="rd">Info: DHCP Offer</span>', '<span class="rd">Destination: Broadcast (ff:ff:ff:ff:ff:ff)</span>', "Source: D-LinkIn_d1:26:5a", '<span class="rd">IPv4, Src: 10.10.1.1, Dst: 255.255.255.255</span>', '<span class="rd">Your (client) IP address: 10.10.1.13</span>', "Option: (51) IP Address Lease Time"], 2),
+        wsd("DHCPREQUEST", ['<span class="rd">Info: DHCP Request</span>', "Destination: Broadcast", '<span class="rd">IPv4, Src: 0.0.0.0, Dst: 255.255.255.255</span>', "UDP, Src Port: 68, Dst Port: 67", "Option: (54) DHCP Server Identifier (10.10.1.1)", '<span class="rd">Option: (50) Requested IP Address (10.10.1.13)</span>'], 3),
+        wsd("DHCPACK", ['<span class="rd">Info: DHCP ACK</span>', '<span class="rd">Destination: Broadcast (ff:ff:ff:ff:ff:ff)</span>', '<span class="rd">IPv4, Src: 10.10.1.1, Dst: 255.255.255.255</span>', "Your (client) IP address: 10.10.1.13", "Subnet Mask (255.255.255.0)", "IP Address Lease Time: (600s) 10 minutes"], 3), style="margin-top:.8rem"))
+
+# 47 ---------------------------------------------------------------- конфликт (s37)
+slide("Конфликт IP-адресов", "", "", G("minmax(0,1.3fr) minmax(0,1fr)",
+    ih("Проверка IP-адреса", "на конфликт", "", "Действия DHCP-клиента после получения адреса от сервера."),
+    info("Наличие двух узлов с одинаковым IP-адресом в сети маловероятно, но возможно. Чтобы избежать таких ситуаций, клиент проверяет полученный адрес.", "info", 0), cls="ac") +
+    G("minmax(0,2fr) minmax(0,.9fr)",
+      '<div>' + G("minmax(0,.4fr) minmax(0,2fr) minmax(0,.4fr)",
+                  '<div class="col-dev" style="height:100%">' + devsvg("monitor", "", "6rem") + '<span class="dvbl">DHCP-клиент</span><span class="dvbs">MAC: ' + CMc + '<br>IP: 10.10.1.13</span></div>',
+                  '<div class="lst">' +
+                  msgrow("1 DHCPACK", "check", "l", "blue", "Подтверждаю принятие IPv4-адреса", [("IP назначения", "255.255.255.255"), ("MAC назначения", "ff:ff:ff:ff:ff:ff")], [("IP источника", "10.10.1.1"), ("MAC источника", SMc)], 1, 1800) +
+                  msgrow("2 ARP-request", "info", "r", "red", "У кого-нибудь есть такой же адрес?", [("IP источника", "10.10.1.13"), ("MAC источника", CMc)], [("IP назначения", "10.10.1.13"), ("MAC назначения", "ff:ff:ff:ff:ff:ff")], 2, 1800) +
+                  msgrow("3 ARP-reply", "warn", "l", "blue", "У меня", [("IP назначения", "10.10.1.13"), ("MAC назначения", CMc)], [("IP источника", "10.10.1.13"), ("MAC источника", "xx:xx:xx:xx:xx:xx (другое)")], 3, 1800) +
+                  msgrow("4 DHCPDECLINE", "cross", "r", "red", "Нет, спасибо", [("IP источника", "0.0.0.0"), ("MAC источника", CMc)], [("IP назначения", "255.255.255.255"), ("MAC назначения", "ff:ff:ff:ff:ff:ff")], 4, 1800) + '</div>',
+                  '<div class="col-dev" style="height:100%">' + devsvg("server", "", "4.5rem") + '<span class="dvbl">DHCP-сервер</span><span class="dvbs">MAC: ' + SMc + '<br>IP: 10.10.1.1</span></div>', cls="as") +
+      G("minmax(0,1fr) minmax(0,1fr)", pnl("ARP-ответа нет", '<p class="p sm">Такой IP-адрес в сети не используется: DHCP-сервер не обманул клиента, адрес уникален для сегмента. Клиент начинает его применять.</p>', "grn", 5, ic="check"),
+        pnl("Получен ARP-ответ", '<p class="p sm">Этот IP-адрес уже используется. Клиент отправляет <b>DHCPDECLINE</b>, чтобы сервер назначил другой адрес.</p>', "red", 5, ic="cross"), style="margin-top:.6rem") + '</div>',
+      '<div class="lst">' + pnl("Что такое конфликт IP-адресов?", '<p class="p sm">Два устройства с одинаковым IP-адресом не могут корректно получать информацию от других узлов. Бывает при ручном назначении адресов разными администраторами без координации или без документации по инвентаризации адресов.</p>', "", 1, ic="warn") +
+      pnl("Зачем нужна проверка?", '<p class="p sm">После DHCPACK клиент отправляет ARP-запрос на назначенный IP-адрес, чтобы убедиться, что он уникален в данном сегменте сети.</p>', "", 2, ic="shield") +
+      pnl("Что делать дальше?", '<p class="p sm">Нет ARP-ответа — адрес свободен. Есть ответ — клиент уведомляет DHCP-сервер сообщением DHCPDECLINE и получает другой IP-адрес.</p>', "", 5, ic="gear") + '</div>', cls="as"))
+
+# 48 ---------------------------------------------------------------- продление аренды (s38)
+def lease_panel(n, t, sub, body, s, cls=""):
+    return f'<div class="card pn {cls}" data-s="{s}" data-w="1800"><div class="pnh"><span class="nb" style="width:3.2rem;height:2.8rem;font-size:1.5rem">{n}</span><div><h3 style="margin:0;text-transform:uppercase">{t}</h3><div class="pns" style="margin:0">{sub}</div></div></div>{body}</div>'
+def fan(col, lab, sub):
+    return f'<div class="ar c-{col}" style="text-align:center;font-family:var(--hf)">{lab}<br><small>{sub}</small>{mline("r", col)}{mline("r", col, "fan1")}{mline("r", col, "fan2")}</div>'
+LT = ('<div class="tl" data-s="1"><div class="ln"></div>'
+      '<div class="pt" style="left:0;color:var(--cyan)"><i></i>Получение<br>IP-адреса</div><div class="pt" style="left:50%;color:var(--green)"><i></i>T0<br>(50% аренды)</div>'
+      '<div class="pt" style="left:87.5%;color:var(--amber)"><i></i>T1<br>(87,5% аренды)</div><div class="pt" style="left:100%;color:var(--red)"><i></i>Истечение<br>аренды</div></div>')
+slide("Продление аренды", "", "", G("minmax(0,1.3fr) minmax(0,1fr)", ih("Продление аренды", "IP-адреса в DHCP"),
+    info("После получения IP-адреса и времени аренды DHCP-клиент устанавливает два таймера: <b style='color:var(--amber)'>T0 = 50%</b> от времени аренды, <b>T1 = 87,5%</b> от времени аренды.", "clock", 0), cls="ac") +
+    G("minmax(0,1fr) minmax(0,1fr)",
+      lease_panel(1, "Наступление T0", "Продление аренды у того же сервера",
+                  '<div class="G ac" style="--gc:auto 1fr auto">' + devbox("laptop", "DHCP-клиент", "IP: 10.10.1.10<br>MAC: " + CMc, "", "7rem", 1) +
+                  '<div><div class="ar c-blue" style="text-align:center;font-family:var(--hf)">DHCPREQUEST<br><small>(одноадресная рассылка) продление аренды</small>' + mline("r", "blue") + '</div>'
+                  '<div class="ar c-grn" style="text-align:center;font-family:var(--hf);margin-top:1rem">' + mline("l", "grn") + 'DHCPACK<br><small>(подтверждение)</small></div></div>' +
+                  devbox("server", "DHCP-сервер", "IP: 10.10.1.1<br>MAC: " + SMc, "", "5rem", 1) + '</div>' +
+                  info("Сервер продлевает аренду, сбрасывает таймеры, а клиент обновляет T0 и T1, продолжая использовать свой IP-адрес.", "check", 1), 1),
+      '<div class="lst">' +
+      lease_panel(2, "Нет ответа. Наступление T1", "Попытка продления широковещательной рассылкой",
+                  '<div class="G ac" style="--gc:auto 1fr auto">' + devsvg("laptop", "", "5rem") + fan("red", "DHCPREQUEST", "(широковещательная рассылка)") +
+                  '<div class="lst" style="gap:.2rem">' + "".join(devsvg("server", "", "2rem") for _ in range(3)) + '</div></div>' +
+                  '<div class="alert">' + hexicon("warn", "hx sm") + 'Если ответа нет, клиент продолжает использовать IP-адрес до окончания аренды — вдруг у сервера просто сменился адрес.</div>', 2, "red") +
+      lease_panel(3, "Нет ответа. Истечение аренды", "Начало нового цикла получения IP-адреса",
+                  '<div class="G ac" style="--gc:auto 1fr auto 1fr">' + devsvg("laptop", "", "5rem") + fan("red", "DHCPDISCOVER", "(широковещательная рассылка)") +
+                  '<div class="lst" style="gap:.2rem">' + "".join(devsvg("server", "", "2rem") for _ in range(2)) + '</div>' +
+                  '<div class="alert" style="font-size:.8rem">Если сервер отказывает в продлении (DHCPNACK) или не отвечает — новый цикл с DHCPDISCOVER.</div></div>', 3, "red") + '</div>', cls="as") +
+    '<div class="mt">' + LEASE + '</div>')
+
+# 49 ---------------------------------------------------------------- DHCP relay (s43)
+RM = "a0:a3:f0:d1:26:5a"
+def rmsg(n, name, note, col, d, a, b_, extra, s):
+    return (f'<div class="msg" data-s="{s}" data-w="1500"><div class="mh"><span class="chip {"red" if col == "red" else "blue"}">{n:02d}</span>{name}<small>{note}</small></div>{mline(d, col)}'
+            f'<div class="addr" style="grid-template-columns:1fr">{adr(a + b_)}</div>{extra}</div>')
+def ex(t):
+    return f'<div class="dimp" style="font-size:.8rem;margin-top:.2rem">{t}</div>'
+slide("DHCP relay", "", "", G("minmax(0,1.3fr) minmax(0,1fr)",
+    ih("DHCP", "relay", "передача DHCP-сообщений между сетями · связь клиента с удалённым DHCP-сервером", inline=True, big=True),
+    info("DHCP-ретранслятор (DHCP relay) передаёт запросы и ответы DHCP между разными сетями, так как широковещательные сообщения не проходят через маршрутизаторы.", "info", 0), cls="ac") +
+    G("minmax(0,2fr) minmax(0,.8fr)",
+      '<div class="card pn" data-s="0">' +
+      G("auto 1fr auto 1fr auto", devbox("monitor", "PC-A", "DHCP-клиент", "", "5rem", 0), '<div class="netl"><span>192.168.10.0/24</span></div>', devbox("router", "DHCP-relay", ".1 | .1", "", "6rem", 0),
+        '<div class="netl"><span>192.168.30.0/24</span></div>', devbox("server", "DHCP-сервер", ".10", "", "3.5rem", 0), cls="ac") +
+      G("minmax(0,1fr) minmax(0,1fr)",
+        '<div class="lst">' + rmsg(1, "DHCPDISCOVER", "широковещательно", "red", "r", [("IP src", "0.0.0.0"), ("MAC src", CMc)], [("IP dst", "255.255.255.255"), ("MAC dst", "ff:ff:ff:ff:ff:ff")], "", 1) +
+        rmsg(4, "DHCPOFFER", "одноадресно, для PC-A", "blue", "l", [("IP src", "192.168.10.1"), ("MAC src", RM)], [("IP dst", "192.168.10.15"), ("MAC dst", CMc)], ex("Предлагаемый адрес: <b class='hl'>192.168.10.15</b>"), 4) +
+        rmsg(5, "DHCPREQUEST", "широковещательно", "red", "r", [("IP src", "0.0.0.0"), ("MAC src", CMc)], [("IP dst", "255.255.255.255"), ("MAC dst", "ff:ff:ff:ff:ff:ff")], ex("Запрашиваемый адрес: <b class='hl'>192.168.10.15</b>"), 5) +
+        rmsg(8, "DHCPACK", "одноадресно, для PC-A", "blue", "l", [("IP src", "192.168.10.1"), ("MAC src", RM)], [("IP dst", "192.168.10.15"), ("MAC dst", CMc)], ex("Назначенный адрес: <b class='hl'>192.168.10.15</b>"), 8) + '</div>',
+        '<div class="lst">' + rmsg(2, "DHCPDISCOVER", "от PC-A, одноадресно", "red", "r", [("IP src", "192.168.10.1"), ("MAC src", RM)], [("IP dst", "192.168.30.10"), ("MAC dst", "server-mac")], ex("В поле <b class='hl'>GIADDR</b> указан адрес 192.168.10.1"), 2) +
+        rmsg(3, "DHCPOFFER", "одноадресно, для PC-A", "blue", "l", [("IP src", "192.168.30.10"), ("MAC src", "server-mac")], [("IP dst", "192.168.10.1"), ("MAC dst", RM)], ex("Предлагаемый адрес: 192.168.10.15"), 3) +
+        rmsg(6, "DHCPREQUEST", "от PC-A, одноадресно", "red", "r", [("IP src", "192.168.10.1"), ("MAC src", RM)], [("IP dst", "192.168.30.10"), ("MAC dst", "server-mac")], ex("Запрашиваемый адрес: 192.168.10.15"), 6) +
+        rmsg(7, "DHCPACK", "одноадресно, для PC-A", "blue", "l", [("IP src", "192.168.30.10"), ("MAC src", "server-mac")], [("IP dst", "192.168.10.1"), ("MAC dst", RM)], ex("Назначенный адрес: 192.168.10.15"), 7) + '</div>', cls="as", style="margin-top:.6rem") + '</div>',
+      '<div class="lst">' + pnl("Как работает DHCP relay?", steps(["Перехватывает широковещательные запросы от клиента (DHCPDISCOVER).", "Заменяет адрес источника на адрес своего интерфейса и добавляет его в поле GIADDR.",
+                                                                  "Передаёт запрос DHCP-серверу одноадресно.", "Получает ответ от сервера (DHCPOFFER, DHCPACK).", "Отправляет ответ клиенту одноадресно, используя MAC-адрес клиента из сообщения."]), "", 1) +
+      pnl("Важно знать", '<div class="lst">' + lrow("globe", "", "Широковещательные сообщения DHCP не проходят через маршрутизаторы.") + lrow("link", "", "Клиент и сервер должны быть в одном широковещательном домене или использовать DHCP relay.") +
+          lrow("gear", "", "По полю GIADDR сервер определяет, какой пул адресов использовать для конкретной сети.") + '</div>', "", 1) + '</div>', cls="as") +
+    G("minmax(0,1fr) minmax(0,1fr)", pnl("", '<div class="G ac" style="--gc:auto 1fr">' + hexicon("check", "hx lg") + '<div><h3>Результат</h3><p class="p sm" style="margin:0">PC-A получает IP-адрес 192.168.10.15 от удалённого DHCP-сервера через DHCP-ретранслятор.</p></div></div>', "", 9),
+      qt("DHCP relay объединяет сети и делает автоматическую настройку доступной в любой инфраструктуре.", 9), style="margin-top:.8rem"))
+
+# 50 ---------------------------------------------------------------- SMB (s44)
+SMBV = ('<svg class="mini" viewBox="0 0 700 220" aria-hidden="true">' f'<g transform="translate(110 110) scale(1.3)">{dev("monitor", "", "blue")}</g><g transform="translate(590 110) scale(1.3)">{dev("monitor", "", "blue")}</g>'
+        + arrow("sm1", 190, 110, 510, 110, "teal") + arrow("sm2", 510, 110, 190, 110, "teal") +
+        "".join(f'<g class="an" data-id="sf{i}" style="--md:1600ms"><path class="fpg" d="M-12 -16h16l8 8v24h-24z"/></g>' for i in range(4)) + '</svg>')
+SMBV_SC = scene("smbv", 3, {"sm1": {"c": {0: "", 1: "on"}}, "sm2": {"c": {0: "", 2: "on"}},
+                            "sf0": {"p": {0: (200, 80), 1: (480, 80)}, "o": {0: 0, 1: 1}}, "sf1": {"p": {0: (200, 145), 1: (480, 145)}, "o": {0: 0, 1: 1}},
+                            "sf2": {"p": {0: (500, 80), 2: (230, 80)}, "o": {0: 0, 2: 1}}, "sf3": {"p": {0: (500, 145), 3: (260, 145)}, "o": {0: 0, 3: 1}}}, {i: 1400 for i in range(4)})
+slide("SMB", "", "", G("minmax(0,1fr) minmax(0,1fr)",
+    ih("SMB", "обмен данными между узлами", "", "Протокол SMB обеспечивает совместный доступ к файлам, директориям, принтерам и другим сетевым ресурсам.", big=True),
+    info("<b>SMB (Server Message Block)</b> — протокол для передачи данных между клиентом и сервером. Определяет организацию совместных ресурсов в сети.", "info", 0), cls="ac") +
+    G("minmax(0,1.6fr) minmax(0,1fr)", f'<div class="card pn" data-s="0"><div {SMBV_SC}>{SMBV}</div><div class="G" style="--gc:1fr 1fr;text-align:center"><span class="dvbl">Узел 1 (SMB-клиент)</span><span class="dvbl">Узел 2 (SMB-сервер)</span></div></div>',
+      pnl("Что можно делать с помощью SMB?", '<div class="lst">' + lrow("user", "Запускать, аутентифицировать и завершать сеансы") + lrow("folder", "Управлять доступом к файлам, каталогам и т.д.") +
+          lrow("printer", "Использовать общие принтеры и другие ресурсы") + lrow("gear", "Разрешать приложению отправлять данные на другое устройство") + '</div>', "", 1), cls="as") +
+    G("minmax(0,1fr) minmax(0,.8fr) minmax(0,1fr)",
+      pnl("Как работает SMB?", SMB, "", 2),
+      pnl("Совместные ресурсы", '<div class="lst">' + lrow("folder", "Файлы и каталоги", "", 2) + lrow("printer", "Принтеры", "", 2) + lrow("gear", "Приложения", "", 2) + lrow("user", "Другие сетевые ресурсы", "", 2) + '</div>', "", 2),
+      pnl("Особенности SMB", '<div class="lst">' + lrow("link", "Долговременное подключение", "В отличие от FTP — постоянный сеанс: с удалёнными файлами работают как с локальными.", 3) +
+          lrow("shield", "Безопасность", "Аутентификация пользователей и управление правами доступа.", 3) + lrow("layers", "Широкое применение", "Корпоративные и домашние сети.", 3) + '</div>', "", 3), style="margin-top:.8rem") +
+    '<div class="mt">' + qt("SMB делает совместную работу в сети такой же удобной, как работу с локальными файлами.", 4) + '</div>')
+
+# 51 ---------------------------------------------------------------- почтовые протоколы (s45)
+MAIL0 = flow("mail0", "0 0 820 330", {
+    "s": {"x": 90, "y": 80, "ic": "monitor", "label": "Отправитель", "sub": "почтовый клиент"},
+    "r": {"x": 90, "y": 260, "ic": "monitor", "label": "Получатель", "sub": "почтовый клиент"},
+    "i": {"x": 400, "y": 170, "ic": "cloud", "label": "Интернет", "r": 60},
+    "m1": {"x": 720, "y": 70, "ic": "server", "label": "Сервер (отправляющий)"},
+    "m2": {"x": 720, "y": 250, "ic": "server", "label": "Сервер (получающий)"}}, [
+    {"a": "s", "b": "i", "pk": "SMTP", "col": "teal", "cap": "1 Клиент отправляет письмо на свой почтовый сервер (протокол SMTP)."},
+    {"a": "i", "b": "m1", "pk": "SMTP", "col": "teal", "cap": "Письмо на отправляющем сервере."},
+    {"a": "m1", "b": "m2", "pk": "SMTP", "col": "teal", "cap": "2 Почтовый сервер отправляет письмо через Интернет на сервер получателя (SMTP)."},
+    {"a": "m2", "b": "i", "pk": "POP/IMAP", "col": "blue", "cap": "3 Получатель забирает письмо с почтового сервера по IMAP или POP…"},
+    {"a": "i", "b": "r", "pk": "POP/IMAP", "col": "blue", "tag": {"r": "письмо получено"}, "cap": "…и читает его в почтовом клиенте."},
+], links=[("s", "i"), ("r", "i"), ("i", "m1"), ("i", "m2"), ("m1", "m2")], wdef=1700)
+slide("Почтовые протоколы", "", "", G("minmax(0,.8fr) minmax(0,1.8fr) minmax(0,.8fr)",
+    '<div>' + ih("Почтовые", "протоколы", "отправка, хранение и получение электронных сообщений", inline=True) +
+    '<div class="lst">' + lrow("mail", "Электронная почта", "Система для отправки, хранения и получения сообщений по сети. Письма хранятся на почтовых серверах в базах данных.", 1) +
+    lrow("user", "Пользователи и серверы", "Пользователи обращаются к почтовым серверам; серверы взаимодействуют друг с другом для обмена письмами между доменами.", 1) + '</div></div>',
+    MAIL0,
+    pnl("Как это работает?", steps(["Клиент отправляет письмо на свой почтовый сервер (SMTP).", "Почтовый сервер отправляет письмо через Интернет на сервер получателя (SMTP).", "Получатель забирает письмо с помощью IMAP или POP."]), "", 1), cls="as") +
+    G("repeat(3,minmax(0,1fr))",
+      pnl("SMTP", '<div class="pns">Simple Mail Transfer Protocol</div>' + bul(["Отправка электронных сообщений.", "От почтового клиента к серверу и между почтовыми серверами.", "Передача писем между разными доменами."]), "", 2, ic="mail"),
+      pnl("IMAP", '<div class="pns">Internet Message Access Protocol</div>' + bul(["Получение писем.", "Письма хранятся на сервере, клиент получает к ним доступ.", "Работа с письмами с нескольких устройств."]), "", 2, ic="db"),
+      pnl("POP", '<div class="pns">Post Office Protocol</div>' + bul(["Получение писем.", "Письма загружаются с сервера на устройство (обычно с удалением с сервера).", "Подходит для работы с почтой с одного устройства."]), "", 2, ic="mail"), style="margin-top:.8rem") +
+    '<div class="mt">' + qt("SMTP, IMAP и POP — основные протоколы, которые обеспечивают работу электронной почты.", 3, "gear") + '</div>')
+
+# 52 ---------------------------------------------------------------- SMTP (s46)
+slide("SMTP", "", "", G("minmax(0,.8fr) minmax(0,1.9fr)",
+    '<div>' + ih("Работа протокола", "SMTP", "передача сообщений между почтовыми серверами", inline=True) +
+    pnl("SMTP", '<div class="pns">Simple Mail Transfer Protocol</div><p class="p sm">Протокол для отправки электронных сообщений от клиента на почтовый сервер и между почтовыми серверами.</p>', "", 1, ic="mail") +
+    pnl("Структура SMTP-сообщения", '<div class="lst">' + lrow("file", "Заголовок", "Строго определённый формат (RFC 2822)") + lrow("file", "Тело сообщения", "Текст произвольной длины") + '</div>', "", 1, ic="file") + '</div>',
+    MAIL, cls="as") +
+    G("repeat(4,minmax(0,1fr))",
+      pnl("<span class='bn'>1</span> Установление соединения", '<div class="stgd">' + devsvg("laptop", "", "4rem") + '<div class="stga c-teal">' + mline("r", "teal") + '</div>' + devsvg("server", "", "2.6rem") + '</div>' +
+          bul(["При отправке почтовый клиент устанавливает соединение с почтовым сервером по SMTP."]), "", 2),
+      pnl("<span class='bn'>2</span> Передача сообщения", bul(["Клиент отправляет сообщение на почтовый сервер.", "Сервер проверяет, есть ли получатель в его списке: если да — доставляет; если нет — пересылает другому серверу (SMTP)."]), "", 2),
+      pnl("<span class='bn'>3</span> Временное хранение", bul(["Сервер назначения недоступен — сообщение хранится на сервере и периодически отправляется повторно.", "Не доставлено за определённое время — возвращается отправителю с уведомлением."]), "amb", 2),
+      pnl("<span class='bn'>4</span> Получение сообщения", bul(["Получатель забирает сообщение с сервера по IMAP или POP.", "IMAP оставляет письма на сервере, POP загружает на устройство (обычно с удалением)."]), "", 2), style="margin-top:.8rem") +
+    '<div class="mt">' + qt("Поиск нужных почтовых серверов для пересылки происходит с помощью DNS — по записям MX.", 3, "dns") + '</div>')
+
+# 53 ---------------------------------------------------------------- POP (s47)
+POPX = ('<div class="pcmd" data-s="3">' + "".join(
+    f'<div class="pl" style="--dl:{i*180}ms"><span class="sv">{a}</span><span class="dir {d}"></span><span class="cl">{b_}</span></div>' for i, (a, d, b_) in enumerate([
+        ("+OK POP3 server ready", "l", ""), ("+OK User accepted", "l", "USER user@company.ru"), ("+OK Password accepted", "l", "PASS ********"), ("+OK 2 messages (3200 octets)", "l", "LIST"),
+        ("+OK Message follows…", "l", "RETR 1"), ("+OK Message deleted", "l", "DELE 1"), ("", "r", "QUIT")])) + '</div>')
+slide("POP", "", "", G("minmax(0,1.4fr) minmax(0,1fr)",
+    ih("POP", "получение электронной почты", "", "Протокол POP (Post Office Protocol) используется для получения электронных сообщений с почтового сервера на устройство пользователя.", inline=True, big=True),
+    info("POP позволяет загружать письма с почтового сервера на локальное устройство, обычно с использованием TCP (порт 110) или защищённого POP3S (порт 995).", "info", 0), cls="ac") +
+    G("minmax(0,1.9fr) minmax(0,.8fr)", POPF,
+      pnl("Этапы работы POP", steps(["Отправитель отправляет письмо на адрес получателя (SMTP).", "Письмо доставляется на почтовый сервер и хранится там.", "Клиент устанавливает соединение с сервером (POP).",
+                                     "Сервер отправляет приветствие и ожидает команд.", "Клиент проходит аутентификацию и запрашивает список писем.", "Клиент загружает сообщения на своё устройство.",
+                                     "После получения сообщение удаляется с почтового сервера."]), "", 1), cls="as") +
+    G("minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr)",
+      pnl("Основные особенности", '<div class="lst">' + lrow("file", "Загрузка писем на локальное устройство", "", 2) + lrow("cross", "Удаление писем с сервера после получения", "", 2) +
+          lrow("lock", "Простой протокол, минимальный набор команд", "", 2) + lrow("gear", "TCP 110 или POP3S 995", "", 2) + '</div>', "", 2),
+      pnl("Пример обмена командами", '<div class="G" style="--gc:1fr 1fr"><b class="dimp">Сервер</b><b class="dimp" style="text-align:right">Клиент</b></div>' + POPX, "", 3),
+      pnl("Важно знать", '<div class="lst">' + lrow("warn", "Письма удаляются с сервера", "Это может быть критично для компаний малого бизнеса.", 4, cls="bad") +
+          lrow("user", "Для индивидуального использования", "Когда письма нужны только на одном устройстве.", 4) + lrow("server", "Хранить письма на сервере", "Используйте IMAP.", 4) + '</div>', "", 4), style="margin-top:.8rem") +
+    '<div class="mt">' + qt("POP — простой и надёжный способ получить почту, но после загрузки письма остаются только у вас.", 5) + '</div>')
+
+# 54 ---------------------------------------------------------------- IMAP (s48)
+slide("IMAP", "", "", G("minmax(0,1.4fr) minmax(0,1fr)",
+    ih("Работа протокола", "IMAP", "получение и управление электронными сообщениями на сервере", inline=True),
+    info("IMAP (Internet Message Access Protocol) позволяет получать сообщения с почтового сервера, оставляя их копии на сервере.", "info", 0), cls="ac") +
+    IMAPF +
+    G("repeat(4,minmax(0,1fr))",
+      pnl("Что такое IMAP?", '<p class="p sm">Протокол прикладного уровня для получения и управления электронными сообщениями на почтовом сервере.</p>' + lrow("server", "TCP 143", "IMAP использует порт TCP 143."), "", 1),
+      pnl("Как это работает?", steps(["Отправитель отправляет письмо на почтовый сервер (SMTP).", "Письмо сохраняется на сервере получателя.", "Получатель подключается по IMAP и получает копию сообщения.", "Исходное сообщение остаётся на сервере, пока пользователь не удалит его вручную."]), "", 1),
+      pnl("Особенности IMAP", '<div class="lst">' + lrow("cloud", "", "Пользователь получает копию, оригинал остаётся на сервере.") + lrow("server", "", "Работа с письмами с нескольких устройств.") +
+          lrow("desk", "", "Изменения (прочитано, удалено) синхронизируются.") + lrow("gear", "", "Удаление сообщения — и на устройстве, и на сервере.") + '</div>', "", 1),
+      pnl("Преимущества", bul(["Доступ к почте с любого устройства.", "Синхронизация писем и папок.", "Удобное управление сообщениями на сервере.", "Для пользователей, работающих с почтой на нескольких устройствах."]), "grn", 1), style="margin-top:.8rem") +
+    '<div class="mt">' + qt("IMAP — удобное решение для тех, кто хочет иметь доступ к своей почте с разных устройств, сохраняя письма на сервере.", 2, "info") + '</div>')
+
+# 55 ---------------------------------------------------------------- синхронизация времени (s49)
+CLOCK = ('<svg class="clockbig" viewBox="-110 -110 220 220" aria-hidden="true" data-s="1" data-w="2600"><circle r="100" class="glb"/><circle r="84" class="gll"/>' +
+         "".join(f'<line x1="0" y1="-92" x2="0" y2="-80" class="sln" transform="rotate({i*30})"/>' for i in range(12)) +
+         '<line class="hand h1" x1="0" y1="0" x2="0" y2="-48" style="stroke-width:6"/><line class="hand h2" x1="0" y1="0" x2="0" y2="-72" style="stroke-width:4"/><circle r="6" fill="#7ef5e2"/></svg>')
+slide("Синхронизация времени", "", "", G("minmax(0,1.6fr) minmax(0,1fr)",
+    ih("Требования к синхронизации", "времени", "единое время — основа стабильной и эффективной работы сети", inline=True),
+    qt("Во многих сценариях в корпоративных кампусных сетях требуется последовательная синхронизация всех устройств.", 0), cls="ac") +
+    G("minmax(0,1fr) minmax(0,.8fr) minmax(0,1fr)",
+      '<div class="lst">' + pnl("Управление сетью", '<p class="p sm">Анализ журналов или сообщений отладки, собранных от различных маршрутизаторов, требует времени для обработки: единое время позволяет выстроить последовательность событий.</p>' +
+                                code(['<span class="k">LOG</span> 10:24:03', '<span class="k">LOG</span> 10:24:07', '<span class="k">LOG</span> 10:24:11'], 2), "", 2, ic="desk") +
+      pnl("Совместная работа систем", '<p class="p sm">Несколько систем, работающих вместе над одним сложным событием, используют один синхронизирующий сигнал, чтобы обеспечить правильную последовательность реализации.</p>', "", 2, ic="gear") + '</div>',
+      '<div>' + CLOCK + '<div class="card pn" data-s="1" style="text-align:center"><h3 style="font-size:1.6rem;color:#fff">Синхронизация времени</h3><p class="p sm" style="margin:0">Единое время для надёжной работы</p></div></div>',
+      '<div class="lst">' + pnl("Система тарификации", '<p class="p sm">Часы всех устройств должны быть согласованными: точное время нужно для учёта ресурсов и выставления счетов.</p>', "", 3, ic="db") +
+      pnl("Инкрементное резервное копирование", '<p class="p sm">Часы на сервере резервного копирования и клиентах должны быть синхронизированы — чтобы правильно определить изменённые файлы.</p>', "", 3, ic="db") + '</div>', cls="ac") +
+    G("minmax(0,1fr) minmax(0,1.2fr)",
+      pnl("Системное время", '<p class="p sm">Некоторым приложениям необходимо знать время входа пользователей в систему и время изменения файлов.</p>', "", 4, ic="user"),
+      '<div class="G" style="--gc:1fr 1fr" data-s="4">' + pnl("Вход в систему", '<table class="tbl2"><tr><td>user1</td><td>09:15:22</td></tr><tr><td>user2</td><td>10:03:47</td></tr><tr><td>user3</td><td>11:28:19</td></tr></table>', "", 0) +
+      pnl("Изменение файлов", '<table class="tbl2"><tr><td>config.txt</td><td>09:42:11</td></tr><tr><td>data.db</td><td>10:17:36</td></tr><tr><td>report.pdf</td><td>11:05:03</td></tr></table>', "", 0) + '</div>', style="margin-top:.8rem") +
+    '<div class="mt">' + qt("Точное и единое время — необходимое условие для безопасности, отказоустойчивости и эффективного управления сетью.", 5, "gear") + '</div>')
+
+# 56 ---------------------------------------------------------------- NTP (s50)
+slide("NTP", "", "", G("minmax(0,1.2fr) minmax(0,1fr)",
+    ih("NTP", "иерархическая структура серверов времени", "", "Синхронизация времени в сети для обеспечения безопасности, диагностики и управляемости.", inline=True, big=True),
+    info("Устройства используют программные часы, запускаемые при загрузке. Время можно ввести вручную командой или получить по <b>NTP</b>: все устройства получают одинаковые настройки от NTP-сервера.", "info", 0), cls="ac") +
+    G("minmax(0,2fr) minmax(0,.9fr)", NTP,
+      '<div class="lst">' + pnl("Ключевые особенности NTP", '<div class="lst">' + lrow("clock", "Синхронизация времени", "Одинаковое время важно для безопасности и диагностики.") +
+                                lrow("layers", "Иерархическая структура", "Каждая ступень — часовой слой (stratum); чем меньше номер, тем ближе к точному источнику.") +
+                                lrow("shield", "Надёжность", "Серверы одного уровня равноправны: резервирование и проверка точности.") + lrow("gear", "Простая настройка", "Вручную или с помощью NTP.") + '</div>', "", 1) +
+      pnl("Номера часовых слоёв (stratum)", '<div class="lst">' + '<div class="lrow"><span class="nb">0</span><span>Точные источники времени (атомные часы, GPS)</span></div>'
+          '<div class="lrow"><span class="nb">1</span><span>Серверы, подключённые к stratum 0</span></div><div class="lrow"><span class="nb" style="width:3.2rem">2–15</span><span>Серверы и клиенты, получающие время от вышестоящих слоёв</span></div>'
+          '<div class="lrow bad"><span class="nb" style="background:var(--red)">16</span><span>Недоверенный слой (время не синхронизировано)</span></div></div>', "", 2) + '</div>', cls="as") +
+    G("minmax(0,1fr) minmax(0,1.4fr)", pnl("", '<div class="G ac" style="--gc:auto 1fr">' + hexicon("check", "hx lg") + '<div><h3>Результат</h3><p class="p sm" style="margin:0">Все устройства сети имеют одинаковое время: это упрощает управление, повышает безопасность и облегчает поиск причин событий.</p></div></div>', "", 3),
+      qt("Точное время в сети — фундамент надёжной и безопасной инфраструктуры.", 3), style="margin-top:.8rem"))
+
+# 57 ---------------------------------------------------------------- атомные часы (s51) — реальное фото платы с выносками
+slide("Атомные часы", "", "", G("minmax(0,1.3fr) minmax(0,1fr)", ih("Современные", "атомные часы", "высокая точность · стабильность · надёжность", inline=True),
+      info("Атомные часы — устройства, использующие стабильные колебания атомов для высокоточного измерения времени. Это источник слоя 0 в иерархии NTP.", "atom", 0), cls="ac") +
+      G("minmax(0,.8fr) minmax(0,2fr) minmax(0,.8fr)",
+        '<div class="lst">' + pnl("Модуль атомных часов", '<div class="pns">Orolia Spectratime mRO-50</div><p class="p sm">Высокоточный модуль, использующий стабильные колебания атомов рубидия для точного и стабильного времени.</p>' +
+                                  '<div class="lst">' + lrow("target", "Высокая точность", "до нс") + lrow("shield", "Долговременная стабильность") + lrow("gear", "Надёжная работа", "в различных условиях") + '</div>', "", 1, ic="atom") + '</div>',
+        '<figure class="card ph" data-s="0" style="margin:0"><img src="img7app/s51_board.jpg" alt="Плата модуля атомных часов Orolia mRO-50" style="max-height:56vh"></figure>',
+        '<div class="lst">' + pnl("Процессор / ПЛИС", '<div class="pns">Intel Cyclone 10</div><p class="p sm">Обработка сигналов, синхронизация и управление модулем атомных часов.</p>', "", 2, ic="gear") +
+        pnl("Интерфейсы", '<div class="pns">SMA-разъёмы</div><p class="p sm">Подключение внешних антенн и интерфейсов синхронизации (например, 1PPS, 10 MHz).</p>', "", 2, ic="radio") +
+        pnl("Дополнительный модуль", '<div class="pns">Приёмник GNSS (например, u-blox)</div><p class="p sm">Резервная синхронизация и повышение надёжности системы.</p>', "", 2, ic="sat") + '</div>', cls="ac") +
+      '<div class="mt">' + irow([("clock", "Точное время"), ("link", "Стабильная работа"), ("shield", "Проверенные технологии")], 3) + '</div>')
+
+# 58–62 ---------------------------------------------------------------- тренажёры, проверь себя, вопросы, до свидания
+slide("Тренажёр: протоколы", "", "", ih("Тренажёр", "какой протокол и какой порт", inline=True) + '<div class="two even">' + trn("t1", "Задача — протокол", "Новая задача") + trn("t2", "Порт — протокол", "Другой порт") + '</div>')
+slide("Тренажёр: DHCP и DNS", "", "", ih("Тренажёр", "адреса DHCP и части доменного имени", inline=True) + '<div class="two even">' + trn("t3", "Адреса в сообщениях DHCP", "Следующий вопрос") + trn("t4", "Части доменного имени", "Следующая часть") + '</div>')
+slide("Проверь себя", "", "", ih("Проверь", "себя", "12 вопросов с разбором", inline=True, big=True) + '<div class="two mid"><div class="card quiz">'
+      '<div class="qtop mono"><span id="qz-n">1 / 12</span><span id="qz-sc">верно: 0</span></div><div class="tq" id="qz-q"></div>'
+      '<div class="opts col" id="qz-o"></div><div class="tres" id="qz-e" aria-live="polite"></div>'
+      '<div class="trow"><button class="btn" id="qz-pv" type="button">Предыдущий</button><button class="btn pri" id="qz-nx" type="button">Следующий вопрос</button></div></div>'
+      '<div class="side">' + info("Выберите ответ — сразу появится разбор. Вопросы охватывают FTP, TFTP, DNS, DHCP, почту и NTP.", "info", 0) + '<div class="relbox" style="min-height:16rem">' + globe_deco("gdeco g-c") + '</div></div></div>')
+slide("Вопросы", "", "", ih("Вопросы", "для обсуждения", inline=True, big=True) + G("repeat(3,minmax(0,1fr))", *[pnl(f"<span class='bn'>{i+1:02d}</span>", p(q, cls="p"), "", 1, ic=ic) for i, (q, ic) in enumerate([
+    ("Почему DNS-сервер провайдера отвечает роутеру с флагом AA=0, хотя данные верные?", "dns"), ("Что изменится в пути DNS-запроса, если запись уже есть в кэше роутера?", "router"),
+    ("Какой режим FTP выбрать, если клиент за NAT, и почему?", "folder"), ("Зачем клиенту ARP-запрос после DHCPACK, если сервер уже проверял адрес ICMP-запросом?", "warn"),
+    ("Почему DHCP-сообщения не проходят через маршрутизатор без DHCP relay?", "link"), ("Когда удобнее POP, а когда IMAP?", "mail")])]))
+slide("До свидания", "", "", f"""
+<div class="title bye">{TITLE_ART}
+  <div class="kick"><span class="nb">07</span>Глава 7 · уровень приложений</div>
+  <h1>Спасибо<br><span class="o2">за внимание!</span></h1>
+  <p class="lead">До свидания! Повторите путь DNS-запроса и этапы DHCP — они понадобятся в лабораторной работе.</p>
+  <p class="authors">Ананко Софья Михайловна<br>Качур Анна Юрьевна</p>
+</div>""", "tslide")
 
 render()

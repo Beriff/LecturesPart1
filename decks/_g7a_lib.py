@@ -88,15 +88,25 @@ def hexnode(x, y, r=40):
 # ---------------------------------------------------------------- топология с пакетами
 COLS = {"blue": "wb", "amber": "wa", "violet": "wv", "teal": "wt", "red": "wr", "green": "wg", "ice": "wi"}
 
+DEVK = {"laptop", "server", "dns", "pc", "router", "switch", "cloud", "globe", "fw", "hacker", "term", "phone", "ap", "monitor"}
+
 def _node(nid, n):
+    from _g7a_ui import dev
     x, y = n["x"], n["y"]
     r = n.get("r", 40)
-    lab = "".join(f'<tspan x="{x}" dy="{0 if i == 0 else 20}">{esc(t)}</tspan>' for i, t in enumerate(n["label"].split("\n")))
+    lines = n["label"].split("\n")
+    if n["ic"] in DEVK:
+        shape = f'<g transform="translate({x} {y}) scale({r / 44:.3f})">{dev(n["ic"], n.get("scr", ""), n.get("cls", ""))}</g>'
+    else:
+        shape = hexnode(x, y, r) + svgicon(n["ic"], x, y, r / 25)
+    w = max(len(t) for t in lines) * 9.2 + 26
+    ly = y + r + 14
+    box = f'<path class="nlb" d="M{x - w / 2 + 6:.1f} {ly:.1f}H{x + w / 2:.1f}V{ly + 22 * len(lines) + 4 - 6:.1f}L{x + w / 2 - 6:.1f} {ly + 22 * len(lines) + 4:.1f}H{x - w / 2:.1f}V{ly + 6:.1f}Z"/>'
+    lab = "".join(f'<tspan x="{x}" dy="{0 if i == 0 else 22}">{esc(t)}</tspan>' for i, t in enumerate(lines))
     sub = n.get("sub", "")
-    nl = len(n["label"].split("\n"))
-    s = f'<text class="nsub" x="{x}" y="{y + r + 26 + 20 * nl}" text-anchor="middle">{esc(sub)}</text>' if sub else ""
-    return (f'<g class="nd" data-id="n_{nid}">{hexnode(x, y, r)}{svgicon(n["ic"], x, y, r / 25)}'
-            f'<text class="nlab" x="{x}" y="{y + r + 22}" text-anchor="middle">{lab}</text>{s}</g>'
+    s = f'<text class="nsub" x="{x}" y="{ly + 22 * len(lines) + 22}" text-anchor="middle">{esc(sub)}</text>' if sub else ""
+    return (f'<g class="nd" data-id="n_{nid}">{shape}{box}'
+            f'<text class="nlab" x="{x}" y="{ly + 18}" text-anchor="middle">{lab}</text>{s}</g>'
             f'<g class="tagg" data-id="gb_{nid}"><text class="tag" data-id="g_{nid}" x="{x}" y="{y - r - 14}" text-anchor="middle"></text></g>')
 
 def _pt(nodes, a, b, off):
@@ -202,7 +212,7 @@ def flow(name, vb, nodes, steps, links=(), fields=(), ftitle="Заголовок
             f'<div class="fcap"><span class="fsn mono" data-id="{name}sn"></span><span class="fct" data-id="{name}cp"></span></div></div>')
 
 # ---------------------------------------------------------------- диаграмма обмена (линии жизни)
-def seq(name, cols, msgs, width=900, gap=58, fields=(), ftitle="Заголовок пакета", wdef=1900, top=110, pre="", hint=""):
+def seq(name, cols, msgs, width=900, gap=58, fields=(), ftitle="Заголовок пакета", wdef=1900, top=124, pre="", hint=""):
     ncol = len(cols)
     xs = [80 + i * (width - 160) / (ncol - 1) for i in range(ncol)]
     rows, r = [], 0
@@ -218,7 +228,9 @@ def seq(name, cols, msgs, width=900, gap=58, fields=(), ftitle="Заголово
     for i, c in enumerate(cols):
         x = xs[i]
         body.append(f'<line class="ll" x1="{x}" y1="{top - 18}" x2="{x}" y2="{H - 10}"/>')
-        body.append(f'<g class="nd" data-id="{name}c{i}">{hexnode(x, 44, 30)}{svgicon(c[2], x, 44, 1.15)}</g>')
+        from _g7a_ui import dev
+        shp = f'<g transform="translate({x} 44) scale(.6)">{dev(c[2])}</g>' if c[2] in DEVK else hexnode(x, 44, 30) + svgicon(c[2], x, 44, 1.15)
+        body.append(f'<g class="nd" data-id="{name}c{i}">{shp}</g>')
         body.append(f'<text class="nlab" x="{x}" y="{top - 26 + 4}" text-anchor="middle">{esc(c[0])}</text>')
         if c[1]:
             body.append(f'<text class="nsub" x="{x}" y="{top - 6 + 4}" text-anchor="middle">{esc(c[1])}</text>')
