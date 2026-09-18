@@ -25,7 +25,9 @@ def cat64(name, w=340):
 
 def photo(name, cap=""):
     c = f'<figcaption>{cap}</figcaption>' if cap else ""
-    return f'<figure class="card ph"><img src="{img64(name)}" alt="{cap or "Иллюстрация"}" loading="lazy">{c}</figure>'
+    stem = name.rsplit(".", 1)[0]
+    src = next(f"img11/{f.name}" for f in (HERE / "img11").iterdir() if f.stem == stem)
+    return f'<figure class="card ph"><img src="{src}" decoding="async" alt="{cap or "Иллюстрация"}" loading="lazy">{c}</figure>'
 
 # ---------------------------------------------------------------- scenes
 SCENES = {}
