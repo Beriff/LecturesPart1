@@ -780,6 +780,15 @@ rect.src{fill:#fff;stroke:var(--c);stroke-width:2.4}.dg .srct{font-size:21px;fon
   #nav{bottom:6px;font-size:12px}
   #nav .lbl2{display:none}
 }
+.figs .wrap{max-width:110rem}.figx{margin:0;display:flex;justify-content:center}.figx img{max-width:100%;max-height:74vh;height:auto;border-radius:14px;box-shadow:0 10px 40px rgba(20,24,80,.18);background:#fff}
+.figcap{text-align:center;margin-top:1rem}.wsx{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:2rem;align-items:start}.wsx .figx img{max-height:76vh}.wsh{margin:0 0 1rem;font-size:1.3rem}
+@media (max-width:900px){.wsx{grid-template-columns:1fr}}
+.ovg{grid-template-columns:repeat(auto-fill,minmax(17rem,1fr));gap:1rem}
+.ovi{flex-direction:column;align-items:stretch;gap:.45rem;padding:.5rem}
+.ovt{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:8px;background:var(--paper);border:1px solid var(--line);pointer-events:none}
+.ovt>.slide{position:absolute!important;inset:auto!important;left:0;top:0;display:block!important;transform-origin:0 0}
+.ovt [data-s]{opacity:1!important;transform:none!important}.ovt .arr .draw{stroke-dashoffset:0!important}.ovt .arr .head,.ovt .arr .lbl{opacity:1!important}
+.ovi .ovn{display:flex;gap:.6rem;align-items:baseline;font-size:.95rem}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{transition:none!important;animation:none!important}
 }
@@ -790,7 +799,7 @@ JS = r"""
 (function(){
 'use strict';
 var $=function(s,r){return (r||document).querySelector(s)}, $$=function(s,r){return [].slice.call((r||document).querySelectorAll(s))};
-var slides=$$('.slide'), N=slides.length, cur=0, step=0, mode='steps', speed=1, timer=null, playing=false, paused=false;
+var slides=$$('.slide'), N=slides.length, cur=0, step=0, mode='all', speed=1, timer=null, playing=false, paused=false;
 var RM=window.matchMedia('(prefers-reduced-motion: reduce)');
 var root=document.documentElement;
 slides.forEach(function(s){
@@ -820,7 +829,9 @@ function stopPlay(){ clearTimeout(timer); timer=null; playing=false; paused=fals
 function schedule(ms){ clearTimeout(timer); timer=setTimeout(tick, ms/speed); }
 function tick(){
   var sl=slides[cur];
-  if(step>=sl._max){ playing=false; paused=false; ui(); return; }
+  if(step>=sl._max){ playing=false; paused=false; ui();
+    if(sl.dataset.anim==='loop'&&!RM.matches){ var me=cur; timer=setTimeout(function(){ if(cur===me&&ov.hidden){ play(); } },2600); }
+    return; }
   setStep(step+1,false);
   schedule(waitFor(sl,step));
 }
@@ -840,18 +851,16 @@ function go(i,atEnd){
   stopPlay();
   slides.forEach(function(s){s.classList.remove('on')}); cur=i; slides[cur].classList.add('on');
   var sc=$('.sc',slides[cur]); if(sc) sc.scrollTop=0;
-  var full=RM.matches||atEnd;
-  setStep(full?slides[cur]._max:0,true);
+  var an=slides[cur].dataset.anim;
+  setStep((RM.matches||!an)?slides[cur]._max:0,true);
   try{ history.replaceState(null,'','#'+(cur+1)); }catch(e){}
-  if(mode==='all' && !RM.matches && !atEnd) play();
+  if(an && !RM.matches) play();
 }
 function next(){
-  if(mode==='steps' && step<slides[cur]._max){ stopPlay(); setStep(step+1,false); return; }
   if(cur<N-1) go(cur+1);
 }
 function prev(){
-  if(mode==='steps' && step>0){ stopPlay(); setStep(step-1,true); return; }
-  if(cur>0) go(cur-1,mode==='steps');
+  if(cur>0) go(cur-1);
 }
 function setMode(m){ mode=m; stopPlay(); ui(); if(mode==='all') play(); }
 function setSpeed(v){ speed=v; root.style.setProperty('--sp',v); ui(); }
@@ -859,25 +868,38 @@ function setSpeed(v){ speed=v; root.style.setProperty('--sp',v); ui(); }
 var ind=$('#ind'), bPlay=$('#b-play');
 function ui(){
   var mx=slides[cur]._max;
-  ind.innerHTML='слайд '+(cur+1)+' / '+N+(mx?'<span class="st">шаг '+step+' / '+mx+'</span>':'');
+  ind.innerHTML='слайд '+(cur+1)+' / '+N;
   $('#prog i').style.width=((cur+1)/N*100)+'%';
-  $('#m-steps').setAttribute('aria-pressed',mode==='steps');
-  $('#m-all').setAttribute('aria-pressed',mode==='all');
   $$('[data-speed]').forEach(function(b){ b.setAttribute('aria-pressed', +b.dataset.speed===speed); });
-  bPlay.querySelector('.lbl2').textContent = playing&&!paused ? 'Пауза' : 'Проиграть';
+  bPlay.style.display=slides[cur].dataset.anim?'':'none';
+  bPlay.querySelector('.lbl2').textContent = playing&&!paused ? 'Пауза' : 'Повторить';
 }
 $('#b-prev').onclick=prev; $('#b-next').onclick=next;
-$('#m-steps').onclick=function(){setMode('steps')}; $('#m-all').onclick=function(){setMode('all')};
 bPlay.onclick=function(){ if(!togglePause()) play(); };
 $$('[data-speed]').forEach(function(b){ b.onclick=function(){ setSpeed(+b.dataset.speed); }; });
 /* overview */
 var ov=$('#ov'), ovg=$('.ovg',ov);
 slides.forEach(function(s,k){
   var b=document.createElement('button'); b.className='ovi'; b.type='button';
-  b.innerHTML='<span class="mono">'+(k+1)+'</span><span></span>'; b.lastChild.textContent=s.dataset.label;
+  b.innerHTML='<span class="ovt"></span><span class="ovn"><span class="mono">'+(k+1)+'</span><span></span></span>'; b.querySelector('.ovn').lastChild.textContent=s.dataset.label;
   b.onclick=function(){ closeOv(); go(k); }; ovg.appendChild(b);
 });
-function openOv(){ ov.hidden=false; $$('.ovi',ov).forEach(function(b,k){b.classList.toggle('cur',k===cur)}); var c=$('.ovi.cur',ov); if(c)c.focus(); }
+var ovBuilt=false;
+function buildThumbs(){
+  var W=innerWidth, H=innerHeight;
+  $$('.ovi',ov).forEach(function(b,k){
+    var box=$('.ovt',b); box.innerHTML='';
+    var c=slides[k].cloneNode(true); c.classList.add('on'); c.removeAttribute('id');
+    $$('[id]',c).forEach(function(e){e.removeAttribute('id')});
+    $$('input,button,select,textarea',c).forEach(function(e){e.tabIndex=-1});
+    c.setAttribute('aria-hidden','true'); c.style.width=W+'px'; c.style.height=H+'px';
+    box.appendChild(c);
+    var sc=box.clientWidth/W; c.style.transform='scale('+sc+')';
+  });
+  ovBuilt=true;
+}
+addEventListener('resize',function(){ ovBuilt=false; if(!ov.hidden) buildThumbs(); });
+function openOv(){ stopPlay(); ov.hidden=false; if(!ovBuilt) buildThumbs(); $$('.ovi',ov).forEach(function(b,k){b.classList.toggle('cur',k===cur)}); var c=$('.ovi.cur',ov); if(c)c.focus(); }
 function closeOv(){ ov.hidden=true; }
 $('#b-ov').onclick=openOv;
 /* keys */
@@ -893,12 +915,11 @@ document.addEventListener('keydown',function(e){
     case 'ArrowRight': case 'PageDown': e.preventDefault(); next(); return;
     case 'ArrowLeft': case 'PageUp': e.preventDefault(); prev(); return;
     case ' ': if(isBtn) return; e.preventDefault();
-      if(mode==='all'){ if(!togglePause()){ if(step>=slides[cur]._max) next(); else play(); } } else next(); return;
+      next(); return;
     case 'Home': e.preventDefault(); go(0); return;
     case 'End': e.preventDefault(); go(N-1); return;
   }
   var k=e.key.toLowerCase();
-  if(k==='a'||k==='ф'){ setMode(mode==='steps'?'all':'steps'); return; }
   if(k==='r'||k==='к'){ play(); return; }
   if(/^[0-9]$/.test(e.key)){
     dbuf+=e.key; clearTimeout(dtm);
@@ -1024,15 +1045,16 @@ def render():
            '<div id="prog"><i></i></div><main id="deck">']
     for label, kick, title, body, cls in S:
         head = "" if not title else f'<header class="sh">{"<div class=kick>"+kick+"</div>" if kick else ""}<h2>{title}</h2></header>'
-        out.append(f'<section class="slide {cls}" data-label="{label}"><div class="sc"><div class="wrap">{head}{body}</div></div></section>')
+        anim = 'loop' if label in ANIM_LOOP else 'once' if label in ANIM_ONCE else ''
+        out.append(f'<section class="slide {cls}" data-label="{label}" data-anim="{anim}"><div class="sc"><div class="wrap">{head}{body}</div></div></section>')
     out.append('</main>')
     out.append('<nav id="nav" aria-label="Навигация по слайдам">'
                f'<button id="b-prev" type="button" aria-label="Назад">{ICON_L}</button>'
                '<span id="ind" aria-live="polite"></span>'
                f'<button id="b-next" type="button" aria-label="Вперёд">{ICON_R}</button>'
                '<span class="nsep"></span>'
-               '<span class="seg"><button id="m-steps" type="button" title="Клавиша A">По этапам</button><button id="m-all" type="button" title="Клавиша A">Целиком</button></span>'
-               '<button id="b-play" type="button" title="Клавиша R"><svg viewBox="0 0 24 24"><path d="M7 5l11 7-11 7z"/></svg><span class="lbl2">Проиграть</span></button>'
+               
+               '<button id="b-play" type="button" title="Клавиша R"><svg viewBox="0 0 24 24"><path d="M7 5l11 7-11 7z"/></svg><span class="lbl2">Повторить</span></button>'
                '<span class="seg"><button type="button" data-speed="0.5">0.5×</button><button type="button" data-speed="1">1×</button><button type="button" data-speed="2">2×</button></span>'
                '<button id="b-ov" type="button" title="Esc"><svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg><span class="lbl2">Содержание</span></button>'
                '</nav>')
@@ -1041,5 +1063,69 @@ def render():
     out.append('<script>' + js + '</script></body></html>')
     OUT.write_text("".join(out), encoding="utf-8")
     print(len(S), "slides", OUT.stat().st_size, "bytes")
+
+# ==== доработка по ЛК8: схемы из pptx, Wireshark, анимация по месту ====
+import base64, io, glob
+from PIL import Image as _Im
+DL = r"C:/Users/anank/Downloads/"
+PP = r"C:/Users/anank/AppData/Local/Temp/claude/p8/"
+def _jpg(path, w=1800, q=74):
+    im = _Im.open(path).convert("RGB")
+    if im.width > w: im = im.resize((w, round(im.height*w/im.width)), _Im.LANCZOS)
+    b = io.BytesIO(); im.save(b, "JPEG", quality=q, optimize=True, progressive=True)
+    return "data:image/jpeg;base64," + base64.b64encode(b.getvalue()).decode()
+def _dl(pref): return glob.glob(DL + pref + "*.jpg")[0]
+def figslide(label, kick, title, src, cap=""):
+    c = f'<p class="p sm figcap">{cap}</p>' if cap else ""
+    return (label, kick, title, f'<figure class="figx"><img src="{_jpg(src)}" alt="{title}"></figure>{c}', "figs")
+FIGS = [("Сегментация", figslide("Сегментация: схема", "Сегменты и потоки", "Сегментация файла 300 КБ", _dl("HLFbfQPm"))),
+ ("Мультиплексирование", figslide("Мультиплексирование: схема", "Сегменты и потоки", "Мультиплексирование потоков", _dl("e7Medrg8"))),
+ ("Адресация", figslide("Адресация: схема", "Порты и сокеты", "Обмен данными в сети: IP-адреса и порты", _dl("iY880CSX"))),
+ ("Сокеты", figslide("Сокеты: схема", "Порты и сокеты", "Клиент и сервер: IP-адрес и порт", _dl("G4IbKcEZ"))),
+ ("Заголовок TCP", figslide("Заголовок TCP: схема", "Протокол TCP", "Структура TCP-сегмента", _dl("MJ1xnWPS"))),
+ ("Флаги 1", figslide("Флаги в Wireshark", "Протокол TCP", "Флаги TCP-заголовка в Wireshark", PP + "s12_1.png", "При установке соединения в заголовке TCP выставлен флаг SYN, остальные флаги сброшены.")),
+ ("Рукопожатие", figslide("Рукопожатие: схема", "Установка соединения", "Трёхстороннее рукопожатие во времени", _dl("4xVcPsGf"))),
+ ("Рукопожатие: номера", figslide("Рукопожатие: заголовки", "Установка соединения", "Трёхстороннее рукопожатие: IP- и TCP-заголовки", _dl("lLmE7XF3"))),
+ ("Порядковые номера", figslide("Рукопожатие: данные", "Установка соединения", "Рукопожатие и полезная нагрузка", _dl("fY8Kij7O"))),
+ ("Окно: принцип", figslide("Окно: схема", "Надёжность TCP", "Установление соединения и передача данных", _dl("iXnA9OHk"))),
+ ("Окно: пример", figslide("Окно: обмен", "Надёжность TCP", "Обмен данными между двумя узлами: окно 3000 байт", _dl("MlkLqTqd"))),
+ ("Потеря данных", figslide("Потеря: схема", "Надёжность TCP", "Обмен данными: ожидание подтверждения", _dl("ZyaE-uFR"))),
+ ("Завершение сеанса", figslide("Завершение: схема", "Надёжность TCP", "Выключение TCP: четырёхстороннее квитирование", _dl("lf2Fo-i-"))),
+ ("Завершение: детали", figslide("Завершение: номера", "Надёжность TCP", "Выключение TCP: Seq и Ack на каждом шаге", _dl("DdFGAzhZ"))),
+ ("UDP: датаграммы", figslide("UDP: заголовок", "Протокол UDP", "Структура UDP-датаграммы", _dl("RChew0hT"))),
+]
+WSX = [("Первый этап рукопожатия (SYN)", PP + "s16_1.png", [
+  "Сам пакет, который мы рассмотрим изнутри.",
+  "Клиент отправляет запрос на сервер: порт источника — частный <b class='mono'>54824</b>, порт назначения — общеизвестный <b class='mono'>443</b> (HTTPS).",
+  "<b class='mono'>Sequence Number: 0</b> — относительный номер от начала сессии (его формирует Wireshark для удобства). <b class='mono'>Sequence Number (raw): 3638817700</b> — настоящий номер в сети. <b class='mono'>Next Sequence Number: 1</b> — следующий ожидаемый. <b class='mono'>Acknowledgment number</b> равен 0: ACK ещё не поступал.",
+  "Флаг <b>SYN</b> — начало синхронизации, запрос на соединение с сервером.",
+  "<b class='mono'>Window 64240</b> — размер окна приёма: сколько байт принимающая сторона может принять сейчас."]),
+ ("Второй этап рукопожатия (SYN, ACK)", PP + "s17_1.png", [
+  "Сам пакет, который мы рассмотрим изнутри.",
+  "Сервер отвечает клиенту: порт источника <b class='mono'>443</b>, порт назначения <b class='mono'>54824</b> — в ответе порты меняются местами.",
+  "<b class='mono'>Sequence Number: 0</b> — первая последовательность со стороны сервера, <b class='mono'>raw: 1565342372</b>. <b class='mono'>Acknowledgment number: 1</b> и <b class='mono'>raw: 3638817701</b> — это +1 к начальному номеру клиента.",
+  "Флаг <b>ACK</b> — подтверждение принятых данных.",
+  "Флаг <b>SYN</b> — начало синхронизации со стороны сервера.",
+  "<b class='mono'>Window 65160</b> — размер окна изменился: работает механизм «скользящего окна»."]),
+ ("Третий этап рукопожатия (ACK)", PP + "s18_1.png", [
+  "Сам пакет, который мы рассмотрим изнутри.",
+  "Порты снова поменялись местами: это данные от клиента для сервера.",
+  "<b class='mono'>Sequence Number: 1</b>, <b class='mono'>raw: 3638817701</b> — закономерное +1. <b class='mono'>Acknowledgment number: 1</b> и <b class='mono'>raw: 1565342373</b> — +1 к начальному номеру сервера.",
+  "Флаг <b>ACK</b> — подтверждение принятых данных.",
+  "<b class='mono'>Window 502</b> — окно меняется каждый раз в зависимости от сторон и загруженности сети."])]
+def _ws(i, t, src, items):
+    li = "".join(f'<li><span class="badge">{k+1}</span><span>{x}</span></li>' for k, x in enumerate(items))
+    return (f"Wireshark {i}", "Установка соединения", "Установка TCP-соединения в Wireshark",
+      f'<div class="wsx"><figure class="figx"><img src="{_jpg(src, 1600, 80)}" alt="{t}"></figure><div><h3 class="wsh">{t}</h3><ol class="steps sm">{li}</ol></div></div>', "figs")
+_new = []
+for it in S:
+    _new.append(it)
+    if it[0] == "Wireshark":
+        _new += [_ws(i+1, *w) for i, w in enumerate(WSX)]
+    for a, f in FIGS:
+        if a == it[0]: _new.append(f)
+S[:] = _new
+ANIM_LOOP = {"Мультиплексирование", "Адресация"}
+ANIM_ONCE = {"Сегментация", "Сокеты", "Рукопожатие", "Рукопожатие: номера", "Порядковые номера", "Окно: принцип", "Окно: пример", "Потеря данных", "Завершение сеанса", "Завершение: детали", "Управление потоком", "UDP: датаграммы"}
 
 render()
