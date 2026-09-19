@@ -85,21 +85,27 @@ def svg(vb, body, cls="dg"):
 
 # ---------------------------------------------------------------- 1. encapsulation
 ENC_ROWS = [(70, "Транспортный уровень (L4)"), (190, "Сетевой уровень (L3)"), (310, "Канальный уровень (L2)")]
-enc = "".join(f'<line class="row" x1="20" y1="{y+42}" x2="980" y2="{y+42}"/><text class="rowt" x="24" y="{y-10}">{t}</text>' for y, t in ENC_ROWS)
+enc = "".join(f'<line class="row" x1="20" y1="{y+42}" x2="980" y2="{y+42}"/><text class="rowt" x="24" y="{y-26}">{t}</text>' for y, t in ENC_ROWS)
 enc += ('<g class="an" data-id="seg"><rect class="bx sky" x="0" y="0" width="130" height="58" rx="10"/><text class="bxt" x="65" y="37" text-anchor="middle">TCP</text>'
         '<rect class="bx mint" x="134" y="0" width="200" height="58" rx="10"/><text class="bxt" x="234" y="37" text-anchor="middle">Данные</text></g>'
-        '<g class="an" data-id="ip"><rect class="bx pink" x="0" y="0" width="150" height="58" rx="10"/><text class="bxt" x="75" y="37" text-anchor="middle">Заголовок IP</text></g>')
+        '<g class="an" data-id="ip"><rect class="bx pink" x="0" y="0" width="150" height="58" rx="10"/><text class="bxt" x="75" y="37" text-anchor="middle">Заголовок IP</text></g>'
+        '<g class="an" data-id="fh"><rect class="bx fr" x="0" y="0" width="166" height="58" rx="10"/><text class="bxt" x="83" y="37" text-anchor="middle">Заголовок кадра</text></g>'
+        '<g class="an" data-id="ft"><rect class="bx fr" x="0" y="0" width="72" height="58" rx="10"/><text class="bxt" x="36" y="37" text-anchor="middle">FCS</text></g>')
 enc += cap("ecap", 500, 420)
 L4, L3, L2 = (330, 42), (560, 162), (560, 282)
 ENCAP = svg("0 0 1000 440", enc)
-ENC_SC = scene("encap", 7, {
-    "seg": {"p": {0: L4, 2: L3, 4: L2, 5: L3, 7: L4}, "o": {0: 0, 1: 1}},
-    "ip": {"p": {0: (406, 60), 3: (406, 162), 4: (406, 282), 5: (406, 162), 6: (300, 100)}, "o": {0: 0, 3: 1, 6: 0}},
+ENC_SC = scene("encap", 9, {
+    "seg": {"p": {0: L4, 2: L3, 4: L2, 7: L3, 9: L4}, "o": {0: 0, 1: 1}},
+    "ip": {"p": {0: (406, 60), 3: (406, 162), 4: (406, 282), 7: (406, 162), 8: (300, 100)}, "o": {0: 0, 3: 1, 8: 0}},
+    "fh": {"p": {0: (236, 230), 5: (236, 282), 6: (160, 360)}, "o": {0: 0, 5: 1, 6: 0}},
+    "ft": {"p": {0: (898, 230), 5: (898, 282), 6: (960, 360)}, "o": {0: 0, 5: 1, 6: 0}},
     "ecap": {"t": {1: "Сегмент приходит от транспортного уровня", 2: "Сегмент на сетевом уровне",
                    3: "Инкапсуляция: к данным добавляется заголовок IP", 4: "Пакет передаётся на канальный уровень",
-                   5: "Пакет приходит с канального уровня", 6: "Декапсуляция: заголовок пакета удаляется",
-                   7: "Сегмент передаётся протоколу транспортного уровня"}},
-}, {1: 900, 2: 1200, 3: 1200, 4: 1300, 5: 1300, 6: 1100, 7: 1200})
+                   5: "Инкапсуляция на L2: добавляются заголовок кадра и концевик (FCS) — получился кадр",
+                   6: "У получателя: канальный уровень удаляет заголовок и концевик кадра",
+                   7: "Пакет передаётся на сетевой уровень", 8: "Декапсуляция: заголовок пакета удаляется",
+                   9: "Сегмент передаётся протоколу транспортного уровня"}},
+}, {1: 900, 2: 1200, 3: 1200, 4: 1300, 5: 1600, 6: 1500, 7: 1200, 8: 1100, 9: 1200})
 
 # ---------------------------------------------------------------- 2. connectionless
 cl = pcsym(110, 210, "PC-1") + pcsym(890, 210, "PC-2")
@@ -856,7 +862,8 @@ svg [data-s]{transform:none}
 .row{stroke:rgba(255,255,255,.3);stroke-width:2;stroke-dasharray:6 8}
 .dg .rowt{fill:var(--dim);font-size:18px}
 .bx{stroke:rgba(255,255,255,.55);stroke-width:1.5}
-.bx.sky{fill:rgba(111,178,255,.55)}.bx.mint{fill:rgba(93,220,176,.5)}.bx.pink{fill:rgba(240,122,180,.6)}.bx.glass{fill:rgba(255,255,255,.14)}
+.bx.sky{fill:rgba(111,178,255,.55)}.bx.mint{fill:rgba(93,220,176,.5)}.bx.pink{fill:rgba(240,122,180,.6)}
+.bx.fr{fill:rgba(255,196,110,.62)}.bx.glass{fill:rgba(255,255,255,.14)}
 .dg .bxt{font-weight:700;font-size:21px}
 .dg .cap,.dg .capm{font-size:22px;font-weight:600}
 .dg .capm{fill:var(--mint);font-family:var(--mono)}
@@ -1035,6 +1042,23 @@ svg [data-s]{transform:none}
 .ovt>.slide{position:absolute!important;inset:auto!important;left:0;top:0;display:block!important;transform-origin:0 0}
 .ovt [data-s]{opacity:1!important;transform:none!important}
 .ovi .ovn{display:flex;gap:.6rem;align-items:baseline;font-size:.95rem}
+.fld.off{opacity:.3;filter:saturate(.4)}
+.fld.big{min-height:6.4rem}
+.figh{max-width:92rem;margin:0 auto}.figh .fld{min-height:4.2rem}.figh .fld b{font-size:1.15rem}.figh .fld.big{min-height:7rem}
+.htot{text-align:center;margin-top:.9rem;font-size:1.05rem;opacity:.9}
+.flow{display:flex;flex-direction:column;align-items:center;gap:0;max-width:64rem;margin:0 auto}
+.fl-b{background:var(--glass);border:1px solid var(--edge);border-radius:16px;padding:1rem 1.6rem;text-align:center;font-size:1.25rem;line-height:1.45;box-shadow:var(--hl),var(--sh)}
+.fl-a{width:3px;height:2rem;background:rgba(255,255,255,.7);position:relative}
+.fl-a::after{content:"";position:absolute;left:50%;bottom:-2px;transform:translateX(-50%);border:8px solid transparent;border-top-color:rgba(255,255,255,.85)}
+.fl-d{width:15rem;height:15rem;display:grid;place-items:center;margin:1.2rem 0}
+.fl-d span{display:grid;place-items:center;width:10.6rem;height:10.6rem;transform:rotate(45deg);background:rgba(93,220,176,.28);border:2px solid var(--mint);border-radius:18px}
+.fl-d span{font-size:0;position:relative}
+.fl-d span::after{content:"IP-адреса в одной сети?";position:absolute;inset:0;display:grid;place-items:center;transform:rotate(-45deg);font-size:1.15rem;font-weight:700;text-align:center;padding:1.4rem}
+.fl-split{display:grid;grid-template-columns:1fr 1fr;gap:2.4rem;width:100%}
+.fl-br{display:flex;flex-direction:column;align-items:center;gap:.6rem}
+.fl-tag{font-weight:800;font-family:var(--mono);padding:.25rem .9rem;border-radius:999px}
+.fl-tag.ok{background:var(--mint);color:var(--deep)}.fl-tag.no{background:var(--pink);color:#fff}
+.fl-b.ok{border-color:var(--mint)}.fl-b.no{border-color:var(--pink)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
 @media print{.slide{display:block;position:relative;height:auto;page-break-after:always}[data-s]{opacity:1;transform:none}#nav,#prog{display:none}html,body{overflow:visible;height:auto}}
 """
@@ -1451,6 +1475,49 @@ for it in S:
     for a, lab, kick, title, src in FIGS:
         if a == it[0]: _new.append(figslide(lab, kick, title, src))
 S[:] = _new
+# ==== слайды-схемы вёрсткой (как слайд «Заголовок IPv4») ====
+def hdr_focus(rows, focus, total=None):
+    out = []
+    for row in rows:
+        out.append([(l, b, c if (focus is None or l in focus) else c + " off", t) for (l, b, c, t) in row])
+    ruler = '<div class="ruler mono"><span>0</span><span>8</span><span>16</span><span>24</span><span>31</span></div>'
+    tot = f'<div class="htot mono">{total}</div>' if total else ""
+    g = hdr_grid(out)
+    if rows is HDR6: g = g.replace('Address</b><span class="mono">32 бит', 'Address</b><span class="mono">128 бит')
+    return f'<div class="card hdrcard figh">{ruler}{g}{tot}</div>'
+HDR6 = [
+    [("Version", 4, "sky", "Версия протокола: 6 (0110)."), ("Traffic Class", 8, "sky", "Класс трафика: приоритет, как DSCP/ECN в IPv4."),
+     ("Flow Label", 20, "lilac", "Метка потока: идентификатор сессии TCP или медиапотока UDP.")],
+    [("Payload Length", 16, "lilac", "Длина полезной нагрузки в октетах."), ("Next Header", 8, "sky", "Номер протокола L4 или заголовка-расширения."),
+     ("Hop Limit", 8, "mint", "Лимит переходов: каждый маршрутизатор уменьшает на 1.")],
+    [("Source Address", 32, "pink big", "128-битный адрес отправителя.")],
+    [("Destination Address", 32, "pink big", "128-битный адрес получателя.")],
+]
+FLOW = """<div class="flow">
+  <div class="fl-b">Мой адрес <b class="mono">192.168.1.2/24</b><br>Отправляю пакет на <b class="mono">192.168.3.2</b></div>
+  <div class="fl-a"></div>
+  <div class="fl-b">Операция побитового «И» над адресами и маской</div>
+  <div class="fl-a"></div>
+  <div class="fl-d"><span>IP-адреса в одной сети?</span></div>
+  <div class="fl-split">
+    <div class="fl-br"><div class="fl-tag ok">ДА</div><div class="fl-b ok">Отправить ARP-запрос для получения MAC-адреса <b>получателя</b></div></div>
+    <div class="fl-br"><div class="fl-tag no">НЕТ</div><div class="fl-b no">Отправить ARP-запрос для получения MAC-адреса <b>шлюза по умолчанию</b></div></div>
+  </div>
+</div>"""
+REDRAW = {
+ "Поля IPv4 1: схема": hdr_focus(HDR4, {"Version", "IHL", "DSCP", "ECN", "Total Length"}, "первые 32 бита из 160"),
+ "Поля IPv4 2: схема": hdr_focus(HDR4, {"Identification", "Flags", "Fragment Offset"}, "биты 32–63 из 160"),
+ "Поля IPv4 3: схема": hdr_focus(HDR4, {"TTL", "Protocol", "Header Checksum"}, "биты 64–95 из 160"),
+ "Поля IPv4 4: схема": hdr_focus(HDR4, {"Source IP Address", "Destination IP Address", "Options"}, "адреса: 64 бита из 160 · опции: до 320 бит"),
+ "Заголовок IPv6: схема": hdr_focus(HDR6, None, "фиксированный заголовок: 320 бит (40 байт)"),
+ "Поля IPv6 1: схема": hdr_focus(HDR6, {"Version", "Traffic Class", "Flow Label"}, "первые 32 бита из 320"),
+ "Поля IPv6 2: схема": hdr_focus(HDR6, {"Payload Length", "Next Header", "Hop Limit"}, "биты 32–63 из 320"),
+ "Шлюз: схема": FLOW,
+}
+for k, it in enumerate(S):
+    if it[0] in REDRAW:
+        S[k] = (it[0], it[1], it[2], REDRAW[it[0]], "")
+
 # персонажи
 CHARS = {"Титул": ("wiz_happy", "r"), "Цели главы": ("star_blob", "r"), "Тренажёр: TTL": ("wiz_happy", "r"), "Тренажёр: маршрут": ("wiz_star", "r"),
          "Проверь себя": ("star_blob", "r")}
