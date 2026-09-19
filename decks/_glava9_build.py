@@ -1015,7 +1015,7 @@ svg [data-s]{transform:none}
   #nav{bottom:6px;font-size:12px;width:calc(100vw - 12px)}
   #nav .lbl2{display:none}
 }
-.figs .wrap{max-width:110rem}.figx{margin:0;display:flex;justify-content:center}.figx img{max-width:100%;max-height:74vh;height:auto;border-radius:16px;box-shadow:0 14px 44px rgba(10,6,40,.35)}
+.figs .wrap{max-width:none;width:100%}.figs .sh{margin-bottom:.4rem}.figs .sh h2{font-size:1.5rem}.figx{margin:0;display:flex;justify-content:center}.figx img{width:auto;max-width:100%;max-height:80vh;image-rendering:auto;height:auto;border-radius:16px;box-shadow:0 14px 44px rgba(10,6,40,.35)}
 .wsx{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:1.6rem;align-items:start}
 @media (max-width:900px){.wsx{grid-template-columns:1fr}}
 .wsk{background:#fff;color:#1b1d33;border-radius:14px;overflow:hidden;box-shadow:0 12px 36px rgba(10,6,40,.3);font-size:.8rem}
@@ -1338,10 +1338,10 @@ from PIL import Image as _Im
 DL = r"C:/Users/anank/Downloads/"
 PP = r"C:/Users/anank/AppData/Local/Temp/claude/p9/"
 CH = r"C:/Users/anank/AppData/Local/Temp/claude/chars/"
-def _jpg(path, w=1800, q=74):
+def _jpg(path, w=2400, q=92):
     im = _Im.open(path).convert("RGB")
     if im.width > w: im = im.resize((w, round(im.height*w/im.width)), _Im.LANCZOS)
-    b = io.BytesIO(); im.save(b, "JPEG", quality=q, optimize=True, progressive=True)
+    b = io.BytesIO(); im.save(b, "JPEG", quality=q, optimize=True, progressive=True, subsampling=0)
     return "data:image/jpeg;base64," + base64.b64encode(b.getvalue()).decode()
 def _png(path, w=420):
     im = _Im.open(path).convert("RGBA"); im.thumbnail((w, w))

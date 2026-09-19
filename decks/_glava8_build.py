@@ -780,7 +780,7 @@ rect.src{fill:#fff;stroke:var(--c);stroke-width:2.4}.dg .srct{font-size:21px;fon
   #nav{bottom:6px;font-size:12px}
   #nav .lbl2{display:none}
 }
-.figs .wrap{max-width:110rem}.figx{margin:0;display:flex;justify-content:center}.figx img{max-width:100%;max-height:74vh;height:auto;border-radius:14px;box-shadow:0 10px 40px rgba(20,24,80,.18);background:#fff}
+.figs .wrap{max-width:none;width:100%}.figs .sh{margin-bottom:.4rem}.figs .sh h2{font-size:1.5rem}.figx{margin:0;display:flex;justify-content:center}.figx img{width:auto;max-width:100%;max-height:80vh;image-rendering:auto;height:auto;border-radius:14px;box-shadow:0 10px 40px rgba(20,24,80,.18);background:#fff}
 .figcap{text-align:center;margin-top:1rem}.wsx{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:2rem;align-items:start}.wsx .figx img{max-height:76vh}.wsh{margin:0 0 1rem;font-size:1.3rem}
 @media (max-width:900px){.wsx{grid-template-columns:1fr}}
 .ovg{grid-template-columns:repeat(auto-fill,minmax(17rem,1fr));gap:1rem}
@@ -1080,10 +1080,10 @@ import base64, io, glob
 from PIL import Image as _Im
 DL = r"C:/Users/anank/Downloads/"
 PP = r"C:/Users/anank/AppData/Local/Temp/claude/p8/"
-def _jpg(path, w=1800, q=74):
+def _jpg(path, w=2400, q=92):
     im = _Im.open(path).convert("RGB")
     if im.width > w: im = im.resize((w, round(im.height*w/im.width)), _Im.LANCZOS)
-    b = io.BytesIO(); im.save(b, "JPEG", quality=q, optimize=True, progressive=True)
+    b = io.BytesIO(); im.save(b, "JPEG", quality=q, optimize=True, progressive=True, subsampling=0)
     return "data:image/jpeg;base64," + base64.b64encode(b.getvalue()).decode()
 def _dl(pref): return glob.glob(DL + pref + "*.jpg")[0]
 def figslide(label, kick, title, src, cap=""):
