@@ -986,6 +986,10 @@ function fbarInit(bar,scope,onChange){
 }
 
 /* ===================== SVG: узлы и пакеты ===================== */
+function seg(ax,ay,bx,by,ra,rb){const dx=bx-ax,dy=by-ay,L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L;
+  const d=r=>r?1/Math.hypot(ux/r[0],uy/r[1]):0;const da=d(ra),db=d(rb);
+  return `M${(ax+ux*da).toFixed(1)} ${(ay+uy*da).toFixed(1)}L${(bx-ux*db).toFixed(1)} ${(by-uy*db).toFixed(1)}`;}
+const RAD={pc:s=>[s*.4,s*.3],sw:s=>[s*.42,s*.22],r:s=>[s*.4,s*.3]};
 function svgNode(kind,x,y,{lab='',ip='',col='#b69cff',size=120,labPos='below'}={}){
   const icon={pc:'laptop',sw:'switch-l2',r:'router',srv:'server'}[kind];
   let s=`<use href="#${icon}" x="${x-size/2}" y="${y-size/2}" width="${size}" height="${size}" style="color:${col}"/>`;
@@ -1050,7 +1054,7 @@ function flBuild(){
 }
 function flDraw(){
   const N=FL.nodes;let s='';
-  FL.links.forEach(([a,b])=>s+=`<path class="lnk" d="M${N[a].x} ${N[a].y}L${N[b].x} ${N[b].y}"/>`);
+  const rr=n=>n.t==='sw'?RAD.sw(120):RAD.pc(96);FL.links.forEach(([a,b])=>s+=`<path class="lnk" d="${seg(N[a].x,N[a].y,N[b].x,N[b].y,rr(N[a]),rr(N[b]))}"/>`);
   Object.entries(N).forEach(([id,n])=>{
     if(n.t==='sw')s+=svgNode('sw',n.x,n.y,{lab:n.lab,col:'var(--azure)',size:120,labPos:'above'});
     else{const col=id===FL.src?'var(--magenta)':id===FL.target?'var(--lime)':'#b69cff';
@@ -1105,8 +1109,8 @@ const R={r:[850,95],s1:[300,330],s2:[1400,330],s3:[850,410],
 function r1Draw(){
   let s=`<g stroke-width="2"><rect x="20" y="200" width="570" height="430" rx="22" fill="rgba(230,76,255,.06)" stroke="rgba(230,76,255,.5)"/><rect x="620" y="200" width="460" height="430" rx="22" fill="rgba(59,167,255,.06)" stroke="rgba(59,167,255,.5)"/><rect x="1110" y="200" width="570" height="430" rx="22" fill="rgba(139,92,246,.08)" stroke="rgba(160,120,255,.5)"/></g>
   <text x="44" y="244" font-size="28" font-weight="700" style="fill:#f3a8ff">Сеть 1: 192.168.1.0/24</text><text x="1656" y="244" text-anchor="end" font-size="28" font-weight="700" style="fill:#c9b6ff">Сеть 2: 192.168.2.0/24</text><text x="644" y="244" font-size="28" font-weight="700" style="fill:#a8d4ff">Сеть 3:</text><text x="644" y="280" font-size="26" font-weight="700" style="fill:#a8d4ff">192.168.3.0/24</text>`;
-  s+=`<path class="lnk" d="M${R.r[0]} ${R.r[1]}L${R.s1[0]} ${R.s1[1]}M${R.r[0]} ${R.r[1]}L${R.s2[0]} ${R.s2[1]}M${R.r[0]} ${R.r[1]}L${R.s3[0]} ${R.s3[1]}"/>`;
-  [['s1','n1'],['s2','n2'],['s3','n3']].forEach(([sw,n])=>R[n].forEach(p=>s+=`<path class="lnk" d="M${R[sw][0]} ${R[sw][1]}L${p[0]} ${p[1]}"/>`));
+  ['s1','s2','s3'].forEach(k=>s+=`<path class="lnk" d="${seg(R.r[0],R.r[1],R[k][0],R[k][1],RAD.r(130),RAD.sw(110))}"/>`);
+  [['s1','n1'],['s2','n2'],['s3','n3']].forEach(([sw,n])=>R[n].forEach(p=>s+=`<path class="lnk" d="${seg(R[sw][0],R[sw][1],p[0],p[1],RAD.sw(110),RAD.pc(80))}"/>`));
   s+=svgNode('r',...R.r,{col:'var(--magenta)',size:130});
   s+=`<text x="${R.r[0]+78}" y="112" font-size="32" font-weight="700">R1</text>
    <text x="${R.r[0]-80}" y="70" text-anchor="end" class="mt" font-size="25" style="fill:#f3a8ff">G0/0 192.168.1.1</text>
@@ -1409,7 +1413,7 @@ function byCount(P,kick){
 function topoNets(sl,np){
   const svg=$('.bot svg',sl);if(!svg)return;const rows=$$('.tsk tbody tr',sl);
   const pos=[[190,110],[570,110],[190,410],[570,410]],cols=['var(--magenta)','var(--azure)','var(--magenta)','var(--azure)'];
-  let s='';pos.forEach(p=>s+=`<path class="lnk" d="M380 260L${p[0]} ${p[1]}"/>`);
+  let s='';pos.forEach(p=>s+=`<path class="lnk" d="${seg(380,260,p[0],p[1],RAD.r(110),null)}"/>`);
   s+=svgNode('r',380,260,{col:'var(--magenta)',size:110});
   pos.forEach((p,i)=>{const inp=rows[i]&&rows[i].querySelector('.fx input');const okv=inp&&inp.classList.contains('ok')?inp.value+'/'+np:'?';
     s+=`<rect x="${p[0]-170}" y="${p[1]-80}" width="340" height="160" rx="18" fill="rgba(10,6,26,.9)" stroke="${cols[i]}" stroke-width="2.5"/>`+
@@ -1449,7 +1453,7 @@ $$('[data-solver]').forEach(sl=>buildSolver(sl,SOLVERS[sl.dataset.solver]));
 /* ===================== VLSM ===================== */
 function vlsmTopo(svg,{labels,lan,link,ip}){
   const HQ=[380,300],F1=[140,520],F2=[620,520];
-  let s=`<path d="M${HQ[0]} ${HQ[1]}L${F1[0]} ${F1[1]}" stroke="var(--magenta)" stroke-width="3"/><path d="M${HQ[0]} ${HQ[1]}L${F2[0]} ${F2[1]}" stroke="var(--azure)" stroke-width="3"/>
+  let s=`<path d="${seg(HQ[0],HQ[1],F1[0],F1[1],RAD.r(120),RAD.r(110))}" stroke="var(--magenta)" stroke-width="3"/><path d="${seg(HQ[0],HQ[1],F2[0],F2[1],RAD.r(120),RAD.r(110))}" stroke="var(--azure)" stroke-width="3"/>
    <path d="M${HQ[0]} 164V245M${F1[0]} 570V606M${F2[0]} 570V606" stroke="#a78bfa" stroke-width="3"/>`;
   const box=(x,y,w,t1,t2,col)=>`<rect x="${x-w/2}" y="${y-54}" width="${w}" height="108" rx="20" fill="rgba(10,6,26,.9)" stroke="${col}" stroke-width="2.5"/><text x="${x}" y="${y-8}" text-anchor="middle" font-size="28" font-weight="700">${t1}</text><text x="${x}" y="${y+34}" text-anchor="middle" class="mt" font-size="${ip?20:26}" style="fill:${col}">${t2}</text>`;
   s+=box(HQ[0],110,ip?420:300,lan[0][0],lan[0][1],'var(--magenta)')+box(F1[0],660,ip?270:250,lan[1][0],lan[1][1],'#c9b6ff')+box(F2[0],660,ip?270:250,lan[2][0],lan[2][1],'var(--azure)');
