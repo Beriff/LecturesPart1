@@ -789,6 +789,17 @@ rect.src{fill:#fff;stroke:var(--c);stroke-width:2.4}.dg .srct{font-size:21px;fon
 .ovt>.slide{position:absolute!important;inset:auto!important;left:0;top:0;display:block!important;transform-origin:0 0}
 .ovt [data-s]{opacity:1!important;transform:none!important}.ovt .arr .draw{stroke-dashoffset:0!important}.ovt .arr .head,.ovt .arr .lbl{opacity:1!important}
 .ovi .ovn{display:flex;gap:.6rem;align-items:baseline;font-size:.95rem}
+.wsk{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 10px 30px rgba(20,24,80,.1);font-size:.78rem}
+.wst{width:100%;border-collapse:collapse;font-family:var(--fm,ui-monospace,Consolas,monospace)}
+.wst th{background:#eef0f7;text-align:left;font-family:var(--f);font-weight:600;padding:.45em .6em;border-bottom:1px solid var(--line);color:#556}
+.wst td{padding:.45em .6em;border-bottom:1px solid #eef0f7;white-space:nowrap}.wst td:last-child{white-space:normal}
+.wst tr.sel td{background:#2d5bff;color:#fff;font-weight:600}
+.wsd{padding:.8em 1em;font-family:var(--fm,ui-monospace,Consolas,monospace);line-height:1.75;background:#fafbfe}
+.wl{white-space:nowrap}.wl.i1{padding-left:1.4em}.wl.i3{padding-left:2.8em;color:#445}.wl.dim{color:#8a8fa8}
+.whl{background:#fff1a8;border-radius:5px;padding:.1em .35em}
+.wn{display:inline-grid;place-items:center;width:1.45em;height:1.45em;border-radius:50%;background:#e5383b;color:#fff;font:700 .8em/1 var(--f);margin-right:.45em;vertical-align:.1em}
+.wst tr.sel .wn{background:#fff;color:#2d5bff}
+.wbad{background:#e5383b!important;color:#fff!important}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{transition:none!important;animation:none!important}
 }
@@ -1125,6 +1136,61 @@ for it in S:
     for a, f in FIGS:
         if a == it[0]: _new.append(f)
 S[:] = _new
+# ==== Wireshark вёрсткой (в стиле ARP-слайда) ====
+def _b(n): return f'<span class="wn">{n}</span>'
+def _hl(txt, n=None): return f'<span class="whl">{_b(n) if n else ""}{txt}</span>'
+_PK = [("4836","23.948769626","10.25.200.60","62.109.1.166","TCP","74","54824 → 443 [SYN] Seq=0 Win=64240 Len=0"),
+       ("4845","23.993051706","62.109.1.166","10.25.200.60","TCP","74","443 → 54824 [SYN, ACK] Seq=0 Ack=1 Win=65160 Len=0"),
+       ("4846","23.993083306","10.25.200.60","62.109.1.166","TCP","66","54824 → 443 [ACK] Seq=1 Ack=1 Win=502 Len=0"),
+       ("4847","23.993585209","10.25.200.60","62.109.1.166","TLSv1.3","2137","Client Hello")]
+def _flags(syn, ack, nsyn=None, nack=None):
+    rows = [("000. .... ....", "Reserved: Not set"), ("...0 .... ....", "Nonce: Not set"),
+            (".... 0... ....", "Congestion Window Reduced (CWR): Not set"), (".... .0.. ....", "ECN-Echo: Not set"),
+            (".... ..0. ....", "Urgent: Not set"),
+            (f".... ...{1 if ack else 0} ....", f"Acknowledgment: {'Set' if ack else 'Not set'}"),
+            (".... .... 0...", "Push: Not set"), (".... .... .0..", "Reset: Not set"),
+            (f".... .... ..{1 if syn else 0}.", f"Syn: {'Set' if syn else 'Not set'}"), (".... .... ...0", "Fin: Not set")]
+    out = ""
+    for bits, t in rows:
+        line = f"{bits} = {t}"
+        if t.startswith("Syn") and syn: line = _hl(line, nsyn)
+        if t.startswith("Acknowledgment") and ack: line = _hl(line, nack)
+        out += f'<div class="wl i3">{line}</div>'
+    return out
+def wshark(sel, src, dst, sp, dp, seq, seqraw, nxt, ackn, ackraw, flagcode, syn, ack, win, marks):
+    rows = ""
+    for i, r in enumerate(_PK):
+        c = ' class="sel"' if i == sel else ""
+        info = (_b(1) + r[6]) if i == sel else r[6]
+        rows += f'<tr{c}><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td><td>{r[4]}</td><td>{r[5]}</td><td>{info}</td></tr>'
+    fl = "SYN" if syn and not ack else "SYN, ACK" if syn else "ACK"
+    d = (f'<div class="wl">▸ Frame {_PK[sel][0]}: {_PK[sel][5]} bytes on wire, {_PK[sel][5]} bytes captured</div>'
+         f'<div class="wl">▸ Internet Protocol Version 4, Src: {src}, Dst: {dst}</div>'
+         f'<div class="wl">▾ Transmission Control Protocol, Src Port: {sp}, Dst Port: {dp}, Seq: {seq}</div>'
+         f'<div class="wl i1">{_hl(f"Source Port: {sp}", 2)}</div><div class="wl i1">{_hl(f"Destination Port: {dp}")}</div>'
+         f'<div class="wl i1">{_hl(f"Sequence Number: {seq}  (relative sequence number)", 3)}</div>'
+         f'<div class="wl i1">{_hl(f"Sequence Number (raw): {seqraw}")}</div>'
+         f'<div class="wl i1">{_hl(f"[Next Sequence Number: {nxt}  (relative sequence number)]")}</div>'
+         f'<div class="wl i1">{_hl(f"Acknowledgment Number: {ackn}")}</div><div class="wl i1">{_hl(f"Acknowledgment number (raw): {ackraw}")}</div>'
+         f'<div class="wl i1 dim">1010 .... = Header Length: 40 bytes (10)</div>'
+         f'<div class="wl i1">▾ Flags: {flagcode} ({fl})</div>' + _flags(syn, ack, marks.get("syn"), marks.get("ack")) +
+         f'<div class="wl i1">{_hl(f"Window: {win}", marks["win"])}</div>')
+    return ('<div class="wsk"><table class="wst"><thead><tr><th>No.</th><th>Time</th><th>Source</th><th>Destination</th><th>Protocol</th><th>Length</th><th>Info</th></tr></thead>'
+            f'<tbody>{rows}</tbody></table><div class="wsd">{d}</div></div>')
+WSV = [wshark(0,"10.25.200.60","62.109.1.166",54824,443,0,3638817700,1,0,0,"0x002",True,False,64240,{"syn":4,"win":5}),
+       wshark(1,"62.109.1.166","10.25.200.60",443,54824,0,1565342372,1,1,3638817701,"0x012",True,True,65160,{"ack":4,"syn":5,"win":6}),
+       wshark(2,"10.25.200.60","62.109.1.166",54824,443,1,3638817701,1,1,1565342373,"0x010",False,True,502,{"ack":4,"win":5})]
+for k, it in enumerate(S):
+    if it[0].startswith("Wireshark ") and it[0][-1].isdigit():
+        i = int(it[0][-1]) - 1
+        t, _src, items = WSX[i]
+        li = "".join(f'<li><span class="badge wbad">{n+1}</span><span>{x}</span></li>' for n, x in enumerate(items))
+        S[k] = (it[0], it[1], it[2], f'<div class="wsx">{WSV[i]}<div><h3 class="wsh">{t}</h3><ol class="steps sm">{li}</ol></div></div>', "figs")
+    if it[0] == "Флаги в Wireshark":
+        S[k] = (it[0], it[1], it[2], '<div class="wsk" style="max-width:62rem;margin:0 auto"><div class="wsd">'
+                '<div class="wl">▾ Flags: 0x002 (SYN)</div>' + _flags(True, False, 1) + '</div></div>'
+                '<p class="p sm figcap">При установке соединения в заголовке TCP выставлен только флаг SYN, остальные флаги сброшены.</p>', "figs")
+
 ANIM_LOOP = {"Мультиплексирование", "Адресация"}
 ANIM_ONCE = {"Сегментация", "Сокеты", "Рукопожатие", "Рукопожатие: номера", "Порядковые номера", "Окно: принцип", "Окно: пример", "Потеря данных", "Завершение сеанса", "Завершение: детали", "Управление потоком", "UDP: датаграммы"}
 
