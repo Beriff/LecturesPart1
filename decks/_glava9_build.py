@@ -790,10 +790,7 @@ CSS = r"""
 *{box-sizing:border-box;margin:0;padding:0}
 html{font-size:clamp(14px,min(1.02vw,1.86vh),28px)}
 html,body{height:100%;overflow:hidden;color:var(--ink);font-family:var(--f)}
-body{background:
-  radial-gradient(130% 110% at 100% 100%,rgba(240,122,180,.55),transparent 48%),
-  radial-gradient(120% 100% at 0% 0%,rgba(120,110,255,.85),transparent 55%),
-  linear-gradient(140deg,#5a52e8 0%,#6a5ced 38%,#8360e8 68%,#a465d8 100%);background-color:#6a5ced;background-attachment:fixed}
+body{background:linear-gradient(180deg,rgba(28,18,78,.55),rgba(40,24,96,.42) 55%,rgba(28,18,78,.6)),url(__BGIMG__) center/cover no-repeat;background-color:#3f358f;background-attachment:fixed}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 b{font-weight:700}
 #prog{position:fixed;left:0;top:0;height:4px;width:100%;z-index:30;background:rgba(255,255,255,.18)}
@@ -1018,6 +1015,26 @@ svg [data-s]{transform:none}
   #nav{bottom:6px;font-size:12px;width:calc(100vw - 12px)}
   #nav .lbl2{display:none}
 }
+.figs .wrap{max-width:110rem}.figx{margin:0;display:flex;justify-content:center}.figx img{max-width:100%;max-height:74vh;height:auto;border-radius:16px;box-shadow:0 14px 44px rgba(10,6,40,.35)}
+.wsx{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:1.6rem;align-items:start}
+@media (max-width:900px){.wsx{grid-template-columns:1fr}}
+.wsk{background:#fff;color:#1b1d33;border-radius:14px;overflow:hidden;box-shadow:0 12px 36px rgba(10,6,40,.3);font-size:.8rem}
+.wsd{padding:.9em 1.1em;font-family:var(--mono);line-height:1.8;background:#fafbfe;overflow-x:auto}
+.wl{white-space:nowrap}.wl.i1{padding-left:1.4em}.wl.i2{padding-left:2.8em;color:#445}.wl.dim{color:#8a8fa8}
+.whl{background:#fff1a8;border-radius:5px;padding:.1em .35em}
+.wn{display:inline-grid;place-items:center;width:1.45em;height:1.45em;border-radius:50%;background:#e5383b;color:#fff;font:700 .8em/1 var(--f);margin-right:.45em;vertical-align:.1em}
+.wbad{background:#e5383b!important;color:#fff!important}
+.wsl li{font-size:.95rem!important;line-height:1.4}
+.slide.on .wsx [data-s],.wsx [data-s]{opacity:1;transform:none}
+.chr{position:absolute;bottom:3.2rem;width:clamp(120px,15vw,300px);height:auto;pointer-events:none;z-index:3;filter:drop-shadow(0 12px 24px rgba(10,6,40,.35));animation:bob 4s ease-in-out infinite}
+.chr-r{right:2.2rem}.chr-l{left:2.2rem}
+@keyframes bob{50%{transform:translateY(-10px)}}
+.ovg{grid-template-columns:repeat(auto-fill,minmax(17rem,1fr));gap:1rem}
+.ovi{flex-direction:column;align-items:stretch;gap:.45rem;padding:.5rem}
+.ovt{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border-radius:8px;border:1px solid rgba(255,255,255,.25);pointer-events:none;background:#3f358f}
+.ovt>.slide{position:absolute!important;inset:auto!important;left:0;top:0;display:block!important;transform-origin:0 0}
+.ovt [data-s]{opacity:1!important;transform:none!important}
+.ovi .ovn{display:flex;gap:.6rem;align-items:baseline;font-size:.95rem}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
 @media print{.slide{display:block;position:relative;height:auto;page-break-after:always}[data-s]{opacity:1;transform:none}#nav,#prog{display:none}html,body{overflow:visible;height:auto}}
 """
@@ -1076,7 +1093,9 @@ function stopPlay(){ clearTimeout(timer); timer=null; playing=false; paused=fals
 function schedule(ms){ clearTimeout(timer); timer=setTimeout(tick, ms/speed); }
 function tick(){
   var sl=slides[cur];
-  if(step>=sl._max){ playing=false; paused=false; ui(); return; }
+  if(step>=sl._max){ playing=false; paused=false; ui();
+    if(sl.dataset.anim==='loop'&&!RM.matches){ var me=cur; timer=setTimeout(function(){ if(cur===me&&ov.hidden) play(); },2600); }
+    return; }
   setStep(step+1,false);
   schedule(waitFor(sl,step));
 }
@@ -1096,9 +1115,10 @@ function go(i,atEnd){
   stopPlay();
   slides.forEach(function(s){s.classList.remove('on')}); cur=i; slides[cur].classList.add('on');
   var sc=$('.sc',slides[cur]); if(sc) sc.scrollTop=0;
-  setStep(slides[cur]._max,true);
+  var hasSc=!!slides[cur]._scene;
+  setStep((hasSc&&!RM.matches)?0:slides[cur]._max,true);
   try{ history.replaceState(null,'','#'+(cur+1)); }catch(e){}
-  if(!RM.matches) play();
+  if(hasSc && !RM.matches) play();
 }
 function next(){ if(cur<N-1) go(cur+1); }
 function prev(){ if(cur>0) go(cur-1); }
@@ -1107,7 +1127,7 @@ function ui(){
   var mx=slides[cur]._max;
   ind.textContent=(cur+1)+' / '+N;
   $('#prog i').style.width=((cur+1)/N*100)+'%';
-  bPlay.disabled=!mx;
+  bPlay.disabled=!slides[cur]._scene; bPlay.style.visibility=slides[cur]._scene?'':'hidden';
 }
 $('#b-prev').onclick=prev; $('#b-next').onclick=next;
 bPlay.onclick=function(){ play(); };
@@ -1116,10 +1136,24 @@ document.addEventListener('click',function(e){ var b=e.target.closest&&e.target.
 var ov=$('#ov'), ovg=$('.ovg',ov);
 slides.forEach(function(s,k){
   var b=document.createElement('button'); b.className='ovi'; b.type='button';
-  b.innerHTML='<span class="mono">'+(k+1)+'</span><span></span>'; b.lastChild.textContent=s.dataset.label;
+  b.innerHTML='<span class="ovt"></span><span class="ovn"><span class="mono">'+(k+1)+'</span><span></span></span>'; b.querySelector('.ovn').lastChild.textContent=s.dataset.label;
   b.onclick=function(){ closeOv(); go(k); }; ovg.appendChild(b);
 });
-function openOv(){ ov.hidden=false; $$('.ovi',ov).forEach(function(b,k){b.classList.toggle('cur',k===cur)}); var c=$('.ovi.cur',ov); if(c)c.focus(); }
+var ovBuilt=false;
+function buildThumbs(){
+  var W=innerWidth, H=innerHeight;
+  $$('.ovi',ov).forEach(function(b,k){
+    var box=$('.ovt',b); box.innerHTML='';
+    var c=slides[k].cloneNode(true); c.classList.add('on'); c.removeAttribute('id');
+    $$('[id]',c).forEach(function(e){e.removeAttribute('id')});
+    $$('input,button,select,textarea',c).forEach(function(e){e.tabIndex=-1});
+    c.setAttribute('aria-hidden','true'); c.style.width=W+'px'; c.style.height=H+'px';
+    box.appendChild(c); c.style.transform='scale('+(box.clientWidth/W)+')';
+  });
+  ovBuilt=true;
+}
+addEventListener('resize',function(){ ovBuilt=false; if(!ov.hidden) buildThumbs(); });
+function openOv(){ stopPlay(); ov.hidden=false; if(!ovBuilt) buildThumbs(); $$('.ovi',ov).forEach(function(b,k){b.classList.toggle('cur',k===cur)}); var c=$('.ovi.cur',ov); if(c)c.focus(); }
 function closeOv(){ ov.hidden=true; }
 $('#b-ov').onclick=openOv;
 var dbuf='', dtm=null;
@@ -1273,11 +1307,12 @@ ICON_RR = '<svg viewBox="0 0 24 24"><path d="M12 5l7 7-7 7M5 5l7 7-7 7"/></svg>'
 def render():
     out = ['<!doctype html><html lang="ru"><head><meta charset="utf-8">'
            '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
-           '<title>Глава 9. Сетевой уровень</title><style>' + CSS + '</style></head><body>' + DEFS +
+           '<title>Глава 9. Сетевой уровень</title><style>' + CSS.replace('__BGIMG__', BGIMG) + '</style></head><body>' + DEFS +
            '<div id="prog"><i></i></div><main id="deck">']
     for label, kick, title, body, cls in S:
         head = "" if not title else f'<header class="sh">{"<div class=kick>"+kick+"</div>" if kick else ""}<h2>{title}</h2></header>'
-        out.append(f'<section class="slide {cls}" data-label="{label}"><div class="sc"><div class="wrap">{head}{body}</div></div></section>')
+        anim = 'loop' if label in ANIM_LOOP else ''
+        out.append(f'<section class="slide {cls}" data-label="{label}" data-anim="{anim}"><div class="sc"><div class="wrap">{head}{body}</div></div></section>')
     out.append('</main>')
     out.append('<nav id="nav" aria-label="Навигация по слайдам">'
                f'<button id="b-prev" type="button" aria-label="Предыдущий слайд">{ICON_L}</button>'
@@ -1296,5 +1331,136 @@ def render():
     out.append('<script>' + js + '</script></body></html>')
     OUT.write_text("".join(out), encoding="utf-8")
     print(len(S), "slides", OUT.stat().st_size, "bytes")
+
+# ==== доработка по ЛК9: схемы, Wireshark вёрсткой, задник, персонажи, анимация по месту ====
+import base64, io, glob
+from PIL import Image as _Im
+DL = r"C:/Users/anank/Downloads/"
+PP = r"C:/Users/anank/AppData/Local/Temp/claude/p9/"
+CH = r"C:/Users/anank/AppData/Local/Temp/claude/chars/"
+def _jpg(path, w=1800, q=74):
+    im = _Im.open(path).convert("RGB")
+    if im.width > w: im = im.resize((w, round(im.height*w/im.width)), _Im.LANCZOS)
+    b = io.BytesIO(); im.save(b, "JPEG", quality=q, optimize=True, progressive=True)
+    return "data:image/jpeg;base64," + base64.b64encode(b.getvalue()).decode()
+def _png(path, w=420):
+    im = _Im.open(path).convert("RGBA"); im.thumbnail((w, w))
+    b = io.BytesIO(); im.save(b, "WEBP", quality=82, method=6)
+    return "data:image/webp;base64," + base64.b64encode(b.getvalue()).decode()
+def _dl(pref): return glob.glob(DL + pref + "*.jpg")[0]
+def figslide(label, kick, title, src):
+    return (label, kick, title, f'<figure class="figx"><img src="{_jpg(src)}" alt="{title}"></figure>', "figs")
+FIGS = [
+ ("Без соединения", "Без соединения: схема", "Свойства IP", "Отправитель и получатель", _dl("STVkwuJj")),
+ ("Негарантированная доставка", "Доставка: схема", "Свойства IP", "Пакет 1 потерян, повторно не отправлен", _dl("cMFpXyip")),
+ ("Независимость от среды", "Среда: схема", "Свойства IP", "Разные среды передачи на одном пути", _dl("7HpxaUIe")),
+ ("Заголовок IPv4", "Заголовок IPv4: схема", "Протокол IPv4", "Заголовок IPv4 целиком", _dl("sjGAyQie")),
+ ("Поля IPv4: 1", "Поля IPv4 1: схема", "Протокол IPv4", "Version, IHL, DSCP, ECN, Total Length", _dl("bwPcBH1b")),
+ ("Поля IPv4: 2", "Поля IPv4 2: схема", "Протокол IPv4", "Identification, флаги DF и MF, Fragment Offset", _dl("sBNfj5_G")),
+ ("Поля IPv4: 3", "Поля IPv4 3: схема", "Протокол IPv4", "TTL, Protocol, Header Checksum", _dl("GReUSjuZ")),
+ ("Поля IPv4: 4", "Поля IPv4 4: схема", "Протокол IPv4", "Адреса источника и назначения, опции", _dl("9ElgQHnp")),
+ ("TTL", "TTL: схема", "Поле TTL", "TTL уменьшается на каждом маршрутизаторе", _dl("J74fdwjR")),
+ ("Time Exceeded", "Time Exceeded: схема", "Поле TTL", "ping -t: время жизни закончилось в пути", _dl("p3OFeTg3")),
+ ("Заголовок IPv6", "Заголовок IPv6: схема", "Протокол IPv6", "Заголовок IPv6 целиком", _dl("BU1ZScN0")),
+ ("Поля IPv6: 1", "Поля IPv6 1: схема", "Протокол IPv6", "Version, Traffic Class, Flow Label", _dl("aMYwESFP")),
+ ("Поля IPv6: 2", "Поля IPv6 2: схема", "Протокол IPv6", "Payload Length, Next Header, Hop Limit", _dl("iX5-go-0")),
+ ("Передача между сетями", "Топология: схема", "Передача данных", "Топология: PC-A, R1, R2, R3, PC-B", _dl("9z-naJ_k")),
+ ("Шлюз по умолчанию", "Шлюз: схема", "Передача данных", "Решение: своя сеть или шлюз", _dl("lq-iXLPS")),
+ ("ARP и маршрутизатор", "ARP: схема", "Передача данных", "PC-A формирует пакет и кадр", _dl("sbjUBUIe")),
+ ("Таблица маршрутизации", "Таблица R1: схема", "Передача данных", "Таблица маршрутизации R1", _dl("Ytg4lBI3")),
+ ("R1 формирует кадр", "R1: схема", "Передача данных", "Кадр от R1 к R2, TTL = 254", _dl("ptT2Sh3M")),
+ ("R2 получает кадр", "R2: схема", "Передача данных", "R2 сверяется с таблицей маршрутизации", _dl("bfdHO6RJ")),
+ ("R2 пересылает", "R2 → R3: схема", "Передача данных", "Кадр от R2 к R3, TTL = 253", _dl("KZVdVLOA")),
+ ("R3 получает кадр", "R3: схема", "Передача данных", "R3: сеть получателя подключена к G2", PP + "s30_1.png"),
+ ("R3 доставляет", "R3 → PC-B: схема", "Передача данных", "Кадр от R3 к PC-B, TTL = 252", PP + "s31_1.png"),
+]
+# --- Wireshark вёрсткой ---
+def _b(n): return f'<span class="wn">{n}</span>'
+def _hl(txt, n=None): return f'<span class="whl">{_b(n) if n else ""}{txt}</span>'
+def _wl(txt, lvl=0, cls=""): return f'<div class="wl i{lvl} {cls}">{txt}</div>'
+def ws4(marks=True):
+    m = (lambda n: n) if marks else (lambda n: None)
+    h = (lambda t, n: _hl(t, m(n))) if marks else (lambda t, n: t)
+    return ('<div class="wsk"><div class="wsd">'
+      + _wl("▸ Frame 59: 1494 bytes on wire (11952 bits), 1494 bytes captured (11952 bits)", 0, "dim")
+      + _wl("▸ Ethernet II, Src: Giga-Byt_d6:a9:2a, Dst: EltexEnt_f9:b0:80", 0, "dim")
+      + _wl("▾ Internet Protocol Version 4, Src: 10.25.200.60, Dst: 3.164.206.11")
+      + _wl(h("0100 .... = Version: 4", 1), 1)
+      + _wl(h(".... 0101 = Header Length: 20 bytes (5)", 2), 1)
+      + _wl(h("▸ Differentiated Services Field: 0x00 (DSCP: CS0, ECN: Not-ECT)", 3), 1)
+      + _wl(h("Total Length: 1480", 4), 1)
+      + _wl(h("Identification: 0xd06a (53354)", 5), 1)
+      + _wl(h("▾ Flags: 0x40, Don't fragment", 6), 1)
+      + _wl("0... .... = Reserved bit: Not set", 2) + _wl(".1.. .... = Don't fragment: Set", 2) + _wl("..0. .... = More fragments: Not set", 2)
+      + _wl(h("...0 0000 0000 0000 = Fragment Offset: 0", 7), 1)
+      + _wl(h("Time to Live: 64", 8), 1)
+      + _wl(h("Protocol: TCP (6)", 9), 1)
+      + _wl(h("Header Checksum: 0xc0c0 [validation disabled]", 10), 1)
+      + _wl(h("Source Address: 10.25.200.60", 11), 1)
+      + _wl(h("Destination Address: 3.164.206.11", None), 1)
+      + '</div></div>')
+def ws6(marks=True):
+    m = (lambda n: n) if marks else (lambda n: None)
+    h = (lambda t, n: _hl(t, m(n))) if marks else (lambda t, n: t)
+    return ('<div class="wsk"><div class="wsd">'
+      + _wl("▾ Internet Protocol Version 6, Src: 2603:1026:c0d:101f::2, Dst: 2a01:620:c12a:a500:953:6c6e:487:5201")
+      + _wl(h("0110 .... = Version: 6", 1), 1)
+      + _wl(h(".... 0000 0000 .... = Traffic Class: 0x00 (DSCP: CS0, ECN: Not-ECT)", 2), 1)
+      + _wl(h(".... 1111 0100 0111 0110 1100 = Flow Label: 0xf476c", 3), 1)
+      + _wl(h("Payload Length: 20", 4), 1)
+      + _wl(h("Next Header: TCP (6)", 5), 1)
+      + _wl(h("Hop Limit: 116", 6), 1)
+      + _wl(h("Source Address: 2603:1026:c0d:101f::2", 7), 1)
+      + _wl(h("Destination Address: 2a01:620:c12a:a500:953:6c6e:487:5201", 8), 1)
+      + _wl("▸ Transmission Control Protocol, Src Port: 443, Dst Port: 50067, Seq: 1, Ack: 516, Len: 0", 0, "dim")
+      + '</div></div>')
+def wsexpl(rows):
+    li = "".join(f'<li><span class="badge wbad">{k+1}</span><span><b>{a}</b> — <span class="mono">{b}</span>. {c}</span></li>' for k, (a, b, c) in enumerate(rows))
+    return f'<ol class="steps sm wsl">{li}</ol>'
+R4 = [("Version", "4 (0100)", "Пакет принадлежит версии IPv4"),
+    ("Header Length", "20 bytes (5)", "IHL = 5: опций нет"),
+    ("DSCP / ECN", "CS0 / Not-ECT", "Приоритет по умолчанию, уведомление о заторе не используется"),
+    ("Total Length", "1480", "Длина пакета (заголовок + сегмент) в байтах"),
+    ("Identification", "0xd06a (53354)", "Уникальный идентификатор пакета"),
+    ("Flags", "0x40: DF = 1, MF = 0", "Фрагментация запрещена, фрагментов за пакетом нет"),
+    ("Fragment Offset", "0", "Пакет не фрагментирован"),
+    ("Time to Live", "64", "Оставшееся время жизни пакета"),
+    ("Protocol", "TCP (6)", "Полезная нагрузка предназначена протоколу TCP"),
+    ("Header Checksum", "0xc0c0", "Контрольная сумма заголовка"),
+    ("Source / Destination", "10.25.200.60 → 3.164.206.11", "Адреса отправителя и получателя")]
+R6 = [("Version", "6 (0110)", "Пакет принадлежит версии IPv6"),
+    ("Traffic Class", "0x00", "Приоритет трафика по умолчанию"),
+    ("Flow Label", "0xf476c", "Метка потока – идентификатор сессии TCP"),
+    ("Payload Length", "20", "Длина полезной нагрузки в октетах"),
+    ("Next Header", "TCP (6)", "Протокол L4, заголовков-расширений нет"),
+    ("Hop Limit", "116", "Каждый маршрутизатор уменьшает значение на 1"),
+    ("Source Address", "2603:1026:c0d:101f::2", "Адрес отправителя"),
+    ("Destination Address", "2a01:620:c12a:a500:953:6c6e:487:5201", "Адрес получателя")]
+for k, it in enumerate(S):
+    if it[0] == "IPv4 в Wireshark":
+        S[k] = (it[0], it[1], it[2], f'<div class="wsx">{ws4()}{wsexpl(R4)}</div>', "figs")
+    if it[0] == "IPv6 в Wireshark":
+        S[k] = (it[0], it[1], it[2], f'<div class="wsx">{ws6()}{wsexpl(R6)}</div>', "figs")
+    if it[0] == "Вопросы: IPv4":
+        S[k] = (it[0], it[1], it[2], it[3].replace(DUMP4, ws4(False)), it[4])
+    if it[0] == "Вопросы: IPv6":
+        S[k] = (it[0], it[1], it[2], it[3].replace(DUMP6, ws6(False)), it[4])
+_new = []
+for it in S:
+    _new.append(it)
+    for a, lab, kick, title, src in FIGS:
+        if a == it[0]: _new.append(figslide(lab, kick, title, src))
+S[:] = _new
+# персонажи
+CHARS = {"Титул": ("wiz_happy", "r"), "Цели главы": ("star_blob", "r"), "Тренажёр: TTL": ("wiz_happy", "r"), "Тренажёр: маршрут": ("wiz_star", "r"),
+         "Проверь себя": ("star_blob", "r")}
+_cc = {}
+for k, it in enumerate(S):
+    if it[0] in CHARS:
+        n, side = CHARS[it[0]]
+        if n not in _cc: _cc[n] = _png(CH + n + ".png")
+        S[k] = (it[0], it[1], it[2], it[3] + f'<img class="chr chr-{side}" src="{_cc[n]}" alt="" aria-hidden="true">', it[4])
+BGIMG = _jpg(DL + "ChatGPT Image 5 сент. 2026 г., 19_47_48.png", 1920, 70)
+ANIM_LOOP = {"Инкапсуляция", "Путь пакета целиком"}
 
 render()
