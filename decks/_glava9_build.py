@@ -1059,6 +1059,28 @@ svg [data-s]{transform:none}
 .fl-tag{font-weight:800;font-family:var(--mono);padding:.25rem .9rem;border-radius:999px}
 .fl-tag.ok{background:var(--mint);color:var(--deep)}.fl-tag.no{background:var(--pink);color:#fff}
 .fl-b.ok{border-color:var(--mint)}.fl-b.no{border-color:var(--pink)}
+.figsvg{padding:.6rem;max-width:min(100%,calc(80vh * 16 / 9));margin:0 auto}.figsvg svg.fs{width:100%;height:auto;display:block}
+.flowbox{max-width:min(100%,calc(80vh * 1.22))}
+svg.fs .it{fill:#fff;font-family:var(--f);font-size:23px;font-weight:500}
+svg.fs .it.sm{font-size:20px}svg.fs .it.fl{font-size:25px}svg.fs .it.b{font-weight:800}svg.fs .it.big{font-size:30px}svg.fs .it.big2{font-size:28px}
+svg.fs .it.mono{font-family:var(--mono);font-size:20px}svg.fs .it.tm{font-size:21px}svg.fs .tg{fill:#6ef0a8}
+svg.fs .it.tag{font-size:22px;paint-order:stroke;stroke:rgba(90,70,200,.7);stroke-width:8px;stroke-linejoin:round}
+svg.fs .ibx{fill:rgba(255,255,255,.13);stroke:rgba(255,255,255,.45);stroke-width:1.6}
+svg.fs .ibx.strong{fill:rgba(120,90,230,.45);stroke:rgba(255,190,240,.7);stroke-width:2.4}
+svg.fs .cchip{fill:rgba(60,140,255,.35);stroke:rgba(140,210,255,.8);stroke-width:2}svg.fs .cfold{fill:rgba(120,180,255,.55);stroke:#cfe6ff;stroke-width:2}
+svg.fs .ccol{fill:rgba(255,255,255,.08);stroke:rgba(255,255,255,.3)}
+svg.fs .lnk2{fill:none;stroke:rgba(220,210,255,.85);stroke-width:5;stroke-linejoin:round}
+svg.fs .ifb{fill:rgba(160,150,255,.35);stroke:rgba(255,255,255,.6);stroke-width:2}svg.fs .port{fill:#241a6a;stroke:#fff;stroke-width:2}
+svg.fs .sn{fill:rgba(60,200,170,.45);stroke:#7ef2cf;stroke-width:2}
+svg.fs .frm{fill:rgba(255,120,150,.55);stroke:#ffb3c8;stroke-width:2}svg.fs .frmL{stroke:#ffd7e3;stroke-width:3}svg.fs .frmT{stroke:#ff9fb8;stroke-width:3;stroke-linecap:round}
+svg.fs .env.or{fill:#ffb347;stroke:#ffe0a8;stroke-width:2}svg.fs .env.gr{fill:#26c06a;stroke:#9ff0c0;stroke-width:2}
+svg.fs .envl{fill:none;stroke:rgba(0,0,0,.35);stroke-width:3}svg.fs .spd{stroke-width:3;stroke-linecap:round}svg.fs .spd.or{stroke:#ffb347}svg.fs .spd.gr{stroke:#5ef0a0}
+svg.fs .cloud{fill:rgba(230,220,255,.9)}svg.fs .term{fill:rgba(30,22,70,.92);stroke:rgba(200,180,255,.6);stroke-width:2}svg.fs .termh{fill:rgba(70,55,140,.9)}
+svg.fs .legc{fill:rgba(255,255,255,.14);stroke:rgba(255,255,255,.4)}svg.fs .legsep{stroke:rgba(255,255,255,.3);stroke-width:2}
+svg.fs .farr{fill:none;stroke:#e9e4ff;stroke-width:4}svg.fs .dia{fill:rgba(80,200,160,.55);stroke:#a6f5d8;stroke-width:3}
+svg.fs .ichip{fill:rgba(80,120,255,.6);stroke:#bcd0ff;stroke-width:2}svg.fs .yes{fill:rgba(60,190,160,.6);stroke:#a6f5d8;stroke-width:2}svg.fs .no{fill:rgba(220,90,200,.6);stroke:#ffb6f0;stroke-width:2}
+svg.fs .bor{fill:rgba(255,160,100,.6);stroke:#ffd2a8;stroke-width:2}svg.fs .bor2{fill:rgba(255,190,130,.7);stroke:#fff1dc;stroke-width:2}
+svg.fs .bpk{fill:rgba(240,110,200,.55);stroke:#ffc2ee;stroke-width:2}svg.fs .bpk2{fill:rgba(250,150,220,.65);stroke:#ffe1f6;stroke-width:2}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
 @media print{.slide{display:block;position:relative;height:auto;page-break-after:always}[data-s]{opacity:1;transform:none}#nav,#prog{display:none}html,body{overflow:visible;height:auto}}
 """
@@ -1517,6 +1539,176 @@ REDRAW = {
 for k, it in enumerate(S):
     if it[0] in REDRAW:
         S[k] = (it[0], it[1], it[2], REDRAW[it[0]], "")
+
+# ==== схемы 1:1 вёрсткой (SVG) ====
+def _t(x, y, txt, cls="it", anchor="start"):
+    return f'<text class="{cls}" x="{x}" y="{y}" text-anchor="{anchor}">{txt}</text>'
+def ibox(x, y, l1, l2, w=330, icon=False, tail=None):
+    h = 78
+    s = f'<rect class="ibx" x="{x}" y="{y}" width="{w}" height="{h}" rx="14"/>'
+    tx = x + 20
+    if icon:
+        s += f'<use href="#pc" x="{x+16}" y="{y+16}" width="54" height="45"/>'; tx = x + 86
+    if tail:
+        tx0, ty0, tx1, ty1 = tail
+        s += f'<path class="ibx" d="M{tx0-12} {ty0} L{tx1} {ty1} L{tx0+12} {ty0} Z"/>'
+    s += _t(tx, y + 33, l1) + _t(tx, y + 60, l2)
+    return s
+IFX = {"E1": 170, "E2": 450, "T1": 690, "T2": 910, "G1": 1150, "G2": 1430}
+RX = {"R1": 310, "R2": 800, "R3": 1290}
+RY = 560
+IBOX = {"E1": (40, 650, "IP 192.168.1.1", "MAC AA-AA-AA-AA-AA-AA"),
+        "E2": (410, 650, "IP 10.10.0.1", "MAC AA-BB-BB-BB-BB-BB"),
+        "T1": (430, 410, "IP 10.10.0.2", "MAC AA-CC-CC-CC-CC-CC"),
+        "T2": (880, 650, "IP 10.10.1.1", "MAC AA-DD-DD-DD-DD-DD"),
+        "G1": (920, 410, "IP 10.10.1.2", "MAC AA-EE-EE-EE-EE-EE"),
+        "G2": (1270, 650, "IP 192.168.3.1", "MAC AA-FF-FF-FF-FF-FF")}
+TABLES = {"R1": ["C  192.168.1.0/24  E1", "C  10.10.0.0/30  E2", "S  192.168.3.0/24 via 10.10.0.2"],
+          "R2": ["C  10.10.0.0/30  T1", "C  10.10.1.0/30  T2", "S  192.168.3.0/24 via 10.10.1.2", "S  192.168.1.0/24 via 10.10.0.1"],
+          "R3": ["C  10.10.1.0/30  G1", "C  192.168.3.0/24  G2", "S  192.168.1.0/24 via 10.10.1.1"]}
+def rtable(r):
+    rows = TABLES[r]; w = 470; h = 60 + 36 * len(rows); x = {"R1": 250, "R2": 700, "R3": 850}[r]; y = 150
+    s = f'<rect class="ibx strong" x="{x}" y="{y}" width="{w}" height="{h}" rx="16"/>'
+    tx0 = max(x + 40, min(RX[r] - 30, x + w - 60)); s += f'<path class="ibx strong" d="M{tx0} {y+h-1} L{RX[r]} {RY-62} L{tx0+44} {y+h-1} Z"/>'
+    s += _t(x + 22, y + 38, f"{r}# show ip route", "it mono")
+    for i, row in enumerate(rows):
+        s += f'<text class="it mono" x="{x+22}" y="{y+76+i*36}"><tspan class="{"cC" if row[0]=="C" else "cS"}">{row[0]}</tspan>{row[1:]}</text>'
+    return s
+def card(x, y, ttl, eth=None):
+    w = 956 if eth else 640
+    s = f'<rect class="ibx strong" x="{x}" y="{y}" width="{w}" height="170" rx="20"/>'
+    s += f'<rect class="cchip" x="{x+14}" y="{y+14}" width="186" height="142" rx="14"/>'
+    s += f'<rect class="cfold" x="{x+30}" y="{y+52}" width="92" height="66" rx="10"/>' + _t(x + 76, y + 92, "Данные", "it sm", "middle") + _t(x + 150, y + 93, "FTP", "it b")
+    cols = [("TCP", ["SPrt: 54236", "DPrt: 20"], 176), ("IP", ["SrcIP: 192.168.1.2", "DstIP: 192.168.3.2", f"TTL: {ttl}"], 240)]
+    if eth: cols.append(("Ethernet", [f"SrcMAC: {eth[0]}", f"DstMAC: {eth[1]}"], 310))
+    cx = x + 210
+    for t, lines, cw in cols:
+        s += f'<rect class="ccol" x="{cx}" y="{y+14}" width="{cw}" height="142" rx="14"/>' + _t(cx + 18, y + 48, t, "it b")
+        for i, l in enumerate(lines): s += _t(cx + 18, y + 82 + i * 28, l, "it sm")
+        cx += cw + 8
+    return s
+def frameicon(x, y):
+    return (f'<g transform="translate({x} {y}) skewX(-28)"><rect class="frm" x="0" y="0" width="70" height="42" rx="6"/>'
+            f'<path class="frmL" d="M10 12H60M10 22H60M10 32H48"/></g>'
+            f'<path class="frmT" d="M{x-60} {y+10}H{x-18}M{x-70} {y+22}H{x-22}M{x-58} {y+34}H{x-26}"/>')
+def topo1(ifboxes=(), table=None, crd=None, frame=None, pcb_box=True):
+    s = ""
+    s += ibox(230, 30, "IP 192.168.1.2", "MAC AA-BB-CC-11-22-33", 350, True)
+    if pcb_box: s += ibox(1020, 30, "IP 192.168.3.2", "MAC AA-BB-CC-22-33-44", 350, True)
+    s += f'<path class="lnk2" d="M{IFX["E1"]} 250V{RY}H{IFX["G2"]}V250"/>'
+    s += pcsym(IFX["E1"], 205, "", 120) + pcsym(IFX["G2"], 205, "", 120)
+    s += _t(IFX["E1"], 146, "PC-A", "it b big", "middle") + _t(IFX["G2"], 146, "PC-B", "it b big", "middle")
+    for r, x in RX.items(): s += rt(x, RY, 170, "") + _t(x, RY + 80, r, "it b big", "middle")
+    for n, x in IFX.items():
+        s += f'<rect class="ifb" x="{x-26}" y="{RY-26}" width="52" height="52" rx="10"/>' + _t(x, RY - 34, n, "it sm", "middle")
+        s += f'<rect class="port" x="{x-13}" y="{RY-9}" width="26" height="18" rx="3"/>'
+    for (a, b2, lab) in ((IFX["E2"], IFX["T1"], "10.10.0.0/30"), (IFX["T2"], IFX["G1"], "10.10.1.0/30")):
+        m = (a + b2) / 2
+        s += f'<rect class="sn" x="{m-78}" y="{RY-20}" width="156" height="40" rx="12"/>' + _t(m, RY + 7, lab, "it sm", "middle")
+    for n in ifboxes:
+        x, y, l1, l2 = IBOX[n]
+        s += ibox(x, y, l1, l2, 330)
+    if frame: s += frameicon(*frame)
+    if table: s += rtable(table)
+    if crd: s += card(*crd)
+    return f'<div class="card figsvg"><svg viewBox="0 0 1600 960" class="dg fs">{s}</svg></div>'
+def env(x, y, col):
+    return (f'<g transform="translate({x} {y})"><rect class="env {col}" x="0" y="0" width="74" height="50" rx="6"/>'
+            f'<path class="envl" d="M3 4L37 30L71 4"/></g>'
+            f'<path class="spd {col}" d="M{x-44} {y+14}H{x-10}M{x-50} {y+26}H{x-12}M{x-40} {y+38}H{x-10}"/>')
+def bub(x, y, w, lines, tail):
+    h = 26 + 30 * len(lines)
+    s = f'<rect class="ibx" x="{x}" y="{y}" width="{w}" height="{h}" rx="14"/>'
+    tx, ty = tail
+    s += f'<path class="ibx" d="M{x+w/2-14} {y+h-1} L{tx} {ty} L{x+w/2+14} {y+h-1} Z"/>'
+    for i, l in enumerate(lines): s += _t(x + w / 2, y + 36 + i * 30, l, "it sm", "middle")
+    return s
+def ttlscene(exceeded):
+    s = f'<path class="lnk2" d="M230 450L420 250H1250L1440 470"/>'
+    s += pcsym(180, 520, "", 150) + f'<use href="#sw" x="350" y="200" width="150" height="100"/>'
+    s += rt(620, 250, 170, "") + rt(1200, 250, 170, "")
+    s += '<path class="cloud" d="M880 285c-30 0-46-22-40-44 6-20 28-28 44-22 8-28 40-44 70-32 22 8 34 28 32 48 22-4 42 12 40 32-2 18-18 20-30 20z"/>'
+    s += f'<use href="#srv" x="1390" y="460" width="120" height="160"/>' + _t(1450, 660, "8.8.8.8", "it b big", "middle")
+    if exceeded:
+        s += bub(40, 330, 180, ["Ping 8.8.8.8", "TTL=8"], (140, 440))
+        s += bub(210, 640, 300, ["Пришел ответ Time", "exceeded, значит", "количество переходов", "было слишком большим"], (210, 600))
+        s += bub(1240, 20, 290, ["Обрабатываю,", "уменьшаю TTL на 1,", "отбрасываю пакет.", "Отправляю ответ TTL", "exceeded"], (1230, 190))
+        tt = ["TTL=8", "TTL=8", "TTL=7", "TTL=1"]
+        term = ["user@user-H410M-S2H-V3:~$ ping -t 8  8.8.8.8", "PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.",
+                "From 72.14.197.6 icmp_seq=4 Time to live exceeded", "From 72.14.197.6 icmp_seq=5 Time to live exceeded", "..."]
+        leg4 = ["Отправляет ответ", "TTL exceeded"]; leg1 = "с TTL=8"
+    else:
+        s += bub(40, 330, 180, ["Ping 8.8.8.8", "TTL=128"], (140, 440))
+        s += bub(210, 640, 280, ["Пришел ответ", "TTL=104 значит, пакет", "сделал 128-104=24", "прыжка"], (220, 580))
+        s += bub(1150, 650, 300, ["Отправляю обратно", "ответ с оставшимся", "значением TTL=104"], (1400, 620))
+        s += _t(1520, 330, "TTL=104", "it tag", "middle")
+        tt = ["TTL=128", "TTL=128", "TTL=127", "TTL=105"]
+        term = ["user@user-H410M-S2H-V3:~$ ping 8.8.8.8", "PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.",
+                "64 bytes from 8.8.8.8: icmp_seq=1 ttl=104 time=62.4 ms", "64 bytes from 8.8.8.8: icmp_seq=2 ttl=104 time=62.4 ms", "..."]
+        leg4 = ["Отправляет ответ", "с текущим TTL"]; leg1 = "с TTL=128"
+    s += bub(250, 20, 280, ["Не уменьшаю значение", "TTL, потому что я работаю", "на канальном уровне"], (400, 200))
+    s += bub(560, 50, 240, ["Уменьшаю TTL на 1"], (620, 160))
+    if not exceeded: s += bub(1100, 50, 240, ["Уменьшаю TTL на 1"], (1200, 160))
+    for (x, y), t in zip(((230, 300), (540, 130), (820, 130), (1060, 130)), tt): s += _t(x, y, t, "it tag", "middle")
+    for x, y in ((250, 330), (520, 160), (810, 160), (1050, 160)): s += env(x, y, "or")
+    for x, y in ((300, 400), (520, 250), (810, 250), (1050, 250)): s += env(x, y, "gr")
+    if not exceeded: s += env(1380, 350, "or") + env(1270, 400, "gr")
+    s += '<rect class="term" x="480" y="360" width="700" height="240" rx="18"/><rect class="termh" x="480" y="360" width="720" height="44" rx="18"/>'
+    s += '<circle cx="510" cy="382" r="8" fill="#ff6fa8"/><circle cx="536" cy="382" r="8" fill="#ffc94a"/><circle cx="562" cy="382" r="8" fill="#4ade80"/>'
+    for i, l in enumerate(term):
+        if i == 0:
+            a, b3 = l.split("$", 1)
+            s += f'<text class="it mono tm" x="504" y="{444}"><tspan class="tg">{a}$</tspan>{b3}</text>'
+        else:
+            s += _t(504, 444 + i * 34, l, "it mono tm")
+    leg = [("pc", "Отправитель", ["Отправляет пакет", leg1]), ("sw", "Коммутаторы (L2)", ["Не изменяют TTL,", "работают на канальном уровне"]),
+           ("rt", "Маршрутизаторы (L3)", ["Уменьшают TTL на 1", "при каждом переходе"]), ("srv", "Получатель", leg4)]
+    s += '<rect class="ibx" x="60" y="810" width="1480" height="120" rx="18"/>'
+    for i, (ic, t, ls) in enumerate(leg):
+        x = 80 + i * 370
+        s += f'<circle class="legc" cx="{x+50}" cy="870" r="44"/><use href="#{ic}" x="{x+18}" y="844" width="64" height="52"/>'
+        s += _t(x + 110, 855, t, "it b") + _t(x + 110, 885, ls[0], "it sm") + _t(x + 110, 910, ls[1], "it sm")
+        if i: s += f'<line class="legsep" x1="{x-10}" y1="830" x2="{x-10}" y2="910"/>'
+    s += '<rect class="ibx" x="330" y="945" width="940" height="50" rx="14"/>' + _t(800, 978, "ⓘ  TTL позволяет определить количество узлов между отправителем и получателем", "it sm", "middle")
+    return f'<div class="card figsvg"><svg viewBox="0 0 1600 1010" class="dg fs">{s}</svg></div>'
+def flowsvg():
+    s = '<defs><marker id="fa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#e9e4ff"/></marker></defs>'
+    s += '<rect class="ibx strong" x="330" y="20" width="560" height="150" rx="75"/><circle class="legc" cx="410" cy="95" r="42"/>'
+    s += '<circle cx="410" cy="82" r="14" fill="#fff" opacity=".85"/><path d="M384 118c4-18 48-18 52 0" fill="#fff" opacity=".85"/>'
+    s += _t(480, 85, "Мой адрес 192.168.1.2/24", "it big2") + _t(480, 128, "Отправляю на 192.168.3.2", "it big2")
+    s += '<path class="farr" d="M610 172V232" marker-end="url(#fa)"/>'
+    s += '<rect class="ibx strong" x="380" y="240" width="460" height="130" rx="16"/><rect class="ichip" x="410" y="270" width="70" height="70" rx="14"/>'
+    s += _t(445, 318, "И", "it big2 b", "middle") + _t(510, 318, "Операция побитовая \"И\"", "it big2")
+    s += '<path class="farr" d="M610 372V432" marker-end="url(#fa)"/>'
+    s += '<path class="dia" d="M610 440L870 560L610 680L350 560Z"/>'
+    s += '<circle class="legc" cx="470" cy="560" r="34"/><path d="M458 574l12-24 12 24z" fill="none" stroke="#fff" stroke-width="3"/>'
+    s += _t(520, 552, "IP-адрес назначения", "it big2") + _t(520, 590, "в одной сети со мной?", "it big2")
+    s += '<path class="farr" d="M350 560H180V770" marker-end="url(#fa)"/><path class="farr" d="M870 560H1040V770" marker-end="url(#fa)"/>'
+    s += '<rect class="yes" x="130" y="640" width="100" height="46" rx="23"/>' + _t(180, 671, "ДА", "it b", "middle")
+    s += '<rect class="no" x="985" y="640" width="110" height="46" rx="23"/>' + _t(1040, 671, "НЕТ", "it b", "middle")
+    s += '<rect class="bor" x="10" y="780" width="470" height="200" rx="20"/><rect class="bor2" x="45" y="835" width="92" height="92" rx="18"/>'
+    s += '<path d="M65 870q26-24 52 0M73 882q18-14 36 0" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/><circle cx="91" cy="898" r="6" fill="#fff"/>'
+    for i, l in enumerate(["Отправляю ARP-запрос", "для нахождения", "MAC-адреса", "получателя."]): s += _t(160, 832 + i * 38, l, "it fl")
+    s += '<rect class="bpk" x="740" y="780" width="470" height="200" rx="20"/><rect class="bpk2" x="765" y="835" width="92" height="92" rx="18"/>'
+    s += '<rect x="783" y="880" width="56" height="26" rx="6" fill="none" stroke="#fff" stroke-width="3"/><path d="M793 880V858M829 880V858" stroke="#fff" stroke-width="3"/>'
+    for i, l in enumerate(["Отправляю ARP-запрос", "для нахождения", "MAC-адреса шлюза", "по умолчанию."]): s += _t(880, 832 + i * 38, l, "it fl")
+    return f'<div class="card figsvg flowbox"><svg viewBox="0 0 1220 1000" class="dg fs">{s}</svg></div>'
+REDRAW2 = {
+ "TTL: схема": ttlscene(False),
+ "Time Exceeded: схема": ttlscene(True),
+ "Топология: схема": topo1(("E1", "E2")),
+ "Шлюз: схема": flowsvg(),
+ "ARP: схема": topo1(("E1", "E2"), crd=(40, 300, 255, ("AA:BB:CC:11:22:33", "AA:AA:AA:AA:AA:AA"))),
+ "Таблица R1: схема": topo1(("E1", "E2"), table="R1", crd=(40, 760, 255)),
+ "R1: схема": topo1(("E1", "E2", "T1"), frame=(330, 330), crd=(300, 760, 254, ("AA:BB:BB:BB:BB:BB", "AA:CC:CC:CC:CC:CC"))),
+ "R2: схема": topo1(("E1", "E2", "T1", "G1"), table="R2", crd=(460, 760, 254)),
+ "R2 → R3: схема": topo1(("T2", "G1"), frame=(1320, 400), crd=(600, 760, 253, ("AA:DD:DD:DD:DD:DD", "AA:EE:EE:EE:EE:EE"))),
+ "R3: схема": topo1(("T2", "G1"), table="R3", crd=(260, 760, 253)),
+ "R3 → PC-B: схема": topo1(("T2", "G1", "G2"), crd=(330, 170, 252, ("AA:FF:FF:FF:FF:FF", "AA:BB:CC:22:33:44"))),
+}
+for k, it in enumerate(S):
+    if it[0] in REDRAW2:
+        S[k] = (it[0], it[1], it[2], REDRAW2[it[0]], "figs")
 
 # персонажи
 CHARS = {"Титул": ("wiz_happy", "r"), "Цели главы": ("star_blob", "r"), "Тренажёр: TTL": ("wiz_happy", "r"), "Тренажёр: маршрут": ("wiz_star", "r"),
