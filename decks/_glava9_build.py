@@ -254,19 +254,23 @@ def topo(build=False, tables=False, addr=True):
         b += (f'<g{s(3, i*80)}><rect class="ifb" x="{x-19}" y="{LY-15}" width="38" height="30" rx="7"/>'
               f'<text class="ift" x="{x}" y="{LY+6}" text-anchor="middle">{n}</text>')
         if addr:
-            yy = LY + 72 + row * 46
-            b += (f'<text class="adr" x="{x}" y="{yy}" text-anchor="middle">{ip}</text>'
-                  f'<text class="adr dim" x="{x}" y="{yy+18}" text-anchor="middle">{mac}</text>')
+            yy = LY + 84 + row * 58
+            b += (f'<line class="lead" x1="{x}" y1="{LY+18}" x2="{x}" y2="{yy-26}"/>'
+                  f'<rect class="adrb" x="{x-108}" y="{yy-26}" width="216" height="48" rx="11"/>'
+                  f'<text class="adr" x="{x}" y="{yy-7}" text-anchor="middle"><tspan class="ifn">{n}</tspan>  {ip}</text>'
+                  f'<text class="adr dim" x="{x}" y="{yy+13}" text-anchor="middle">{mac}</text>')
         b += '</g>'
     # subnets
     b += (f'<g{s(4,0)}><rect class="sn" x="382" y="{LY+20}" width="136" height="28" rx="14"/><text class="snt" x="450" y="{LY+39}" text-anchor="middle">10.10.0.0/30</text>'
           f'<rect class="sn" x="682" y="{LY+20}" width="136" height="28" rx="14"/><text class="snt" x="750" y="{LY+39}" text-anchor="middle">10.10.1.0/30</text></g>'
-          f'<g{s(4,150)}><rect class="sn lan" x="8" y="{LY+136}" width="160" height="28" rx="14"/><text class="snt" x="88" y="{LY+155}" text-anchor="middle">192.168.1.0/24</text>'
-          f'<rect class="sn lan" x="1032" y="{LY+136}" width="160" height="28" rx="14"/><text class="snt" x="1112" y="{LY+155}" text-anchor="middle">192.168.3.0/24</text></g>')
-    b += (f'<g{s(3, 500)}><text class="adr" x="8" y="{LY+186}" text-anchor="start">192.168.1.2</text>'
-          f'<text class="adr dim" x="8" y="{LY+204}" text-anchor="start">AA-BB-CC-11-22-33</text>'
-          f'<text class="adr" x="1192" y="{LY+186}" text-anchor="end">192.168.3.2</text>'
-          f'<text class="adr dim" x="1192" y="{LY+204}" text-anchor="end">AA-BB-CC-22-33-44</text></g>')
+          f'<g{s(4,150)}><rect class="sn lan" x="238" y="{LY+188}" width="170" height="30" rx="15"/><text class="snt" x="323" y="{LY+208}" text-anchor="middle">192.168.1.0/24</text>'
+          f'<rect class="sn lan" x="792" y="{LY+188}" width="170" height="30" rx="15"/><text class="snt" x="877" y="{LY+208}" text-anchor="middle">192.168.3.0/24</text></g>')
+    b += (f'<g{s(3, 500)}><rect class="adrb" x="0" y="{LY+178}" width="228" height="48" rx="11"/>'
+          f'<text class="adr" x="114" y="{LY+197}" text-anchor="middle"><tspan class="ifn">PC-A</tspan>  192.168.1.2</text>'
+          f'<text class="adr dim" x="114" y="{LY+217}" text-anchor="middle">AA-BB-CC-11-22-33</text>'
+          f'<rect class="adrb" x="972" y="{LY+178}" width="228" height="48" rx="11"/>'
+          f'<text class="adr" x="1086" y="{LY+197}" text-anchor="middle"><tspan class="ifn">PC-B</tspan>  192.168.3.2</text>'
+          f'<text class="adr dim" x="1086" y="{LY+217}" text-anchor="middle">AA-BB-CC-22-33-44</text></g>')
     return b
 
 def rtables():
@@ -650,7 +654,24 @@ slide("Поля IPv6: 2", "Протокол IPv6", "Payload Length, Next Header,
 ], cols="g3"))
 
 slide("Заголовки расширения", "Протокол IPv6", "Заголовки расширения", """
-<p class="p wide">Дополнительные заголовки (<b>extension headers</b>) – отличительная особенность IPv6. Если достаточно полей основного заголовка, используются только они. Если необходимо учесть фрагментацию или внести дополнительные параметры маршрутизации, используются дополнительные заголовки, на наличие которых указывает поле <b>Next Header</b>.</p>""" + scbox(EXT, EXT_SC, "wide2"))
+<div class="two" style="align-items:start">
+  <div>
+  <p class="p sm">Дополнительные заголовки (<b>extension headers</b>) – отличительная особенность IPv6. Если достаточно полей основного заголовка, используются только они. Если нужно учесть фрагментацию или внести дополнительные параметры маршрутизации, добавляются заголовки-расширения, на наличие которых указывает поле <b>Next Header</b>.</p>
+  <p class="p sm">Каждый заголовок-расширение сам содержит поле <b>Next Header</b>: заголовки выстраиваются в цепочку, последний указывает на протокол уровня L4. Промежуточные маршрутизаторы обрабатывают только <b>Hop-by-Hop</b>, остальные читает узел-получатель – поэтому пересылка остаётся быстрой.</p>
+  <p class="p sm">Пример цепочки: <span class="mono">IPv6 (Next Header 44) → Fragment (Next Header 6) → TCP</span>. В IPv4 такого механизма нет: все поля и опции лежат в одном заголовке.</p>
+  <p class="p sm callout">Порядок заголовков зафиксирован RFC 8200: Hop-by-Hop → Destination → Routing → Fragment → AH → ESP → Destination → L4.</p>
+  """ + scbox(EXT, EXT_SC) + """
+  </div>
+  <table class="tbl"><thead><tr><th>Заголовок</th><th>Next Header</th><th>Назначение</th></tr></thead><tbody class="sm">
+  <tr><td>Hop-by-Hop Options</td><td class="mono">0</td><td>параметры, которые читает <b>каждый</b> маршрутизатор на пути</td></tr>
+  <tr><td>Destination Options</td><td class="mono">60</td><td>параметры только для узла-получателя</td></tr>
+  <tr><td>Routing</td><td class="mono">43</td><td>список узлов, через которые должен пройти пакет</td></tr>
+  <tr><td>Fragment</td><td class="mono">44</td><td>фрагментация: её выполняет только отправитель</td></tr>
+  <tr><td>AH (Authentication)</td><td class="mono">51</td><td>проверка подлинности и целостности (IPsec)</td></tr>
+  <tr><td>ESP</td><td class="mono">50</td><td>шифрование полезной нагрузки (IPsec)</td></tr>
+  <tr><td>TCP / UDP / ICMPv6</td><td class="mono">6 / 17 / 58</td><td>протокол L4 – цепочка заголовков закончилась</td></tr>
+  </tbody></table>
+</div>""")
 
 slide("IPv6 в Wireshark", "Протокол IPv6", "Заголовок IPv6 в Wireshark: разбор полей", kvtable([
     ("Version", "6 (0110)", "Пакет принадлежит версии IPv6"),
@@ -1081,6 +1102,11 @@ svg.fs .farr{fill:none;stroke:#e9e4ff;stroke-width:4}svg.fs .dia{fill:rgba(80,20
 svg.fs .ichip{fill:rgba(80,120,255,.6);stroke:#bcd0ff;stroke-width:2}svg.fs .yes{fill:rgba(60,190,160,.6);stroke:#a6f5d8;stroke-width:2}svg.fs .no{fill:rgba(220,90,200,.6);stroke:#ffb6f0;stroke-width:2}
 svg.fs .bor{fill:rgba(255,160,100,.6);stroke:#ffd2a8;stroke-width:2}svg.fs .bor2{fill:rgba(255,190,130,.7);stroke:#fff1dc;stroke-width:2}
 svg.fs .bpk{fill:rgba(240,110,200,.55);stroke:#ffc2ee;stroke-width:2}svg.fs .bpk2{fill:rgba(250,150,220,.65);stroke:#ffe1f6;stroke-width:2}
+svg.fs .lead{stroke:rgba(255,255,255,.55);stroke-width:2;stroke-dasharray:5 5}svg.fs .leadd{fill:#fff;opacity:.85}
+svg.fs .it.ifn2{fill:#8ef0d0;font-weight:800;letter-spacing:.03em}
+.dg .lead{stroke:rgba(255,255,255,.5);stroke-width:1.6;stroke-dasharray:4 4}
+.dg .adrb{fill:rgba(255,255,255,.1);stroke:rgba(255,255,255,.28)}
+.dg .ifn{fill:#8ef0d0;font-weight:800}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
 @media print{.slide{display:block;position:relative;height:auto;page-break-after:always}[data-s]{opacity:1;transform:none}#nav,#prog{display:none}html,body{overflow:visible;height:auto}}
 """
@@ -1543,8 +1569,8 @@ for k, it in enumerate(S):
 # ==== схемы 1:1 вёрсткой (SVG) ====
 def _t(x, y, txt, cls="it", anchor="start"):
     return f'<text class="{cls}" x="{x}" y="{y}" text-anchor="{anchor}">{txt}</text>'
-def ibox(x, y, l1, l2, w=330, icon=False, tail=None):
-    h = 78
+def ibox(x, y, l1, l2, w=330, icon=False, tail=None, name=None):
+    h = 78 if not name else 96
     s = f'<rect class="ibx" x="{x}" y="{y}" width="{w}" height="{h}" rx="14"/>'
     tx = x + 20
     if icon:
@@ -1552,7 +1578,10 @@ def ibox(x, y, l1, l2, w=330, icon=False, tail=None):
     if tail:
         tx0, ty0, tx1, ty1 = tail
         s += f'<path class="ibx" d="M{tx0-12} {ty0} L{tx1} {ty1} L{tx0+12} {ty0} Z"/>'
-    s += _t(tx, y + 33, l1) + _t(tx, y + 60, l2)
+    if name:
+        s += _t(tx, y + 30, ('Узел ' + name) if name.startswith('PC') else ('Интерфейс ' + name), "it sm ifn2") + _t(tx, y + 58, l1) + _t(tx, y + 84, l2)
+    else:
+        s += _t(tx, y + 33, l1) + _t(tx, y + 60, l2)
     return s
 IFX = {"E1": 170, "E2": 450, "T1": 690, "T2": 910, "G1": 1150, "G2": 1430}
 RX = {"R1": 310, "R2": 800, "R3": 1290}
@@ -1593,8 +1622,8 @@ def frameicon(x, y):
             f'<path class="frmT" d="M{x-60} {y+10}H{x-18}M{x-70} {y+22}H{x-22}M{x-58} {y+34}H{x-26}"/>')
 def topo1(ifboxes=(), table=None, crd=None, frame=None, pcb_box=True):
     s = ""
-    s += ibox(230, 30, "IP 192.168.1.2", "MAC AA-BB-CC-11-22-33", 350, True)
-    if pcb_box: s += ibox(1020, 30, "IP 192.168.3.2", "MAC AA-BB-CC-22-33-44", 350, True)
+    s += f'<line class="lead" x1="{IFX["E1"]}" y1="180" x2="240" y2="120"/>' + ibox(230, 24, "IP 192.168.1.2", "MAC AA-BB-CC-11-22-33", 350, True, name="PC-A")
+    if pcb_box: s += f'<line class="lead" x1="{IFX["G2"]}" y1="180" x2="1360" y2="120"/>' + ibox(1020, 24, "IP 192.168.3.2", "MAC AA-BB-CC-22-33-44", 350, True, name="PC-B")
     s += f'<path class="lnk2" d="M{IFX["E1"]} 250V{RY}H{IFX["G2"]}V250"/>'
     s += pcsym(IFX["E1"], 205, "", 120) + pcsym(IFX["G2"], 205, "", 120)
     s += _t(IFX["E1"], 146, "PC-A", "it b big", "middle") + _t(IFX["G2"], 146, "PC-B", "it b big", "middle")
@@ -1607,7 +1636,11 @@ def topo1(ifboxes=(), table=None, crd=None, frame=None, pcb_box=True):
         s += f'<rect class="sn" x="{m-78}" y="{RY-20}" width="156" height="40" rx="12"/>' + _t(m, RY + 7, lab, "it sm", "middle")
     for n in ifboxes:
         x, y, l1, l2 = IBOX[n]
-        s += ibox(x, y, l1, l2, 330)
+        bx = x + 165; by = y if y < RY else y
+        ax = IFX[n]; ay = RY - 30 if y < RY else RY + 30
+        s += f'<line class="lead" x1="{ax}" y1="{ay}" x2="{bx}" y2="{y + (84 if y < RY else -6)}"/>'
+        s += f'<circle class="leadd" cx="{ax}" cy="{ay}" r="6"/>'
+        s += ibox(x, y, l1, l2, 330, name=n)
     if frame: s += frameicon(*frame)
     if table: s += rtable(table)
     if crd: s += card(*crd)
